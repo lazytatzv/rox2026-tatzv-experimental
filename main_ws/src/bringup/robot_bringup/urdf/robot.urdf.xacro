@@ -34,13 +34,11 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- --- THE BARREL MACRO (FREE SPINNING ROLLER) --- -->
+  <!-- Section 2: Barrel Macro (Free Spinning Roller) -->
   <xacro:macro name="barrel" params="prefix wheel_prefix num angle_deg roller_type">
-    <!-- roller_type: 1 for standard, -1 for reverse (45 deg angle) -->
     <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
       <parent link="${wheel_prefix}_hub_link"/>
       <child link="${wheel_prefix}_barrel_${num}_link"/>
-      <!-- Position barrel on the rim of the hub -->
       <origin xyz="${0.04 * cos(radians(angle_deg))} ${0.04 * sin(radians(angle_deg))} 0" 
               rpy="${roller_type * pi/4} 0 ${radians(angle_deg)}"/>
       <axis xyz="0 0 1"/>
@@ -60,12 +58,12 @@
       </collision>
     </link>
     <gazebo reference="${wheel_prefix}_barrel_${num}_link">
-      <mu1>1.0</mu1><mu2>1.0</mu2> <!-- High friction on barrels creates the movement -->
+      <mu1>1.0</mu1><mu2>1.0</mu2>
       <material>Gazebo/Black</material>
     </gazebo>
   </xacro:macro>
 
-  <!-- --- THE MECANUM WHEEL MACRO (HUB + 9 BARRELS) --- -->
+  <!-- Section 3: Mecanum Wheel Macro (Hub + 9 Barrels) -->
   <xacro:macro name="ultimate_mecanum_wheel" params="side position x_sign y_sign roller_type">
     <xacro:property name="w_prefix" value="${side}_${position}"/>
     
@@ -86,7 +84,6 @@
       <dynamics damping="0.05" friction="0.02"/>
     </joint>
 
-    <!-- Instantiate 9 Barrels per wheel -->
     <xacro:barrel wheel_prefix="${w_prefix}" num="0" angle_deg="0"   roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${w_prefix}" num="1" angle_deg="40"  roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${w_prefix}" num="2" angle_deg="80"  roller_type="${roller_type}"/>
@@ -98,7 +95,7 @@
     <xacro:barrel wheel_prefix="${w_prefix}" num="8" angle_deg="320" roller_type="${roller_type}"/>
   </xacro:macro>
 
-  <!-- --- 4 Wheels (O-Pattern via roller_type inversion) --- -->
+  <!-- Section 4: 4 Wheels (O-Pattern) -->
   <xacro:ultimate_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="1"/>
   <xacro:ultimate_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="-1"/>
   <xacro:ultimate_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="-1"/>
