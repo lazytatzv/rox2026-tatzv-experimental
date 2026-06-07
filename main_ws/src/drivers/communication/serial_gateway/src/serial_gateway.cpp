@@ -6,12 +6,15 @@
 #include "serial_gateway/serial_gateway.hpp"
 
 #include <boost/asio.hpp>
+
 #include <atomic>
+#include <deque>
+#include <iostream>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
-#include <iostream>
 
 #include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
@@ -26,7 +29,7 @@ SerialGateway::SerialGateway(const rclcpp::NodeOptions& options)
   this->declare_parameter("baud_rate", 921600);
   this->declare_parameter("reconnect_interval_ms", 2000);
 
-  // Resources are tied to the node object's lifetime, not the lifecycle state.
+  // Tie core resources to node object lifetime
   io_context_ = std::make_unique<boost::asio::io_context>();
   strand_ = std::make_unique<boost::asio::io_context::strand>(*io_context_);
 }
@@ -43,18 +46,16 @@ SerialGateway::on_configure(const rclcpp_lifecycle::State&) {
   diagnostic_updater_->add("Connection Status", this, &SerialGateway::produce_diagnostics);
 
   auto sensor_qos = rclcpp::SensorDataQoS();
-  publisher_rx_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(
-      "/communication/rx_queue", sensor_qos);
-  subscription_serial_frames_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
-      "/communication/tx_queue", sensor_qos,
-      std::bind(&SerialGateway::serial_frame_callback, this, std::placeholders::_1));
+  publisher_rx_frames_ =
+      this->create_publisher<robot_interfaces::msg::SerialFrame>("/communication/rx_queue",
+                                                                 sensor_qos);
+  subscription_serial_frames_ =
+      this->create_subscription<robot_interfaces::msg::SerialFrame>(
+          "/communication/tx_queue", sensor_qos,
+          std::bind(&SerialGateway::serial_frame_callback, this, std::placeholders::_1));
 
-  // Ensure port is ready
-  boost::asio::post(*strand_, [this]() {
-    std::lock_guard<std::recursive_mutex> lock(port_mutex_);
-    init_serial_port();
-  });
-  
+  std::lock_guard<std::recursive_mutex> lock(port_mutex_);
+  init_serial_port();
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -125,7 +126,7 @@ bool SerialGateway::init_serial_port() {
     }
     serial_port_ = std::make_unique<boost::asio::serial_port>(*io_context_, port_path);
     serial_port_->set_option(boost::asio::serial_port_base::baud_rate(baud_rate));
-    
+
     is_connected_ = true;
     last_error_ = "None";
     RCLCPP_INFO(get_logger(), "Port %s opened successfully", port_path.c_str());
@@ -154,26 +155,29 @@ void SerialGateway::start_async_read() {
 
   boost::asio::async_read_until(
       *serial_port_, read_buffer_, "\r\n",
-      boost::asio::bind_executor(*strand_, [this](const boost::system::error_code& ec, std::size_t bytes_transferred) {
-        if (!ec) {
-          rx_count_++;
-          if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-            auto msg = std::make_unique<robot_interfaces::msg::SerialFrame>();
-            std::istream is(&read_buffer_);
-            msg->frame_data.resize(bytes_transferred);
-            is.read(reinterpret_cast<char*>(msg->frame_data.data()), bytes_transferred);
-            publisher_rx_frames_->publish(std::move(msg));
-          }
-          start_async_read();
-        } else if (ec != boost::asio::error::operation_aborted) {
-          std::lock_guard<std::recursive_mutex> lock(port_mutex_);
-          is_connected_ = false;
-          last_error_ = ec.message();
-        }
-      }));
+      boost::asio::bind_executor(
+          *strand_, [this](const boost::system::error_code& ec, std::size_t bytes_transferred) {
+            if (!ec) {
+              rx_count_++;
+              if (this->get_current_state().id() ==
+                  lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+                auto msg = std::make_unique<robot_interfaces::msg::SerialFrame>();
+                std::istream is(&read_buffer_);
+                msg->frame_data.resize(bytes_transferred);
+                is.read(reinterpret_cast<char*>(msg->frame_data.data()), bytes_transferred);
+                publisher_rx_frames_->publish(std::move(msg));
+              }
+              start_async_read();
+            } else if (ec != boost::asio::error::operation_aborted) {
+              std::lock_guard<std::recursive_mutex> lock(port_mutex_);
+              is_connected_ = false;
+              last_error_ = ec.message();
+            }
+          }));
 }
 
-void SerialGateway::serial_frame_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message) {
+void SerialGateway::serial_frame_callback(
+    const robot_interfaces::msg::SerialFrame::SharedPtr message) {
   if (!is_connected_) return;
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
 
@@ -193,18 +197,24 @@ void SerialGateway::start_next_write() {
   auto message = write_queue_.front();
   boost::asio::async_write(
       *serial_port_, boost::asio::buffer(message->frame_data),
-      boost::asio::bind_executor(*strand_, [this, message](const boost::system::error_code& ec, std::size_t /*length*/) {
-        std::lock_guard<std::recursive_mutex> lock(port_mutex_);
-        if (!ec) {
-          tx_count_++;
-          if (!write_queue_.empty()) write_queue_.pop_front();
-          if (!write_queue_.empty()) start_next_write();
-        } else if (ec != boost::asio::error::operation_aborted) {
-          write_queue_.clear();
-          is_connected_ = false;
-          last_error_ = ec.message();
-        }
-      }));
+      boost::asio::bind_executor(
+          *strand_, [this, message](const boost::system::error_code& ec, std::size_t /*length*/) {
+            std::lock_guard<std::recursive_mutex> lock(port_mutex_);
+            if (!ec) {
+              tx_count_++;
+              // Defensive check before popping to avoid segfault if queue was cleared during cleanup
+              if (!write_queue_.empty()) {
+                write_queue_.pop_front();
+              }
+              if (!write_queue_.empty()) {
+                start_next_write();
+              }
+            } else if (ec != boost::asio::error::operation_aborted) {
+              write_queue_.clear();
+              is_connected_ = false;
+              last_error_ = ec.message();
+            }
+          }));
 }
 
 void SerialGateway::produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
@@ -212,8 +222,11 @@ void SerialGateway::produce_diagnostics(diagnostic_updater::DiagnosticStatusWrap
   stat.add("Baud Rate", get_parameter("baud_rate").as_int());
 
   std::lock_guard<std::recursive_mutex> lock(port_mutex_);
-  if (is_connected_) stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Connected");
-  else stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Hardware Offline");
+  if (is_connected_) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "Connected");
+  } else {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Hardware Offline");
+  }
   stat.add("TX Frames", tx_count_);
   stat.add("RX Frames", rx_count_);
   stat.add("Last Error", last_error_);
