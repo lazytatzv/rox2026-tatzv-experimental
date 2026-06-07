@@ -134,7 +134,7 @@ def launch_setup(context, *args, **kwargs):
             package="nav2_lifecycle_manager",
             executable="lifecycle_manager",
             name="lifecycle_manager_robot",
-            parameters=[{"autostart": True, "node_names": total_managed_nodes}],
+            parameters=[{"autostart": True, "node_names": total_managed_nodes, "bond_timeout": 0.0}],
         ),
         Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["joy"]]),
         Node(

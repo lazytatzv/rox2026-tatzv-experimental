@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include "mecanum_kinematics/wheel_speeds_dispatcher.hpp"
 
 #include <algorithm>
@@ -33,11 +34,13 @@ WheelSpeedsDispatcher::on_configure(const rclcpp_lifecycle::State &)
   rear_left_topic_ = this->get_parameter("rear_left_topic").as_string();
   rear_right_topic_ = this->get_parameter("rear_right_topic").as_string();
 
+  // --- QoS SYNCHRONIZATION ---
   auto command_qos = rclcpp::QoS(1).best_effort();
+  auto sensor_qos = rclcpp::SensorDataQoS();
 
   subscription_ = this->create_subscription<robot_interfaces::msg::WheelSpeeds>(
     "wheel_speeds",
-    rclcpp::SystemDefaultsQoS(),
+    sensor_qos,
     std::bind(&WheelSpeedsDispatcher::wheel_speeds_callback, this, std::placeholders::_1));
 
   pub_fl_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(front_left_topic_, command_qos);

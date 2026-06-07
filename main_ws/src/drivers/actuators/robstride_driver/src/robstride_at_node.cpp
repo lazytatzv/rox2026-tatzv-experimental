@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include "robstride_driver/robstride_at_node.hpp"
 #include <cmath>
 #include <algorithm>
@@ -46,13 +47,15 @@ RobstrideAtNode::on_configure(const rclcpp_lifecycle::State &)
   double max_speed_percentage = this->get_parameter("max_speed_limit_percentage").as_double();
   max_at_command_delta_ = static_cast<int>(NEUTRAL_VELOCITY_VALUE * (max_speed_percentage / 100.0));
 
-  // --- PRO QoS SETTINGS ---
-  // Use Best Effort and Keep Last 1 for lowest latency and freshest data
+  // --- QoS SYNCHRONIZATION ---
+  // JointState MUST be Reliable to work with standard tools (joint_state_publisher, etc.)
+  auto telemetry_qos = rclcpp::SystemDefaultsQoS(); 
+  // Internal high-speed queues use Best Effort
   auto sensor_qos = rclcpp::SensorDataQoS();
   auto command_qos = rclcpp::QoS(1).best_effort();
 
-  publisher_serial_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(topic_tx_queue_, command_qos);
-  publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", sensor_qos);
+  publisher_serial_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(topic_tx_queue_, sensor_qos);
+  publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", telemetry_qos);
   
   subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     topic_velocity_command_, command_qos, std::bind(&RobstrideAtNode::velocity_callback, this, std::placeholders::_1));
@@ -163,7 +166,6 @@ void RobstrideAtNode::serial_rx_callback(const robot_interfaces::msg::SerialFram
   if (data.size() < 16) return;
   if (data[0] != FRAME_HEADER_A || data[1] != FRAME_HEADER_T) return;
   if (data[5] != motor_id_) return;
-  if (data.size() < 15) return; 
 
   uint16_t pos_u = (data[7] << 8) | data[8];
   uint16_t vel_u = (data[9] << 8) | data[10];
