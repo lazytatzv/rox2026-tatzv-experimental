@@ -6,7 +6,6 @@
   <material name="black"><color rgba="0 0 0 1"/></material>
 
   <link name="base_footprint"/>
-
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -23,7 +22,9 @@
     <origin xyz="0 0 0.08" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheels - Perfect Symmetry and Physical Tuning -->
+  <!-- Wheels: Standardizing for Mecanum Physics -->
+  <!-- Cylinder oriented along Y-axis, rotating around Y-axis -->
+  
   <link name="front_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
@@ -52,11 +53,22 @@
   </link>
   <joint name="rear_right_wheel_joint" type="continuous"><parent link="base_link"/><child link="rear_right_wheel"/><origin xyz="-0.12 -0.15 0"/><axis xyz="0 1 0"/><dynamics damping="0.1" friction="0.1"/></joint>
 
-  <!-- Balanced Friction (mu=0.5) to allow plugin-driven slip -->
-  <gazebo reference="front_left_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
-  <gazebo reference="front_right_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
-  <gazebo reference="rear_left_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
-  <gazebo reference="rear_right_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
+  <!-- Gazebo Physics - ANISOTROPIC FRICTION (THE KEY) -->
+  <!-- O-Shape Pattern: rollers are oriented at 45 degrees -->
+  <!-- mu1: Friction along roller axis (Should be LOW to allow slip) -->
+  <!-- mu2: Friction perpendicular to roller axis (Should be HIGH for grip) -->
+  <gazebo reference="front_left_wheel">
+    <mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 1 0</fdir1>
+  </gazebo>
+  <gazebo reference="front_right_wheel">
+    <mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 -1 0</fdir1>
+  </gazebo>
+  <gazebo reference="rear_left_wheel">
+    <mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 -1 0</fdir1>
+  </gazebo>
+  <gazebo reference="rear_right_wheel">
+    <mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 1 0</fdir1>
+  </gazebo>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
@@ -72,9 +84,9 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- Stable Power Profile -->
-      <max_wheel_torque>100.0</max_wheel_torque>
-      <max_wheel_velocity>10.0</max_wheel_velocity>
+      <!-- PRO TORQUE: Force it to move! -->
+      <max_wheel_torque>500.0</max_wheel_torque>
+      <max_wheel_velocity>30.0</max_wheel_velocity>
     </plugin>
   </gazebo>
 
