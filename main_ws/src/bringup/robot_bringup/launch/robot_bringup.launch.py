@@ -12,7 +12,6 @@ def launch_setup(context, *args, **kwargs):
     pkg_bringup = get_package_share_directory("robot_bringup")
     pkg_ros_gz_sim = get_package_share_directory("ros_gz_sim")
 
-    # Resolve arguments
     is_gazebo = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
     is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context)
@@ -23,10 +22,11 @@ def launch_setup(context, *args, **kwargs):
         "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
         "urdf": os.path.join(pkg_bringup, "urdf", "robot.urdf"),
         "world": os.path.join(pkg_bringup, "world", "obstacles.sdf"),
+        "bridge": os.path.join(pkg_bringup, "config", "gz_bridge.yaml"),
     }
 
     if is_gazebo:
-        print(f"\n[MASTER LAUNCH] Mode: GAZEBO")
+        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (PRO-SYNC ACTIVE)")
     else:
         print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
@@ -50,19 +50,15 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         ))
 
-        # Re-written bridge with standard @ type mapping for maximum compatibility
+        # PRO WAY: Use YAML config for bridge
         actions.append(Node(
             package='ros_gz_bridge', executable='parameter_bridge',
             name='parameter_bridge',
-            arguments=[
-                '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
-                '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
-                '/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
-                '/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock'
-            ],
+            parameters=[{'config_file': paths["bridge"]}],
             output='screen'
         ))
 
+        # Vision: Dynamic Marker Visualizer (Gazebo Ground Truth)
         actions.append(Node(
             package='mecanum_kinematics', executable='obstacle_visualizer_node',
             name='obstacle_visualizer', output='screen'
@@ -102,6 +98,16 @@ def launch_setup(context, *args, **kwargs):
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
         Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": open(paths["urdf"]).read(), "publish_frequency": 20.0}]),
     ]
+
+    # Optional Visualization
+    if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
+        try:
+            foxglove_pkg = get_package_share_directory("foxglove_bridge")
+            actions.append(IncludeLaunchDescription(
+                AnyLaunchDescriptionSource(os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml"))
+            ))
+        except Exception:
+            pass
 
     return actions
 

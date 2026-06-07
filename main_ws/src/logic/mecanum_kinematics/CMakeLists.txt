@@ -15,6 +15,8 @@ find_package(std_msgs REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 find_package(visualization_msgs REQUIRED)
+find_package(ros_gz_interfaces REQUIRED)
+find_package(gz_msgs REQUIRED)
 
 # kinematics implementation (Internal library)
 add_library(mecanum_kinematics_kinematics SHARED
@@ -71,7 +73,7 @@ add_executable(zero_twist_node src/zero_twist_node.cpp)
 ament_target_dependencies(zero_twist_node rclcpp geometry_msgs)
 
 add_executable(obstacle_visualizer_node src/obstacle_visualizer_node.cpp)
-ament_target_dependencies(obstacle_visualizer_node rclcpp visualization_msgs)
+ament_target_dependencies(obstacle_visualizer_node rclcpp visualization_msgs gz_msgs)
 
 install(TARGETS
   mecanum_kinematics_component

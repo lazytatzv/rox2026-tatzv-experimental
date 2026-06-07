@@ -1,62 +1,68 @@
 // Copyright 2026 Tatsukiyano
 #include <memory>
-#include <vector>
+#include <map>
 #include "rclcpp/rclcpp.hpp"
+#include "gz_msgs/msg/scene.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace mecanum_kinematics {
 
-class ObstacleVisualizer : public rclcpp::Node {
+/**
+ * @brief Dynamic Obstacle Visualizer
+ * Automatically converts Gazebo Scene information into ROS Markers.
+ * No more manual hardcoding of stones!
+ */
+class DynamicObstacleVisualizer : public rclcpp::Node {
 public:
-  ObstacleVisualizer() : Node("obstacle_visualizer") {
+  DynamicObstacleVisualizer() : Node("obstacle_visualizer") {
     publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/obstacles", 10);
-    timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&ObstacleVisualizer::publish_markers, this));
-    RCLCPP_INFO(this->get_logger(), "Obstacle Visualizer active (Sync with SDF)");
+    subscription_ = this->create_subscription<gz_msgs::msg::Scene>(
+      "/gz_scene", 10, std::bind(&DynamicObstacleVisualizer::scene_callback, this, std::placeholders::_1));
+    RCLCPP_INFO(this->get_logger(), "Dynamic Obstacle Visualizer (Gazebo Ground Truth) active");
   }
 
 private:
-  void publish_markers() {
+  void scene_callback(const gz_msgs::msg::Scene::SharedPtr msg) {
     visualization_msgs::msg::MarkerArray array;
-
-    // The Big Red Wall (Sync with SDF: starts at 2.0m, center 2.5m, thickness 1.0m)
-    array.markers.push_back(make_marker(0, 2.5, 0.0, 0.5, 1.0, 10.0, 2.0, 1.0, 0.0, 0.0, visualization_msgs::msg::Marker::CUBE));
     
-    // Stone Sphere (Sync with SDF: 1.5m)
-    array.markers.push_back(make_marker(1, 1.5, -0.5, 0.1, 0.2, 0.2, 0.2, 0.4, 0.4, 0.4, visualization_msgs::msg::Marker::SPHERE));
+    for (const auto & model : msg->models) {
+      // Skip the robot itself to avoid visual clutter
+      if (model.name == "lazytatzv_robot" || model.name == "ground_plane") continue;
 
+      visualization_msgs::msg::Marker m;
+      m.header.frame_id = "odom";
+      m.header.stamp = this->now();
+      m.ns = "gazebo_world";
+      m.id = model.id;
+      m.action = visualization_msgs::msg::Marker::ADD;
+      m.pose = model.pose; // Direct copy from Gazebo Truth
+      
+      // Default visualization for unknown shapes
+      m.type = visualization_msgs::msg::Marker::CUBE;
+      m.scale.x = 0.2; m.scale.y = 0.2; m.scale.z = 0.2;
+
+      // Special handling for the Big Wall
+      if (model.name == "big_wall") {
+        m.scale.x = 1.0; m.scale.y = 10.0; m.scale.z = 2.0;
+        m.color.r = 1.0; m.color.g = 0.0; m.color.b = 0.0; m.color.a = 0.8;
+      } else {
+        m.color.r = 0.5; m.color.g = 0.5; m.color.b = 0.5; m.color.a = 0.8;
+      }
+
+      array.markers.push_back(m);
+    }
     publisher_->publish(array);
   }
 
-  visualization_msgs::msg::Marker make_marker(int id, double x, double y, double z, double sx, double sy, double sz, double r, double g, double b, int type) {
-    visualization_msgs::msg::Marker m;
-    m.header.frame_id = "odom";
-    m.header.stamp = this->now();
-    m.ns = "stones";
-    m.id = id;
-    m.type = type;
-    m.action = visualization_msgs::msg::Marker::ADD;
-    m.pose.position.x = x;
-    m.pose.position.y = y;
-    m.pose.position.z = z;
-    m.scale.x = sx;
-    m.scale.y = sy;
-    m.scale.z = sz;
-    m.color.r = r;
-    m.color.g = g;
-    m.color.b = b;
-    m.color.a = 0.8;
-    return m;
-  }
-
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr publisher_;
-  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::Subscription<gz_msgs::msg::Scene>::SharedPtr subscription_;
 };
 
 } // namespace mecanum_kinematics
 
 int main(int argc, char * argv[]) {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<mecanum_kinematics::ObstacleVisualizer>());
+  rclcpp::spin(std::make_shared<mecanum_kinematics::DynamicObstacleVisualizer>());
   rclcpp::shutdown();
   return 0;
 }

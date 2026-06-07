@@ -21,17 +21,34 @@ endif
 # --- [ Docker Management ] ---
 
 build: ## Build the Docker image
+ifeq ($(IN_CONTAINER),true)
+	@echo "🚨 Error: Cannot run 'make build' inside the container. Please run it from the host."
+	@exit 1
+else
 	DOCKER_BUILDKIT=1 docker compose build
+endif
 
 up: ## Start the container in background
+ifeq ($(IN_CONTAINER),true)
+	@echo "🚨 Error: Container is already running."
+else
 	xhost +local:docker > /dev/null 2>&1 || true
 	docker compose up -d
+endif
 
 down: ## Stop and remove the container
+ifeq ($(IN_CONTAINER),true)
+	@echo "🚨 Error: Cannot stop container from within itself."
+else
 	docker compose down
+endif
 
 shell: ## Enter the running container
+ifeq ($(IN_CONTAINER),true)
+	@echo "🚀 You are already in the strongest shell."
+else
 	docker compose exec ros2_rox2026 /bin/zsh || docker compose exec ros2_rox2026 /bin/bash
+endif
 
 # --- [ ROS 2 Operations - CONTEXT AWARE ] ---
 
