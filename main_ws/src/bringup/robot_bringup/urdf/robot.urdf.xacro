@@ -1,17 +1,16 @@
 <?xml version="1.0"?>
-<robot name="nexus_10011" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="nexus_10011_robstride" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Nexus 100mm Official Specs (14162 / 14094) -->
-  <xacro:property name="base_mass"   value="3.0"/>
-  <xacro:property name="wheel_mass"  value="0.4"/>  <!-- Exact 400g from spec -->
-  <xacro:property name="wheel_radius" value="0.05"/> <!-- 100mm diameter -->
+  <!-- Section 1: Nexus 100mm + Robstride EduLite 05 Specs -->
+  <xacro:property name="base_mass"   value="3.5"/> <!-- Increased slightly for 40V Battery/Electronics -->
+  <xacro:property name="wheel_mass"  value="0.63"/> <!-- 400g wheel + 230g EduLite 05 -->
+  <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.05"/>
-  <xacro:property name="wheel_base"   value="0.25"/>  <!-- Axis-to-axis distance -->
-  <xacro:property name="wheel_sep"    value="0.30"/>  <!-- Left-to-right center distance -->
+  <xacro:property name="wheel_base"   value="0.25"/>
+  <xacro:property name="wheel_sep"    value="0.30"/>
 
-  <!-- Materials (Nexus Yellow/Aluminum) -->
+  <material name="blue"><color rgba="0 0 0.8 1"/></material>
   <material name="nexus_yellow"><color rgba="1.0 0.8 0.0 1"/></material>
-  <material name="aluminum"><color rgba="0.8 0.8 0.8 1"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
 
   <link name="base_footprint"/>
@@ -43,7 +42,7 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Nexus Wheel Macro: Specialized Physics -->
+  <!-- Robstride Powered Wheel Macro -->
   <xacro:macro name="nexus_wheel" params="side position x_sign y_sign fdir">
     <link name="${side}_${position}_wheel">
       <inertial>
@@ -55,7 +54,6 @@
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
-      <!-- PRO TIP: Sphere for stable mecanum sliding -->
       <collision>
         <geometry><sphere radius="${wheel_radius}"/></geometry>
       </collision>
@@ -66,18 +64,16 @@
       <child link="${side}_${position}_wheel"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <dynamics damping="0.1" friction="0.05"/>
+      <dynamics damping="0.05" friction="0.02"/> <!-- EduLite 05 Low-friction dynamics -->
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
-        <!-- THE SECRET SAUCE: Low mu1 along roller, High mu2 for lateral grip -->
-        <mu1>0.01</mu1><mu2>1.0</mu2>
+        <mu1>0.0</mu1><mu2>1.0</mu2>
         <fdir1>${fdir}</fdir1>
         <min_depth>0.001</min_depth>
     </gazebo>
   </xacro:macro>
 
-  <!-- O-Pattern Implementation -->
   <xacro:nexus_wheel side="front" position="left"  x_sign="1"  y_sign="1"  fdir="1 1 0"/>
   <xacro:nexus_wheel side="front" position="right" x_sign="1"  y_sign="-1" fdir="1 -1 0"/>
   <xacro:nexus_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  fdir="1 -1 0"/>
@@ -97,8 +93,9 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- Nexus 12V Coreless Motor Torque -->
-      <max_wheel_torque>20.0</max_wheel_torque>
+      <!-- Robstride EduLite 05 @ 40V: High Torque & Speed -->
+      <max_wheel_torque>5.0</max_wheel_torque>
+      <max_wheel_velocity>40.0</max_wheel_velocity>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
