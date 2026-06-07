@@ -1,47 +1,38 @@
-# THIS IS A TEST CONFIG FILE FOR DDSM115.
+# Configuration for DDSM115 Motors
+# This file is used by speed_dispatcher and individual motor nodes.
 
-# DDSM115 (Binary Protocol) Actuator Settings
-
-# ddsmを使うときのドライバ設定
-# 使う際はphysical.yamlのactuator_typeがddsmであることが前提
-
-/serial_gateway:
+/serial_driver:
   ros__parameters:
-    serial_port: "/dev/ttyUSB0"
+    device_name: "/dev/ttyUSB1"
     baud_rate: 115200
+    flow_control: "none"
+    parity: "none"
+    stop_bits: "1"
 
-/wheel_speeds_dispatcher:
-  ros__parameters:
-    front_left_topic: "/front_left_motor/velocity_command"
-    front_right_topic: "/front_right_motor/velocity_command"
-    rear_left_topic: "/rear_left_motor/velocity_command"
-    rear_right_topic: "/rear_right/velocity_command"
-
-# Individual Motor Parameters (DDSM115)
-/front_left_motor:
+/motors/front_left:
   ros__parameters:
     motor_id: 1
     joint_name: "front_left_wheel_joint"
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/serial_write"
+    topic_rx_queue: "/serial_read"
 
-/front_right_motor:
+/motors/front_right:
   ros__parameters:
     motor_id: 2
     joint_name: "front_right_wheel_joint"
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/serial_write"
+    topic_rx_queue: "/serial_read"
 
-/rear_left_motor:
+/motors/rear_left:
   ros__parameters:
     motor_id: 3
     joint_name: "rear_left_wheel_joint"
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/serial_write"
+    topic_rx_queue: "/serial_read"
 
-/rear_right_motor:
+/motors/rear_right:
   ros__parameters:
     motor_id: 4
     joint_name: "rear_right_wheel_joint"
-    topic_tx_queue: "/serial_bus/tx_queue"
-    topic_rx_queue: "/serial_bus/rx_queue"
+    topic_tx_queue: "/serial_write"
+    topic_rx_queue: "/serial_read"
