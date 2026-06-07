@@ -48,7 +48,7 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   auto sensor_qos = rclcpp::SensorDataQoS();
 
   publisher_wheel_speeds_ =
-      this->create_publisher<robot_interfaces::msg::WheelSpeeds>(topic_wheel_speeds_, sensor_qos);
+      this->create_publisher<std_msgs::msg::Float64MultiArray>(topic_wheel_speeds_, sensor_qos);
 
   publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", telemetry_qos);
 
@@ -122,11 +122,8 @@ void MecanumKinematicsNode::watchdog_callback() {
   double elapsed = (now - last_command_time_).seconds();
 
   if (elapsed > watchdog_timeout_) {
-    auto out = std::make_unique<robot_interfaces::msg::WheelSpeeds>();
-    out->front_left_velocity = 0.0;
-    out->front_right_velocity = 0.0;
-    out->rear_left_velocity = 0.0;
-    out->rear_right_velocity = 0.0;
+    auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
+    out->data.resize(4, 0.0);
     publisher_wheel_speeds_->publish(std::move(out));
 
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000,
@@ -145,11 +142,8 @@ void MecanumKinematicsNode::command_velocity_callback(
   const auto wheels = mecanum_kinematics::compute_wheel_speeds(
       msg->linear.x, msg->linear.y, msg->angular.z, half_length_, half_width_, wheel_radius_);
 
-  auto out = std::make_unique<robot_interfaces::msg::WheelSpeeds>();
-  out->front_left_velocity = wheels[0];
-  out->front_right_velocity = wheels[1];
-  out->rear_left_velocity = wheels[2];
-  out->rear_right_velocity = wheels[3];
+  auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
+  out->data = {wheels[0], wheels[1], wheels[2], wheels[3]};
 
   publisher_wheel_speeds_->publish(std::move(out));
 }

@@ -12,8 +12,8 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "std_msgs/msg/float64_multi_array.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-#include "robot_interfaces/msg/wheel_speeds.hpp"
 #include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 namespace mecanum_kinematics
@@ -65,7 +65,7 @@ private:
   std::string topic_wheel_speeds_;
 
   // Lifecycle Publishers
-  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::WheelSpeeds>::SharedPtr
+  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr
     publisher_wheel_speeds_;
   rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Odometry>::SharedPtr publisher_odom_;
 

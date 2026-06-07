@@ -5,6 +5,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <string>
 
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
@@ -38,7 +39,7 @@ WheelSpeedsDispatcher::on_configure(const rclcpp_lifecycle::State &)
   auto command_qos = rclcpp::QoS(1).best_effort();
   auto sensor_qos = rclcpp::SensorDataQoS();
 
-  subscription_ = this->create_subscription<robot_interfaces::msg::WheelSpeeds>(
+  subscription_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     "wheel_speeds",
     sensor_qos,
     std::bind(&WheelSpeedsDispatcher::wheel_speeds_callback, this, std::placeholders::_1));
@@ -93,9 +94,10 @@ WheelSpeedsDispatcher::on_shutdown(const rclcpp_lifecycle::State &)
 }
 
 void WheelSpeedsDispatcher::wheel_speeds_callback(
-  const robot_interfaces::msg::WheelSpeeds::SharedPtr msg)
+  const std_msgs::msg::Float64MultiArray::SharedPtr msg)
 {
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
+  if (msg->data.size() < 4) return;
 
   auto publish_vec = [](const rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr & pub, double velocity) {
     auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
@@ -104,10 +106,10 @@ void WheelSpeedsDispatcher::wheel_speeds_callback(
     pub->publish(std::move(out));
   };
 
-  publish_vec(pub_fl_, msg->front_left_velocity);
-  publish_vec(pub_fr_, msg->front_right_velocity);
-  publish_vec(pub_rl_, msg->rear_left_velocity);
-  publish_vec(pub_rr_, msg->rear_right_velocity);
+  publish_vec(pub_fl_, msg->data[0]);
+  publish_vec(pub_fr_, msg->data[1]);
+  publish_vec(pub_rl_, msg->data[2]);
+  publish_vec(pub_rr_, msg->data[3]);
 }
 
 }  // namespace mecanum_kinematics
