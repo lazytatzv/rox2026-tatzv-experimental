@@ -1,5 +1,6 @@
+// Copyright 2026 Tatsukiyano
 {
-    "name": "ROX2026 Tatzv Experimental",
+    "name": "ROX2026 Tatzv Experimental [ULTIMATE]",
     "dockerComposeFile": [
         "../compose.yaml"
     ],
@@ -8,21 +9,47 @@
     "customizations": {
         "vscode": {
             "extensions": [
+                // Core Development
                 "ms-vscode.cpptools",
                 "ms-python.python",
+                "ms-vscode.cmake-tools",
+                // ROS 2 Specialist
                 "ms-iot.vscode-ros",
                 "redhat.vscode-yaml",
+                "foxglove.foxglove-extension",
+                // DX (Developer Experience)
                 "eamodio.gitlens",
+                "usernamehw.errorlens",
                 "streetsidesoftware.code-spell-checker",
-                "foxglove.foxglove-extension"
+                "christian-kohler.path-intellisense"
             ],
             "settings": {
+                // ROS 2 Python Path
                 "python.analysis.extraPaths": [
-                    "/opt/ros/jazzy/lib/python3.12/site-packages"
-                ]
+                    "/opt/ros/jazzy/lib/python3.12/site-packages",
+                    "/root/lazytatzv_ws/main_ws/install/robot_bringup/lib/python3.12/site-packages"
+                ],
+                // C++ Intelligence
+                "C_Cpp.default.includePath": [
+                    "/opt/ros/jazzy/include/**",
+                    "/root/lazytatzv_ws/main_ws/src/**/include/**",
+                    "/root/lazytatzv_ws/main_ws/install/**/include/**"
+                ],
+                "C_Cpp.default.cppStandard": "c++20",
+                // Editor Polish
+                "editor.rulers": [100],
+                "editor.renderWhitespace": "all",
+                "files.insertFinalNewline": true,
+                "files.trimTrailingWhitespace": true
             }
         }
     },
     "remoteUser": "root",
-    "postCreateCommand": "cd main_ws && colcon build --symlink-install"
+    "features": {
+        "ghcr.io/devcontainers/features/common-utils:2": {
+            "installZsh": true,
+            "configureZshAsDefaultShell": true
+        }
+    },
+    "postCreateCommand": "make colcon"
 }
