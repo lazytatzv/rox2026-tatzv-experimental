@@ -6,7 +6,6 @@
       <real_time_factor>1.0</real_time_factor>
     </physics>
     
-    <!-- Essential Systems for Physics and Collision -->
     <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
@@ -26,9 +25,7 @@
         <collision name="collision">
           <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
           <surface>
-            <friction>
-              <ode><mu>100</mu><mu2>100</mu2></ode>
-            </friction>
+            <friction><ode><mu>100</mu><mu2>100</mu2></ode></friction>
           </surface>
         </collision>
         <visual name="visual">
@@ -38,37 +35,38 @@
       </link>
     </model>
 
-    <!-- The Big Red Wall -->
+    <!-- THE UNSTOPPABLE WALL (Non-static but 10 Tons) -->
     <model name="big_wall">
       <pose>2.0 0 0.5 0 0 0</pose>
-      <static>true</static>
       <link name="link">
+        <inertial>
+          <mass>10000.0</mass>
+          <inertia>
+            <ixx>1000</ixx><ixy>0</ixy><ixz>0</ixz>
+            <iyy>1000</iyy><iyz>0</iyz><izz>1000</izz>
+          </inertia>
+        </inertial>
         <collision name="c">
-          <geometry><box><size>0.2 5.0 1.0</size></box></geometry>
+          <geometry><box><size>0.5 5.0 1.0</size></box></geometry>
+          <surface>
+            <contact><ode><min_depth>0.001</min_depth></ode></contact>
+            <friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction>
+          </surface>
         </collision>
         <visual name="v">
-          <geometry><box><size>0.2 5.0 1.0</size></box></geometry>
+          <geometry><box><size>0.5 5.0 1.0</size></box></geometry>
           <material><diffuse>1 0 0 1</diffuse></material>
         </visual>
       </link>
     </model>
 
-    <!-- Random Obstacles (The "Stones") -->
-    <model name="stone_2">
-      <pose>1.5 -0.3 0.1 0 0 0</pose>
+    <!-- Physical Stones -->
+    <model name="stone_sphere">
+      <pose>1.0 -0.5 0.1 0 0 0</pose>
       <link name="link">
-        <inertial><mass>0.5</mass></inertial>
+        <inertial><mass>1.0</mass></inertial>
         <collision name="c"><geometry><sphere><radius>0.1</radius></sphere></geometry></collision>
         <visual name="v"><geometry><sphere><radius>0.1</radius></sphere></geometry><material><diffuse>0.4 0.4 0.4 1</diffuse></material></visual>
-      </link>
-    </model>
-
-    <model name="stone_3">
-      <pose>0.8 -0.8 0.05 0 0 0</pose>
-      <link name="link">
-        <inertial><mass>0.2</mass></inertial>
-        <collision name="c"><geometry><box><size>0.1 0.2 0.1</size></box></geometry></collision>
-        <visual name="v"><geometry><box><size>0.1 0.2 0.1</size></box></geometry><material><diffuse>0.3 0.3 0.3 1</diffuse></material></visual>
       </link>
     </model>
 
