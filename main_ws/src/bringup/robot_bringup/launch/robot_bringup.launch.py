@@ -1,4 +1,4 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 import os
 import yaml
 from ament_index_python.packages import get_package_share_directory
