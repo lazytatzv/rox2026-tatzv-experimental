@@ -73,7 +73,7 @@ format: ## Run the self-healing auto-formatter
 	$(EXEC_PREFIX) bash -c "./fix_style.sh"
 
 clean: ## Purge build artifacts
-	rm -rf main_ws/build/ main_ws/install/ main_ws/log/ .ccache/
+	rm -rf main_ws/build/ main_ws/install/ main_ws/log/
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
