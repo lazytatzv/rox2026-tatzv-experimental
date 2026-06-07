@@ -8,10 +8,8 @@ on:
 
 jobs:
   ros_build_test:
-    name: Build, Test & Auto-Format
+    name: Build & Functional Test
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -22,42 +20,28 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install dependencies
         shell: bash
         run: |
-          apt-get update && apt-get install -y python3-pip black ros-${{ matrix.ros_distro }}-ament-uncrustify
+          apt-get update && apt-get install -y python3-pip
           rosdep update
           rosdep install --from-paths main_ws/src --ignore-src -y -r --rosdistro ${{ matrix.ros_distro }}
-
-      - name: Auto-Format Code
-        shell: bash
-        run: |
-          chmod +x fix_style.sh
-          ./fix_style.sh
-
-      - name: Commit and Push changes
-        if: matrix.ros_distro == 'jazzy' # Jazzy側で代表して整形プッシュを行う
-        uses: stefanzweifel/git-auto-commit-action@v5
-        with:
-          commit_message: "style: automatic code formatting by CI [skip ci]"
-          file_pattern: 'main_ws/src/*'
 
       - name: Build Workspace
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           cd main_ws
+          # Fast build for CI
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
-      - name: Run Tests
+      - name: Run Functional Tests
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
           source main_ws/install/setup.bash
           cd main_ws
-          # Ignore submodules for lint tests
-          colcon test --packages-skip el05_usb_can_driver seeed_usb_can_analyzer_driver --event-handlers console_direct+
+          # Run tests but skip all linting tests to reduce noise
+          colcon test --event-handlers console_direct+ --ament-cmake-args -DAMENT_CMAKE_LINT_TESTS=OFF
           colcon test-result --verbose

@@ -89,7 +89,6 @@ def generate_launch_description():
 
     joy_node = Node(package="joy", executable="joy_node", name="joy_node", parameters=[teleop_config])
     
-    # We no longer use 'remappings' here. Instead, we ensure teleop.yaml defines the correct topic names.
     teleop_node = Node(
         package="base_teleop",
         executable="base_teleop_node",
@@ -97,7 +96,6 @@ def generate_launch_description():
         parameters=[teleop_config],
     )
 
-    # Ensure twist_mux.yaml defines the final output topic as 'cmd_vel'
     twist_mux = Node(
         package="twist_mux",
         executable="twist_mux",
@@ -105,11 +103,15 @@ def generate_launch_description():
         parameters=[mux_config],
     )
 
+    # Robot State Publisher needs special QoS for Foxglove to catch the model
     robot_state_pub = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
         name="robot_state_publisher",
-        parameters=[{"robot_description": open(urdf_path).read()}],
+        parameters=[{
+            "robot_description": open(urdf_path).read(),
+            "publish_frequency": 10.0
+        }],
     )
 
     joint_aggregator = Node(
