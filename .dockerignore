@@ -1,9 +1,13 @@
-# ROS 2 build artifacts
-build/
-install/
-log/
+# ROS 2 build artifacts (Crucial to ignore)
+main_ws/build/
+main_ws/install/
+main_ws/log/
 
-# Python artifacts
+# Local cache
+.ccache/
+.direnv/
+
+# Python
 __pycache__/
 *.pyc
 
@@ -11,7 +15,13 @@ __pycache__/
 .git/
 .gitmodules
 
-# Docker assets
+# VS Code
+.vscode/
+.devcontainer/
+
+# Docker files
 Dockerfile
 compose.yaml
 .dockerignore
+Makefile
+fix_style.sh
