@@ -9,7 +9,9 @@
 #include <boost/asio.hpp>
 
 #include <atomic>
+#include <deque>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 #include <vector>
@@ -47,6 +49,10 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
   bool init_serial_port();
   void start_async_read();
   void try_reconnect();
+  
+  // Async Write Queue Logic
+  void do_write(const robot_interfaces::msg::SerialFrame::SharedPtr message);
+  void start_next_write();
 
   // Diagnostics
   void produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat);
@@ -56,6 +62,10 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
   std::unique_ptr<boost::asio::serial_port> serial_port_;
   boost::asio::streambuf read_buffer_;
   std::thread io_thread_;
+
+  // Write Queue & Synchronization
+  std::deque<robot_interfaces::msg::SerialFrame::SharedPtr> write_queue_;
+  std::mutex write_mutex_;
 
   // State & Recovery
   std::atomic<bool> is_connected_{false};

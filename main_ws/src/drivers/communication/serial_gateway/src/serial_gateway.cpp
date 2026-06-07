@@ -89,8 +89,13 @@ SerialGateway::on_cleanup(const rclcpp_lifecycle::State&) {
   if (io_thread_.joinable()) io_thread_.join();
   if (serial_port_ && serial_port_->is_open()) serial_port_->close();
   
+  {
+      std::lock_guard<std::mutex> lock(write_mutex_);
+      write_queue_.clear();
+  }
+  
   serial_port_.reset();
-  io_context_.reset(); // Force recreation on next configure
+  io_context_.reset();
   
   subscription_serial_frames_.reset();
   publisher_rx_frames_.reset();
@@ -162,12 +167,33 @@ void SerialGateway::serial_frame_callback(const robot_interfaces::msg::SerialFra
   if (!is_connected_ || !serial_port_ || !serial_port_->is_open()) return;
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
 
-  // Use async_write for thread-safe output from ROS 2 threads
+  std::lock_guard<std::mutex> lock(write_mutex_);
+  bool write_in_progress = !write_queue_.empty();
+  write_queue_.push_back(message);
+  if (!write_in_progress) {
+    start_next_write();
+  }
+}
+
+void SerialGateway::start_next_write() {
+  if (write_queue_.empty()) return;
+
+  auto message = write_queue_.front();
   boost::asio::async_write(*serial_port_, boost::asio::buffer(message->frame_data),
-      [this](const boost::system::error_code& ec, std::size_t /*length*/) {
-          if (!ec) tx_count_++;
-          else if (ec != boost::asio::error::operation_aborted) is_connected_ = false;
-      });
+    [this, message](const boost::system::error_code& ec, std::size_t /*length*/) {
+      if (!ec) {
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          tx_count_++;
+          write_queue_.pop_front();
+          if (!write_queue_.empty()) {
+            start_next_write();
+          }
+      } else {
+          std::lock_guard<std::mutex> lock(write_mutex_);
+          write_queue_.clear();
+          if (ec != boost::asio::error::operation_aborted) is_connected_ = false;
+      }
+    });
 }
 
 void SerialGateway::produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat) {
