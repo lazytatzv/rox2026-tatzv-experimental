@@ -1,10 +1,10 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 import os
 import yaml
-import shutil
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import OpaqueFunction, DeclareLaunchArgument
+from launch.actions import OpaqueFunction, DeclareLaunchArgument, IncludeLaunchDescription
+from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition
 from launch_ros.actions import Node, ComposableNodeContainer
@@ -176,17 +176,17 @@ def launch_setup(context, *args, **kwargs):
         ),
     ]
 
-    # --- Foxglove Bridge (Safety Check) ---
-    # Only add if specifically requested AND binary exists
+    # --- Foxglove Bridge (Official Launch Style) ---
     if use_foxglove_cfg:
-        if shutil.which("foxglove_bridge_node") or os.path.exists("/opt/ros/jazzy/lib/foxglove_bridge/foxglove_bridge_node"):
-            actions.append(Node(
-                package="foxglove_bridge",
-                executable="foxglove_bridge_node",
-                name="foxglove_bridge"
+        try:
+            foxglove_pkg = get_package_share_directory("foxglove_bridge")
+            actions.append(IncludeLaunchDescription(
+                AnyLaunchDescriptionSource(
+                    os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml")
+                )
             ))
-        else:
-            print("[WARNING] foxglove_bridge_node NOT FOUND. Skipping Foxglove.")
+        except Exception:
+            print("\n[WARNING] foxglove_bridge package NOT FOUND. Skipping Foxglove visualization.")
 
     return actions
 
