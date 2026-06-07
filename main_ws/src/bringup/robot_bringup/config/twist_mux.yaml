@@ -1,22 +1,22 @@
-# twist_mux configuration for ROX2026
-/twist_mux:
+# twist_mux configuration for ROX2026 (Jazzy/Humble Compatible Map Format)
+twist_mux:
   ros__parameters:
     topics:
-      - name: "teleop"
+      teleop:
         topic: "cmd_vel_joy"
         timeout: 0.5
         priority: 100
-      - name: "navigation"
+      navigation:
         topic: "cmd_vel_nav"
         timeout: 0.5
         priority: 10
-      - name: "external"
+      external:
         topic: "cmd_vel_ext"
         timeout: 0.5
         priority: 5
 
     locks:
-      - name: "e_stop"
+      e_stop:
         topic: "stop_lock"
         timeout: 0.0
         priority: 255

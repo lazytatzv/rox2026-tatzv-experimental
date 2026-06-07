@@ -31,16 +31,18 @@ ament_target_dependencies(base_teleop_component
   rcl_interfaces
 )
 
-# Register as Component AND auto-generate standalone executable
+# Register as Component
 rclcpp_components_register_node(base_teleop_component
   PLUGIN "base_teleop::BaseTeleopNode"
   EXECUTABLE base_teleop_node
 )
 
-# Crucial: Install targets so they can be found at runtime
+# Install targets with standard ROS 2 layout
 install(TARGETS
   base_teleop_component
-  DESTINATION lib
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(TARGETS
