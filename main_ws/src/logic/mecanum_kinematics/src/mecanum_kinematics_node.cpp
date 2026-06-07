@@ -63,6 +63,7 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   watchdog_timer_ =
       this->create_wall_timer(100ms, std::bind(&MecanumKinematicsNode::watchdog_callback, this));
 
+  // TF Broadcaster is safe to create in configure, but initialized during activation
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s' watchdog=%.2fs",
@@ -117,7 +118,6 @@ void MecanumKinematicsNode::watchdog_callback() {
   double elapsed = (now - last_command_time_).seconds();
 
   if (elapsed > watchdog_timeout_) {
-    // Command lost! Force stop.
     auto out = std::make_unique<robot_interfaces::msg::WheelSpeeds>();
     out->front_left_velocity = 0.0;
     out->front_right_velocity = 0.0;
@@ -126,7 +126,7 @@ void MecanumKinematicsNode::watchdog_callback() {
     publisher_wheel_speeds_->publish(std::move(out));
 
     RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000,
-                          "Watchdog Triggered: Command stream lost for %.2fs!", elapsed);
+                          "Watchdog Triggered: Command stream lost!");
   }
 }
 
@@ -174,9 +174,7 @@ void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointSt
     }
   }
 
-  if (found_count < 4) {
-    return;
-  }
+  if (found_count < 4) return;
 
   const auto twist = mecanum_kinematics::compute_body_twist(wheel_speeds, half_length_, half_width_,
                                                             wheel_radius_);

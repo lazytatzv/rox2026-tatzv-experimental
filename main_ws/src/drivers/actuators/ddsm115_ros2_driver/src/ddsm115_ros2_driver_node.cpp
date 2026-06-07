@@ -90,8 +90,12 @@ void DDSM115DriverNode::velocity_callback(const std_msgs::msg::Float64MultiArray
   double rpm = (velocity_rad_s * 60.0) / (2.0 * M_PI);
   
   auto frame = std::make_unique<robot_interfaces::msg::SerialFrame>();
-  // Simple RPM command pack (Mock/Real logic needs to follow DDSM spec)
-  frame->frame_data = {motor_id_, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+  // Correctly use RPM in command (simple example pack)
+  int16_t rpm_i16 = static_cast<int16_t>(rpm);
+  frame->frame_data = {motor_id_, 0x64, 
+                       static_cast<uint8_t>((rpm_i16 >> 8) & 0xFF), 
+                       static_cast<uint8_t>(rpm_i16 & 0xFF), 
+                       0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
   publisher_serial_frames_->publish(std::move(frame));
 }
 

@@ -49,8 +49,8 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
   bool init_serial_port();
   void start_async_read();
   void try_reconnect();
-
-  // Async Write Queue Logic
+  
+  // Async Write Logic
   void start_next_write();
 
   // Diagnostics
@@ -58,13 +58,14 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
 
   // Boost.Asio components
   std::unique_ptr<boost::asio::io_context> io_context_;
+  std::unique_ptr<boost::asio::io_context::strand> strand_;
   std::unique_ptr<boost::asio::serial_port> serial_port_;
   boost::asio::streambuf read_buffer_;
   std::thread io_thread_;
 
-  // Thread-safe synchronization (Recursive for re-entrant calls)
-  mutable std::recursive_mutex port_mutex_;
+  // Write Queue & Synchronization
   std::deque<robot_interfaces::msg::SerialFrame::SharedPtr> write_queue_;
+  mutable std::recursive_mutex port_mutex_;
 
   // State & Recovery
   std::atomic<bool> is_connected_{false};
