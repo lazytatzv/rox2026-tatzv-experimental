@@ -148,7 +148,10 @@ def launch_setup(context, *args, **kwargs):
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", 
              parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
         Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher",
-            parameters=[{"robot_description": open(paths["urdf"]).read()}]),
+            parameters=[{
+                "robot_description": open(paths["urdf"]).read(),
+                "publish_frequency": 20.0  # Constant re-broadcast
+            }]),
     ]
 
     # Optional Visualization
