@@ -5,7 +5,6 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, SetEnvironmentVariable
 from launch.launch_description_sources import AnyLaunchDescriptionSource, PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
@@ -18,11 +17,6 @@ def launch_setup(context, *args, **kwargs):
     is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context)
     use_foxglove = LaunchConfiguration("use_foxglove")
-    use_rviz = LaunchConfiguration("use_rviz")
-
-    # Override actuator type if Gazebo is active
-    if is_gazebo:
-        actuator_type = "gazebo"
 
     # Configuration paths
     paths = {
@@ -32,77 +26,47 @@ def launch_setup(context, *args, **kwargs):
         "urdf": os.path.join(pkg_bringup, "urdf", "robot.urdf"),
     }
 
-    print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
-
-    # --- 1. Gazebo Specific Actions ---
-    gazebo_actions = []
     if is_gazebo:
-        # Force Gazebo to use loopback for transport in Docker
-        gazebo_actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
+        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (High-Fidelity Physics)")
+    else:
+        print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
-        # Define gz_args with verbosity and headless mode
-        gz_args = "-r -v 4 empty.sdf"
+    actions = []
+
+    # --- 1. Gazebo Simulation Mode ---
+    if is_gazebo:
+        actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
+        
+        gz_args = "-r -v 1 empty.sdf"
         if is_headless:
             gz_args = "-s " + gz_args
-            print("[SIM] Running Gazebo in HEADLESS mode (Server only)")
-        else:
-            print("[SIM] Running Gazebo with GUI enabled")
 
-        # Launch Gazebo Sim
-        gazebo_actions.append(IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(
-                os.path.join(pkg_ros_gz_sim, "launch", "gz_sim.launch.py")
-            ),
+        actions.append(IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(os.path.join(pkg_ros_gz_sim, "launch", "gz_sim.launch.py")),
             launch_arguments={'gz_args': gz_args}.items(),
         ))
 
-        # Spawn Robot
-        gazebo_actions.append(Node(
-            package='ros_gz_sim',
-            executable='create',
+        actions.append(Node(
+            package='ros_gz_sim', executable='create',
             arguments=['-name', 'lazytatzv_robot', '-file', paths["urdf"]],
             output='screen'
         ))
 
-        # ROS-GZ Bridge (The Tunnel)
-        gazebo_actions.append(Node(
-            package='ros_gz_bridge',
-            executable='parameter_bridge',
+        # Strict Unidirectional Bridges to prevent multiple channel conflicts
+        actions.append(Node(
+            package='ros_gz_bridge', executable='parameter_bridge',
             arguments=[
-                '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
-                '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
-                '/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
-                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'
+                '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',    # ROS -> GZ
+                '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',     # GZ -> ROS
+                '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',        # GZ -> ROS
+                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'      # GZ -> ROS
             ],
             output='screen'
         ))
 
-    # --- 2. ROS 2 Core Logic (Always Active) ---
-    actions = gazebo_actions + [
-        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
-        Node(
-            package="base_teleop",
-            executable="base_teleop_node",
-            name="teleop",
-            parameters=[paths["teleop"]],
-        ),
-        Node(
-            package="twist_mux",
-            executable="twist_mux",
-            name="twist_mux",
-            parameters=[paths["mux"]],
-            remappings=[("cmd_vel_out", "/cmd_vel")],
-        ),
-        Node(
-            package="robot_state_publisher",
-            executable="robot_state_publisher",
-            name="robot_state_publisher",
-            parameters=[{"robot_description": open(paths["urdf"]).read()}],
-        ),
-    ]
-
-    # --- 3. Managed Nodes (Only for Non-Gazebo modes) ---
-    if not is_gazebo:
+    # --- 2. ROS 2 Actuator/Logic Mode (Non-Gazebo) ---
+    else:
+        # Build managed nodes list
         managed_nodes = [
             "/hal/speed_dispatcher",
             "/mecanum_kinematics_node",
@@ -140,53 +104,50 @@ def launch_setup(context, *args, **kwargs):
         for side in ["front_left", "front_right", "rear_left", "rear_right"]:
             control_nodes.append(
                 ComposableNode(
-                    package=m_pkg,
-                    plugin=m_plugin,
-                    name=side,
-                    namespace="motors",
+                    package=m_pkg, plugin=m_plugin, name=side, namespace="motors",
                     parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read"}],
                 )
             )
 
         actions.append(ComposableNodeContainer(
-            name="actuator_control_container",
-            namespace="",
-            package="rclcpp_components",
-            executable="component_container",
-            composable_node_descriptions=control_nodes,
+            name="actuator_control_container", namespace="", package="rclcpp_components",
+            executable="component_container", composable_node_descriptions=control_nodes,
             output="screen",
         ))
 
         actions.append(Node(
-            package="nav2_lifecycle_manager",
-            executable="lifecycle_manager",
+            package="nav2_lifecycle_manager", executable="lifecycle_manager",
             name="lifecycle_manager_robot",
             parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0}],
         ))
 
         if actuator_type != 'virtual':
             actions.append(Node(
-                package="serial_driver",
-                executable="serial_bridge",
-                name="serial_driver",
+                package="serial_driver", executable="serial_bridge", name="serial_driver",
                 parameters=[{
-                    "device_name": "/dev/ttyUSB1",
-                    "baud_rate": 921600,
-                    "flow_control": "none",
-                    "parity": "none",
-                    "stop_bits": "1"
+                    "device_name": "/dev/ttyUSB1", "baud_rate": 921600,
+                    "flow_control": "none", "parity": "none", "stop_bits": "1"
                 }],
                 remappings=[("write", "/serial_write"), ("read", "/serial_read")],
                 output="screen"
             ))
 
+    # --- 3. Base UI & System (Always Active) ---
+    actions += [
+        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
+        Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"]]),
+        Node(package="twist_mux", executable="twist_mux", name="twist_mux", 
+             parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
+        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher",
+            parameters=[{"robot_description": open(paths["urdf"]).read()}]),
+    ]
+
+    # Optional Visualization
     if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
         try:
             foxglove_pkg = get_package_share_directory("foxglove_bridge")
             actions.append(IncludeLaunchDescription(
-                AnyLaunchDescriptionSource(
-                    os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml")
-                )
+                AnyLaunchDescriptionSource(os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml"))
             ))
         except Exception:
             pass
