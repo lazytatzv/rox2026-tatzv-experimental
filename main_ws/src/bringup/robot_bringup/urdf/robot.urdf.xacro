@@ -35,8 +35,8 @@
     <origin xyz="0 0 0.08" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheel Macro - Simplified for Plugin Control -->
-  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign">
+  <!-- Wheel Macro with Anisotropic Friction -->
+  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign fdir">
     <link name="${side}_${position}_wheel">
       <inertial>
         <mass value="${wheel_mass}"/>
@@ -61,15 +61,18 @@
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
-      <mu1>0.5</mu1><mu2>0.5</mu2>
+      <mu1>0.0</mu1> <!-- Full slide along fdir1 -->
+      <mu2>1.0</mu2> <!-- Full grip perpendicular to fdir1 -->
+      <fdir1>${fdir}</fdir1>
       <self_collide>false</self_collide>
     </gazebo>
   </xacro:macro>
 
-  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"/>
-  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1"/>
-  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"/>
-  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1"/>
+  <!-- Instantiate Wheels with EXACT O-Shape Friction Vectors -->
+  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  fdir="1 1 0"/>
+  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" fdir="1 -1 0"/>
+  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  fdir="1 -1 0"/>
+  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" fdir="1 1 0"/>
 
   <!-- Section 3: Gazebo Plugins (PRO CONFIG) -->
   <gazebo>
@@ -86,10 +89,9 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <max_wheel_torque>50.0</max_wheel_torque>
-      <max_wheel_velocity>10.0</max_wheel_velocity>
+      <max_wheel_torque>500.0</max_wheel_torque>
+      <max_wheel_velocity>30.0</max_wheel_velocity>
     </plugin>
-
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
     </plugin>
