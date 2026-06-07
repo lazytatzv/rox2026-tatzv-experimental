@@ -7,27 +7,26 @@
 namespace mecanum_kinematics {
 
 /**
- * @brief Obstacle Visualizer (Synchronized with SDF)
- * Broadcasts fixed obstacle positions as ROS Markers.
- * Aligned with obstacles.sdf (Wall at 2.0m-3.0m).
+ * @brief Obstacle Visualizer (Perfect Sync with SDF)
  */
 class ObstacleVisualizer : public rclcpp::Node {
 public:
   ObstacleVisualizer() : Node("obstacle_visualizer") {
     publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/obstacles", 10);
     timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&ObstacleVisualizer::publish_markers, this));
-    RCLCPP_INFO(this->get_logger(), "Obstacle Visualizer (SDF Sync) active");
+    RCLCPP_INFO(this->get_logger(), "Obstacle Visualizer (Absolute Sync) active");
   }
 
 private:
   void publish_markers() {
     visualization_msgs::msg::MarkerArray array;
 
-    // The Big Red Wall (starts at 2.0m, center 2.5m, thickness 1.0m, width 10m)
-    array.markers.push_back(make_marker(0, 2.5, 0.0, 0.5, 1.0, 10.0, 2.0, 1.0, 0.0, 0.0, visualization_msgs::msg::Marker::CUBE));
+    // THE ABSOLUTE WALL (Sync: center 5.0m, thickness 5.0m)
+    // Starts at 2.5m, Ends at 7.5m
+    array.markers.push_back(make_marker(0, 5.0, 0.0, 0.5, 5.0, 10.0, 2.0, 1.0, 0.0, 0.0, visualization_msgs::msg::Marker::CUBE));
     
-    // Stone Sphere (at 1.5m)
-    array.markers.push_back(make_marker(1, 1.5, -0.5, 0.1, 0.2, 0.2, 0.2, 0.4, 0.4, 0.4, visualization_msgs::msg::Marker::SPHERE));
+    // Physical Box (Bumper Test: Green box at 1.5m)
+    array.markers.push_back(make_marker(1, 1.5, 0.0, 0.1, 0.5, 0.5, 0.2, 0.0, 1.0, 0.0, visualization_msgs::msg::Marker::CUBE));
 
     publisher_->publish(array);
   }
