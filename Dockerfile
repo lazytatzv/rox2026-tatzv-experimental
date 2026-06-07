@@ -7,15 +7,23 @@ FROM ros:${ROS_DISTRO}-ros-base
 SHELL ["/bin/bash", "-c"]
 
 # --- 1. Infrastructure Optimization ---
-# Use official mirrors and add retry logic to apt-get
-# We remove the /etc/resolv.conf modification as it can be read-only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential curl git python3-colcon-common-extensions \
-    python3-pip python3-rosdep python3-vcstool \
-    evtest libboost-all-dev ccache \
+# We use standard mirrors for stability. 
+# We DO NOT touch /etc/resolv.conf here to avoid "Read-only file system" errors.
+RUN apt-get update --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    git \
+    python3-colcon-common-extensions \
+    python3-pip \
+    python3-rosdep \
+    python3-vcstool \
+    evtest \
+    libboost-all-dev \
+    ccache \
     ros-${ROS_DISTRO}-teleop-twist-joy \
     ros-${ROS_DISTRO}-ament-uncrustify \
-    python3-black \
+    black \
     && rm -rf /var/lib/apt/lists/*
 
 # --- 2. Environment Configuration ---
