@@ -1,8 +1,8 @@
 <?xml version="1.0" ?>
 <sdf version="1.8">
   <world name="obstacle_world">
-    <physics name="1ms" type="ignored">
-      <max_step_size>0.001</max_step_size>
+    <physics name="0.5ms" type="ignored">
+      <max_step_size>0.0005</max_step_size> <!-- Higher precision -->
       <real_time_factor>1.0</real_time_factor>
     </physics>
     
@@ -24,6 +24,7 @@
       <link name="link">
         <collision name="collision">
           <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
+          <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
         </collision>
         <visual name="visual">
           <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
@@ -32,37 +33,20 @@
       </link>
     </model>
 
-    <!-- 15 Degree Ramp (Standard Test) -->
-    <model name="ramp_15">
-      <pose>3.0 1.5 0.13 0 -0.26 0</pose> <!-- -0.26 rad approx 15 deg -->
-      <static>true</static>
-      <link name="l">
-        <collision name="c"><geometry><box><size>2.0 2.0 0.05</size></box></geometry></collision>
-        <visual name="v"><geometry><box><size>2.0 2.0 0.05</size></box></geometry><material><diffuse>0.4 0.6 0.4 1</diffuse></material></visual>
+    <!-- Ramps and Obstacles -->
+    <model name="ramp_15"><pose>3.0 1.5 0.13 0 -0.26 0</pose><static>true</static><link name="l"><collision name="c"><geometry><box><size>2.0 2.0 0.05</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 2.0 0.05</size></box></geometry><material><diffuse>0.4 0.6 0.4 1</diffuse></material></visual></link></model>
+    <model name="ramp_25"><pose>3.0 -1.5 0.21 0 -0.44 0</pose><static>true</static><link name="l"><collision name="c"><geometry><box><size>2.0 2.0 0.05</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 2.0 0.05</size></box></geometry><material><diffuse>0.6 0.4 0.4 1</diffuse></material></visual></link></model>
+
+    <model name="stone_1"><pose>1.0 0.5 0.1 0 0 0.3</pose><link name="l"><inertial><mass>5</mass></inertial><collision name="c"><geometry><box><size>0.2 0.2 0.2</size></box></geometry></collision><visual name="v"><geometry><box><size>0.2 0.2 0.2</size></box></geometry><material><diffuse>0.5 0.5 0.5 1</diffuse></material></visual></link></model>
+    <model name="stone_2"><pose>1.5 -0.5 0.1 0 0 0</pose><link name="l"><inertial><mass>10</mass></inertial><collision name="c"><geometry><sphere><radius>0.15</radius></sphere></geometry></collision><visual name="v"><geometry><sphere><radius>0.15</radius></sphere></geometry><material><diffuse>0.3 0.3 0.3 1</diffuse></material></visual></link></model>
+
+    <!-- Absolute Barrier -->
+    <model name="big_wall">
+      <pose>5.0 0 0.5 0 0 0</pose><static>true</static>
+      <link name="link">
+        <collision name="c"><geometry><box><size>2.0 10.0 2.0</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>2.0 10.0 2.0</size></box></geometry><material><diffuse>1 0 0 1</diffuse></material></visual>
       </link>
-    </model>
-
-    <!-- 25 Degree Ramp (Extreme Test) -->
-    <model name="ramp_25">
-      <pose>3.0 -1.5 0.21 0 -0.44 0</pose> <!-- -0.44 rad approx 25 deg -->
-      <static>true</static>
-      <link name="l">
-        <collision name="c"><geometry><box><size>2.0 2.0 0.05</size></box></geometry></collision>
-        <visual name="v"><geometry><box><size>2.0 2.0 0.05</size></box></geometry><material><diffuse>0.6 0.4 0.4 1</diffuse></material></visual>
-      </link>
-    </model>
-
-    <!-- Scattered Stones -->
-    <model name="stone_1"><pose>1.0 0.5 0.05 0 0 0</pose><link name="l"><inertial><mass>5</mass></inertial><collision name="c"><geometry><box><size>0.1 0.1 0.1</size></box></geometry></collision><visual name="v"><geometry><box><size>0.1 0.1 0.1</size></box></geometry><material><diffuse>0.5 0.5 0.5 1</diffuse></material></visual></link></model>
-    <model name="stone_2"><pose>1.5 -0.5 0.1 0 0 0.5</pose><link name="l"><inertial><mass>10</mass></inertial><collision name="c"><geometry><sphere><radius>0.15</radius></sphere></geometry></collision><visual name="v"><geometry><sphere><radius>0.15</radius></sphere></geometry><material><diffuse>0.3 0.3 0.3 1</diffuse></material></visual></link></model>
-
-    <!-- Inescapable Box (Tight Space Test) -->
-    <model name="box_enclosure">
-      <pose>-3.0 0 0.25 0 0 0</pose>
-      <static>true</static>
-      <link name="wall1"><pose>0 1.0 0 0 0 0</pose><collision name="c"><geometry><box><size>2.0 0.1 0.5</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 0.1 0.5</size></box></geometry></visual></link>
-      <link name="wall2"><pose>0 -1.0 0 0 0 0</pose><collision name="c"><geometry><box><size>2.0 0.1 0.5</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 0.1 0.5</size></box></geometry></visual></link>
-      <link name="wall3"><pose>-1.0 0 0 0 0 1.57</pose><collision name="c"><geometry><box><size>2.0 0.1 0.5</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 0.1 0.5</size></box></geometry></visual></link>
     </model>
 
   </world>
