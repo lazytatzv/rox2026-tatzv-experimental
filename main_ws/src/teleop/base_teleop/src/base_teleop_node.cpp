@@ -32,7 +32,7 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
 
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode initialized with parameters.");
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode (Constant Stream) initialized.");
 }
 
 void BaseTeleopNode::declare_parameters() {
@@ -45,7 +45,7 @@ void BaseTeleopNode::declare_parameters() {
   this->declare_parameter("scale_angular_velocity", 1.0);
   this->declare_parameter("smoothing_factor", 0.3);
   this->declare_parameter("topic_joy", "joy");
-  this->declare_parameter("topic_cmd_vel", "cmd_vel");
+  this->declare_parameter("topic_cmd_vel", "cmd_vel_joy");
   this->declare_parameter("topic_stop_lock", "stop_lock");
 }
 
@@ -77,15 +77,9 @@ void BaseTeleopNode::timer_callback() {
   current_twist_.linear.y = apply_deadband(current_twist_.linear.y);
   current_twist_.angular.z = apply_deadband(current_twist_.angular.z);
 
-  static bool was_moving = false;
-  bool is_moving = (current_twist_.linear.x != 0.0 || current_twist_.linear.y != 0.0 ||
-                    current_twist_.angular.z != 0.0);
-
-  if (is_moving || was_moving) {
-    auto msg = std::make_unique<geometry_msgs::msg::Twist>(current_twist_);
-    publisher_command_velocity_->publish(std::move(msg));
-  }
-  was_moving = is_moving;
+  // Pro Rule: Always publish to ensure Gazebo/Watchdog are constantly updated
+  auto msg = std::make_unique<geometry_msgs::msg::Twist>(current_twist_);
+  publisher_command_velocity_->publish(std::move(msg));
 }
 
 void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg) {
