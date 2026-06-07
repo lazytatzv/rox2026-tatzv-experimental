@@ -40,23 +40,26 @@ public:
   on_shutdown(const rclcpp_lifecycle::State & state) override;
 
 private:
-  void command_velocity_callback(const geometry_msgs::msg::Twist::SharedPtr twist_message);
+  void command_velocity_callback(const geometry_msgs::msg::Twist::SharedPtr msg);
   void joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg);
 
   void declare_parameters();
   void update_parameters();
+  void watchdog_callback();
 
   // Robot Geometry
   double half_length_;
   double half_width_;
   double wheel_radius_;
 
-  // Odometry State
+  // Safety & State
   double x_ = 0.0;
   double y_ = 0.0;
   double th_ = 0.0;
   rclcpp::Time last_time_;
+  rclcpp::Time last_command_time_;
   bool first_odom_ = true;
+  double watchdog_timeout_ = 0.5;
 
   std::string topic_cmd_vel_;
   std::string topic_wheel_speeds_;
@@ -66,9 +69,10 @@ private:
     publisher_wheel_speeds_;
   rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Odometry>::SharedPtr publisher_odom_;
 
-  // Subscriptions
+  // Subscriptions & Timers
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_command_velocity_;
   rclcpp::Subscription<sensor_msgs::msg::JointState>::SharedPtr subscription_joint_states_;
+  rclcpp::TimerBase::SharedPtr watchdog_timer_;
 
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
 

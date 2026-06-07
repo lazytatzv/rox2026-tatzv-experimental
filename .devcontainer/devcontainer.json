@@ -1,0 +1,28 @@
+{
+    "name": "ROX2026 Tatzv Experimental",
+    "dockerComposeFile": [
+        "../compose.yaml"
+    ],
+    "service": "ros2_rox2026",
+    "workspaceFolder": "/root/lazytatzv_ws",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-python.python",
+                "ms-iot.vscode-ros",
+                "redhat.vscode-yaml",
+                "eamodio.gitlens",
+                "streetsidesoftware.code-spell-checker",
+                "foxglove.foxglove-extension"
+            ],
+            "settings": {
+                "python.analysis.extraPaths": [
+                    "/opt/ros/jazzy/lib/python3.12/site-packages"
+                ]
+            }
+        }
+    },
+    "remoteUser": "root",
+    "postCreateCommand": "cd main_ws && colcon build --symlink-install"
+}
