@@ -46,6 +46,7 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
 
   auto telemetry_qos = rclcpp::SystemDefaultsQoS();
   auto sensor_qos = rclcpp::SensorDataQoS();
+  auto command_qos = rclcpp::QoS(1).best_effort();
 
   publisher_wheel_speeds_ =
       this->create_publisher<std_msgs::msg::Float64MultiArray>(topic_wheel_speeds_, sensor_qos);
@@ -53,7 +54,7 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", telemetry_qos);
 
   subscription_command_velocity_ = this->create_subscription<geometry_msgs::msg::Twist>(
-      topic_cmd_vel_, telemetry_qos,
+      topic_cmd_vel_, command_qos,
       std::bind(&MecanumKinematicsNode::command_velocity_callback, this, std::placeholders::_1));
 
   subscription_joint_states_ = this->create_subscription<sensor_msgs::msg::JointState>(

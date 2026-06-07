@@ -1,6 +1,7 @@
-# twist_mux configuration for ROX2026 (Jazzy/Humble Compatible Map Format)
+# twist_mux configuration for ROX2026
 twist_mux:
   ros__parameters:
+    use_stamped: false # Output standard geometry_msgs/msg/Twist
     topics:
       teleop:
         topic: "cmd_vel_joy"
