@@ -6,30 +6,22 @@
   <material name="red"><color rgba="1 0 0 1"/></material>
   <material name="black"><color rgba="0 0 0 1"/></material>
 
-  <!-- Base Footprint (The root, minimal physics) -->
-  <link name="base_footprint">
-    <inertial>
-      <mass value="0.1"/>
-      <inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/>
-    </inertial>
-  </link>
+  <!-- Base Footprint (Root) -->
+  <link name="base_footprint"/>
 
-  <!-- Base Link (The Physical Shell) -->
+  <!-- Base Link (Physical body) -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="20.0"/> <!-- Heavier is better for stability -->
+      <mass value="20.0"/>
       <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5"/>
     </inertial>
     <visual>
       <geometry><box size="0.3 0.2 0.1"/></geometry>
       <material name="blue"/>
     </visual>
-    <collision>
+    <collision name="base_collision">
       <geometry><box size="0.3 0.2 0.1"/></geometry>
-      <surface>
-        <contact><ode><kp>1000000.0</kp><kd>1.0</kd><min_depth>0.001</min_depth></ode></contact>
-      </surface>
     </collision>
   </link>
 
@@ -38,7 +30,7 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheels (High Grip Tires) -->
+  <!-- Wheels -->
   <link name="front_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
@@ -47,7 +39,6 @@
   <joint name="front_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_left_wheel"/>
     <origin xyz="0.12 0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="front_right_wheel">
@@ -58,7 +49,6 @@
   <joint name="front_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_right_wheel"/>
     <origin xyz="0.12 -0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="rear_left_wheel">
@@ -69,7 +59,6 @@
   <joint name="rear_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_left_wheel"/>
     <origin xyz="-0.12 0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="rear_right_wheel">
@@ -80,10 +69,24 @@
   <joint name="rear_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_right_wheel"/>
     <origin xyz="-0.12 -0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-  <!-- Gazebo System Overrides -->
+  <!-- Gazebo Physics Hardening -->
+  <gazebo reference="base_link">
+    <collision>
+      <surface>
+        <contact>
+          <ode>
+            <kp>10000000.0</kp>
+            <kd>10.0</kd>
+            <min_depth>0.001</min_depth>
+            <max_vel>0.0</max_vel>
+          </ode>
+        </contact>
+      </surface>
+    </collision>
+  </gazebo>
+
   <gazebo reference="front_left_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
   <gazebo reference="front_right_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
   <gazebo reference="rear_left_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
