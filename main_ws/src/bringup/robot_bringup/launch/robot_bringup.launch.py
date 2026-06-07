@@ -37,7 +37,9 @@ def launch_setup(context, *args, **kwargs):
     if is_gazebo:
         actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
         
-        gz_args = f"-r -v 1 {os.path.join(pkg_bringup, 'world', 'obstacles.sdf')}"
+        world_path = os.path.join(pkg_bringup, "world", "obstacles.sdf")
+        print(f"[SIM] Loading Obstacle World: {world_path}")
+        gz_args = f"-r -v 1 {world_path}"
         if is_headless:
             gz_args = "-s " + gz_args
 

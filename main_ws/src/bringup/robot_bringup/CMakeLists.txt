@@ -3,7 +3,7 @@ project(robot_bringup)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch config urdf
+install(DIRECTORY launch config urdf world
   DESTINATION share/${PROJECT_NAME}
 )
 
