@@ -3,10 +3,23 @@
 
 .PHONY: build up down shell colcon launch virtual format clean help
 
+# Determine if we are running inside the Docker container
+IN_CONTAINER := $(shell [ -f /.dockerenv ] && echo "true" || echo "false")
+
+ifeq ($(IN_CONTAINER),true)
+    # Commands when inside container
+    EXEC_PREFIX := 
+    BASH_PREFIX := bash -c
+else
+    # Commands when on host
+    EXEC_PREFIX := docker compose exec ros2_rox2026
+    BASH_PREFIX := bash -c
+endif
+
 # --- [ Docker Management ] ---
 
-build: ## Build the Docker image with high-performance settings
-	DOCKER_BUILDKIT=1 docker compose build --no-cache
+build: ## Build the Docker image
+	DOCKER_BUILDKIT=1 docker compose build
 
 up: ## Start the container in background
 	xhost +local:docker > /dev/null 2>&1 || true
@@ -16,16 +29,16 @@ down: ## Stop and remove the container
 	docker compose down
 
 shell: ## Enter the running container
-	docker compose exec ros2_rox2026 bash
+	docker compose exec ros2_rox2026 /bin/zsh || docker compose exec ros2_rox2026 /bin/bash
 
-# --- [ ROS 2 Operations - OPTIMIZED ] ---
+# --- [ ROS 2 Operations - CONTEXT AWARE ] ---
 
-colcon: ## [OPTIMIZED] Build the workspace with high-performance flags
-	docker compose exec ros2_rox2026 bash -c "\
+colcon: ## [OPTIMIZED] Build the workspace
+	$(EXEC_PREFIX) bash -c "\
 		cd main_ws && \
 		colcon build \
 			--symlink-install \
-			--parallel-workers $(shell nproc || echo 2) \
+			--parallel-workers $$(nproc || echo 2) \
 			--cmake-args \
 				-DCMAKE_BUILD_TYPE=Release \
 				-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
@@ -33,17 +46,17 @@ colcon: ## [OPTIMIZED] Build the workspace with high-performance flags
 		"
 
 launch: ## Launch the robot in physical mode
-	docker compose exec ros2_rox2026 bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
+	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
 
 virtual: ## Launch the robot in Virtual Mode for testing
-	docker compose exec ros2_rox2026 bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
+	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
 
 # --- [ Utility & Maintenance ] ---
 
 format: ## Run the self-healing auto-formatter
-	docker compose exec ros2_rox2026 bash -c "./fix_style.sh"
+	$(EXEC_PREFIX) bash -c "./fix_style.sh"
 
-clean: ## Purge build artifacts (Caution: physical delete)
+clean: ## Purge build artifacts
 	rm -rf main_ws/build/ main_ws/install/ main_ws/log/ .ccache/
 
 help: ## Show this help message
