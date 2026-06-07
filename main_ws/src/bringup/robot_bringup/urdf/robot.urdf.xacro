@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <robot name="lazytatzv_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Official Pro Properties -->
+  <!-- Section 1: Pro-Stability Properties -->
   <xacro:property name="base_mass"   value="20.0"/>
-  <xacro:property name="wheel_mass"  value="1.0"/>
+  <xacro:property name="wheel_mass"  value="1.5"/> <!-- Heavier wheels for solver stability -->
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.04"/>
   <xacro:property name="wheel_base"   value="0.24"/>
@@ -20,7 +20,7 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="${base_mass}"/>
-      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="1.0"/>
+      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="1.0"/> <!-- High Yaw Inertia -->
     </inertial>
     <visual><geometry><box size="0.35 0.25 0.1"/></geometry><material name="blue"/></visual>
     <visual>
@@ -35,12 +35,12 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- PRO MACRO: Based on Official Gazebo Sim Patterns -->
-  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign">
+  <!-- Wheel Macro with Damping and Balanced Friction -->
+  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign fdir">
     <link name="${side}_${position}_wheel">
       <inertial>
         <mass value="${wheel_mass}"/>
-        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+        <inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/>
       </inertial>
       <visual>
         <origin xyz="0 0 0" rpy="1.57 0 0"/>
@@ -49,7 +49,7 @@
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="1.57 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <geometry><sphere radius="${wheel_radius}"/></geometry>
       </collision>
     </link>
 
@@ -57,21 +57,26 @@
       <parent link="base_link"/>
       <child link="${side}_${position}_wheel"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
-      <axis xyz="0 1 0"/> <!-- Standard rotation axle -->
+      <axis xyz="0 1 0"/>
+      <dynamics damping="1.0" friction="0.1"/> <!-- Add physical resistance -->
     </joint>
 
-    <!-- PRO TIP: In modern Gz Sim, let the plugin handle friction. Remove mu/fdir overrides. -->
     <gazebo reference="${side}_${position}_wheel">
+        <!-- mu1: sliding direction, mu2: traction direction -->
+        <mu1>0.05</mu1> 
+        <mu2>0.5</mu2>
+        <fdir1>${fdir}</fdir1>
         <self_collide>false</self_collide>
     </gazebo>
   </xacro:macro>
 
-  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"/>
-  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1"/>
-  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"/>
-  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1"/>
+  <!-- Standard Mecanum O-Pattern Friction Vectors -->
+  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  fdir="1 -1 0"/>
+  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" fdir="1 1 0"/>
+  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  fdir="1 1 0"/>
+  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" fdir="1 -1 0"/>
 
-  <!-- Section 3: Gazebo Plugins (STRICT OFFICIAL CONFIG) -->
+  <!-- Section 3: Gazebo Plugins (STABILIZED) -->
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
       <front_left_joint>front_left_wheel_joint</front_left_joint>
@@ -86,8 +91,9 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- Official standard torque -->
-      <max_wheel_torque>50.0</max_wheel_torque>
+      <max_wheel_torque>100.0</max_wheel_torque>
+      <!-- SMOOTHING: Prevent physical spikes -->
+      <max_acceleration>5.0</max_acceleration>
     </plugin>
 
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
