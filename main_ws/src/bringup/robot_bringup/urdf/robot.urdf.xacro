@@ -32,7 +32,7 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Visual-only roller macro (Pure aesthetics) -->
+  <!-- Section 2: Visual-only roller macro -->
   <xacro:macro name="roller_visual" params="angle_deg roller_type">
     <visual>
       <origin xyz="${0.038 * cos(radians(angle_deg))} ${0.038 * sin(radians(angle_deg))} 0" 
@@ -42,6 +42,7 @@
     </visual>
   </xacro:macro>
 
+  <!-- Section 3: Optimized Mecanum Wheel Macro -->
   <xacro:macro name="pro_mecanum_wheel" params="side position x_sign y_sign roller_type fdir">
     <link name="${side}_${position}_wheel">
       <inertial><mass value="${wheel_mass}"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
@@ -66,7 +67,6 @@
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
-        <!-- PRO SECRET: Use mu=1.0 for ramps, but slip=0.5 for lateral movement -->
         <mu1>1.0</mu1><mu2>1.0</mu2>
         <slip1>0.5</slip1><slip2>0.5</slip2>
         <fdir1>${fdir}</fdir1>
@@ -74,12 +74,13 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- Correct O-Pattern (X from top) -->
+  <!-- Section 4: 4 Wheels (O-Pattern) -->
   <xacro:pro_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="-1" fdir="1 1 0"/>
   <xacro:pro_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="1"  fdir="1 -1 0"/>
   <xacro:pro_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="1"  fdir="1 -1 0"/>
   <xacro:pro_mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" roller_type="-1" fdir="1 1 0"/>
 
+  <!-- Section 5: Plugins -->
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
       <front_left_joint>front_left_wheel_joint</front_left_joint>
@@ -94,7 +95,7 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <max_wheel_torque>20.0</max_wheel_torque> <!-- Authentic Robstride Power -->
+      <max_wheel_torque>20.0</max_wheel_torque>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
