@@ -6,18 +6,9 @@ FROM ros:${ROS_DISTRO}-ros-base
 # Use bash
 SHELL ["/bin/bash", "-c"]
 
-# --- 1. Infrastructure & Mirror Optimization ---
-# Fix for Ubuntu 24.04+ (Noble) which uses DEB822 format (.sources files)
-# Also adding retry logic for apt-get update to handle flaky networks
-RUN (if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then \
-        sed -i 's@http://archive.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources; \
-        sed -i 's@http://security.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources; \
-    else \
-        sed -i 's@http://archive.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list; \
-        sed -i 's@http://security.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list; \
-    fi) && \
-    for i in {1..5}; do apt-get update && break || sleep 5; done && \
-    apt-get install -y --no-install-recommends \
+# --- 1. Infrastructure Optimization ---
+# Using --mount=type=cache to speed up apt-get and keeping official mirrors for stability
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential curl git python3-colcon-common-extensions \
     python3-pip python3-rosdep python3-vcstool \
     evtest libboost-all-dev ccache \
