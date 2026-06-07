@@ -9,7 +9,7 @@
   <!-- Base Footprint -->
   <link name="base_footprint"/>
 
-  <!-- Base Link -->
+  <!-- Base Link (Mass Center at 0,0,0) -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -17,15 +17,17 @@
       <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.4" iyz="0" izz="0.4"/>
     </inertial>
     <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry><box size="0.35 0.25 0.1"/></geometry>
       <material name="blue"/>
     </visual>
     <visual>
-      <origin xyz="0.17 0 0.05" rpy="0 0 0"/>
+      <origin xyz="0.175 0 0.05" rpy="0 0 0"/>
       <geometry><box size="0.05 0.05 0.05"/></geometry>
       <material name="red"/>
     </visual>
     <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
       <geometry><box size="0.35 0.25 0.1"/></geometry>
     </collision>
   </link>
@@ -35,8 +37,9 @@
     <origin xyz="0 0 0.08" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheels - Gazebo Optimized Orientation -->
-  <!-- Standard: rotate cylinders around Y axis for Gazebo compatibility -->
+  <!-- Wheels - PERFECT SYMMETRY -->
+  <!-- wheel_base = 0.24 (longitudinal separation: 0.12 forward, 0.12 backward) -->
+  <!-- wheel_separation = 0.30 (lateral separation: 0.15 left, 0.15 right) -->
   
   <link name="front_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
@@ -45,7 +48,7 @@
   </link>
   <joint name="front_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_left_wheel"/>
-    <origin xyz="0.12 0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/> <!-- Rotate around Y -->
+    <origin xyz="0.12 0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
@@ -56,7 +59,7 @@
   </link>
   <joint name="front_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_right_wheel"/>
-    <origin xyz="0.12 -0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <origin xyz="0.12 -0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
@@ -67,7 +70,7 @@
   </link>
   <joint name="rear_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_left_wheel"/>
-    <origin xyz="-0.12 0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <origin xyz="-0.12 0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
@@ -78,11 +81,11 @@
   </link>
   <joint name="rear_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_right_wheel"/>
-    <origin xyz="-0.12 -0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
+    <origin xyz="-0.12 -0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-  <!-- Gazebo Physics (Competition Floor - Smooth/Slippery) -->
+  <!-- Gazebo Physics -->
   <gazebo reference="front_left_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
   <gazebo reference="front_right_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
   <gazebo reference="rear_left_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
