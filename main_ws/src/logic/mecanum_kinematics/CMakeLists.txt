@@ -14,6 +14,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(diagnostic_updater REQUIRED)
+find_package(visualization_msgs REQUIRED)
 
 # kinematics implementation (Internal library)
 add_library(mecanum_kinematics_kinematics SHARED
@@ -69,10 +70,14 @@ rclcpp_components_register_node(mecanum_kinematics_component
 add_executable(zero_twist_node src/zero_twist_node.cpp)
 ament_target_dependencies(zero_twist_node rclcpp geometry_msgs)
 
+add_executable(obstacle_visualizer_node src/obstacle_visualizer_node.cpp)
+ament_target_dependencies(obstacle_visualizer_node rclcpp visualization_msgs)
+
 install(TARGETS
   mecanum_kinematics_component
   mecanum_kinematics_kinematics
   zero_twist_node
+  obstacle_visualizer_node
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

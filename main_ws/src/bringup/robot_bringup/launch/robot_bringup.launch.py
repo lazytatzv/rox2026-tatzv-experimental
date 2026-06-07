@@ -66,6 +66,12 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         ))
 
+        # Vision: Broadcast Gazebo obstacles as ROS Markers
+        actions.append(Node(
+            package='mecanum_kinematics', executable='obstacle_visualizer_node',
+            name='obstacle_visualizer', output='screen'
+        ))
+
     # --- 2. ROS 2 Actuator/Logic Mode (Non-Gazebo) ---
     else:
         # Build managed nodes list
