@@ -6,7 +6,7 @@ from launch import LaunchDescription
 from launch.actions import OpaqueFunction, DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
-from launch.conditions import IfCondition
+from launch.conditions import IfCondition, UnlessCondition
 from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 
@@ -31,13 +31,12 @@ def launch_setup(context, *args, **kwargs):
         phys_params = (
             yaml.safe_load(f).get("/kinematics_engine_node", {}).get("ros__parameters", {})
         )
-        actuator_type = phys_params.get("actuator_type", "at")
+        # Priority: Command line arg > YAML param
+        actuator_type_raw = LaunchConfiguration("actuator_type").perform(context)
+        actuator_type = actuator_type_raw if actuator_type_raw else phys_params.get("actuator_type", "at")
 
     # Build managed nodes list
     dynamic_managed_nodes = []
-    # Note: serial_driver is not a lifecycle node by default, so we might not manage it here
-    # but we will keep it for compatibility if needed.
-
     for side in ["front_left", "front_right", "rear_left", "rear_right"]:
         dynamic_managed_nodes.append(f"/motors/{side}")
 
@@ -51,7 +50,7 @@ def launch_setup(context, *args, **kwargs):
     )
     total_managed_nodes = dynamic_managed_nodes + user_nodes
 
-    print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()} (Using Standard Serial Driver)")
+    print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
     # --- Setup Actuator Config ---
     if actuator_type == "at":
@@ -104,8 +103,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    # --- Standard Serial Driver (Replacement for SerialGateway) ---
-    # We use the official serial_bridge from transport_drivers
+    # --- Standard Serial Driver (Only if NOT Virtual) ---
     serial_node = Node(
         package="serial_driver",
         executable="serial_bridge",
@@ -121,6 +119,7 @@ def launch_setup(context, *args, **kwargs):
             ("write", "/serial_write"),
             ("read", "/serial_read"),
         ],
+        condition=UnlessCondition(LaunchConfiguration("is_virtual")),
         output="screen"
     )
 
@@ -174,7 +173,7 @@ def launch_setup(context, *args, **kwargs):
         ),
     ]
 
-    # --- Foxglove Bridge (Official Launch Style) ---
+    # --- Foxglove Bridge ---
     if use_foxglove_cfg:
         try:
             foxglove_pkg = get_package_share_directory("foxglove_bridge")
@@ -192,6 +191,13 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription(
         [
+            DeclareLaunchArgument("actuator_type", default_value="at"),
+            # Internal flag to handle condition logic easily
+            DeclareLaunchArgument(
+                "is_virtual", 
+                default_value="false",
+                description="Internal flag set to true if actuator_type is virtual"
+            ),
             DeclareLaunchArgument(
                 "use_foxglove", default_value="true", description="Launch Foxglove Bridge"
             ),

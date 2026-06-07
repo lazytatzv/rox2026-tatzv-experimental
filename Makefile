@@ -40,7 +40,7 @@ launch: ## Launch the robot in physical mode
 	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
 
 virtual: ## Launch the robot in Virtual Mode for testing
-	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
+	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual is_virtual:=true"
 
 # --- [ Utility & Maintenance ] ---
 
