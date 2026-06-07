@@ -2,7 +2,7 @@
 #include <memory>
 #include <map>
 #include "rclcpp/rclcpp.hpp"
-#include "gz_msgs/msg/scene.hpp"
+#include "ros_gz_interfaces/msg/scene.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace mecanum_kinematics {
@@ -16,13 +16,13 @@ class DynamicObstacleVisualizer : public rclcpp::Node {
 public:
   DynamicObstacleVisualizer() : Node("obstacle_visualizer") {
     publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/obstacles", 10);
-    subscription_ = this->create_subscription<gz_msgs::msg::Scene>(
+    subscription_ = this->create_subscription<ros_gz_interfaces::msg::Scene>(
       "/gz_scene", 10, std::bind(&DynamicObstacleVisualizer::scene_callback, this, std::placeholders::_1));
     RCLCPP_INFO(this->get_logger(), "Dynamic Obstacle Visualizer (Gazebo Ground Truth) active");
   }
 
 private:
-  void scene_callback(const gz_msgs::msg::Scene::SharedPtr msg) {
+  void scene_callback(const ros_gz_interfaces::msg::Scene::SharedPtr msg) {
     visualization_msgs::msg::MarkerArray array;
     
     for (const auto & model : msg->models) {
