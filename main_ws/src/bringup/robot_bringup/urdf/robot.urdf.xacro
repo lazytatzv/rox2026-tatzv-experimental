@@ -35,7 +35,7 @@
   </joint>
 
   <!-- Section 2: Barrel Macro (Free Spinning Roller) -->
-  <xacro:macro name="barrel" params="prefix wheel_prefix num angle_deg roller_type">
+  <xacro:macro name="barrel" params="wheel_prefix num angle_deg roller_type">
     <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
       <parent link="${wheel_prefix}_hub_link"/>
       <child link="${wheel_prefix}_barrel_${num}_link"/>
