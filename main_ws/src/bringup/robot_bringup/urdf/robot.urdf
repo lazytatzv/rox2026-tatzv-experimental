@@ -6,6 +6,7 @@
 
   <link name="base_footprint"/>
 
+  <!-- Base Link (15kg) -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -51,12 +52,13 @@
   <joint name="rear_right_wheel_joint" type="continuous"><parent link="base_link"/><child link="rear_right_wheel"/><origin xyz="-0.12 -0.15 -0.03"/><axis xyz="0 1 0"/><dynamics damping="0.1" friction="0.1"/></joint>
 
   <!-- Gazebo Physics -->
-  <gazebo reference="front_left_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
-  <gazebo reference="front_right_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
-  <gazebo reference="rear_left_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
-  <gazebo reference="rear_right_wheel"><mu1>0.5</mu1><mu2>0.5</mu2></gazebo>
+  <gazebo reference="front_left_wheel"><mu1>0.2</mu1><mu2>0.2</mu2></gazebo>
+  <gazebo reference="front_right_wheel"><mu1>0.2</mu1><mu2>0.2</mu2></gazebo>
+  <gazebo reference="rear_left_wheel"><mu1>0.2</mu1><mu2>0.2</mu2></gazebo>
+  <gazebo reference="rear_right_wheel"><mu1>0.2</mu1><mu2>0.2</mu2></gazebo>
 
   <gazebo>
+    <!-- Mecanum Drive Plugin -->
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
       <front_left_joint>front_left_wheel_joint</front_left_joint>
       <front_right_joint>front_right_wheel_joint</front_right_joint>
@@ -65,21 +67,11 @@
       <wheel_separation>0.30</wheel_separation>
       <wheel_base>0.24</wheel_base>
       <wheel_radius>0.05</wheel_radius>
-      <topic>/cmd_vel</topic>
-      <odom_topic>/odom</odom_topic>
-      <tf_topic>/tf</tf_topic>
-      <frame_id>odom</frame_id>
-      <child_frame_id>base_footprint</child_frame_id>
       <max_wheel_torque>50.0</max_wheel_torque>
     </plugin>
 
-    <!-- PRO FIX: Explicitly list joints for state publishing -->
+    <!-- Joint State Publisher (Standardized for Gz Sim) -->
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
-      <topic>/joint_states</topic>
-      <joint_name>front_left_wheel_joint</joint_name>
-      <joint_name>front_right_wheel_joint</joint_name>
-      <joint_name>rear_left_wheel_joint</joint_name>
-      <joint_name>rear_right_wheel_joint</joint_name>
     </plugin>
   </gazebo>
 
