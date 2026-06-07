@@ -1,6 +1,14 @@
 <?xml version="1.0"?>
 <robot name="lazytatzv_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- Section 1: Official Pro Properties (Aligned with Gz Sim Examples) -->
+  <xacro:property name="base_mass"   value="20.0"/>
+  <xacro:property name="wheel_mass"  value="1.0"/>
+  <xacro:property name="wheel_radius" value="0.05"/>
+  <xacro:property name="wheel_width"  value="0.04"/>
+  <xacro:property name="wheel_base"   value="0.24"/>
+  <xacro:property name="wheel_sep"    value="0.30"/>
+
   <material name="blue"><color rgba="0 0 0.8 1"/></material>
   <material name="black"><color rgba="0 0 0 1"/></material>
 
@@ -9,32 +17,45 @@
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="20.0"/>
-      <inertia ixx="0.5" ixy="0" ixz="0" iyy="1.0" iyz="0" izz="1.0"/>
+      <mass value="${base_mass}"/>
+      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="1.0"/>
     </inertial>
-    <visual><geometry><box size="0.4 0.3 0.15"/></geometry><material name="blue"/></visual>
-    <collision><geometry><box size="0.4 0.3 0.15"/></geometry></collision>
+    <visual><geometry><box size="0.35 0.25 0.1"/></geometry><material name="blue"/></visual>
+    <collision><geometry><box size="0.35 0.25 0.1"/></geometry></collision>
   </link>
 
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint"/><child link="base_link"/>
-    <origin xyz="0 0 0.15" rpy="0 0 0"/> <!-- High Lift: 7.5cm floor clearance -->
+    <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
+  <!-- Wheel Macro - Strictly Following Official Patterns -->
   <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign">
     <link name="${side}_${position}_wheel">
-      <inertial><mass value="2.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
-      <visual><origin rpy="1.57 0 0"/><geometry><cylinder radius="0.10" length="0.06"/></geometry><material name="black"/></visual>
-      <collision><origin rpy="1.57 0 0"/><geometry><sphere radius="0.10"/></geometry></collision>
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0" rpy="1.57 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="black"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="1.57 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
     </link>
+
     <joint name="${side}_${position}_wheel_joint" type="continuous">
-      <parent link="base_link"/><child link="${side}_${position}_wheel"/>
-      <origin xyz="${x_sign * 0.15} ${y_sign * 0.20} -0.05" rpy="0 0 0"/><axis xyz="0 1 0"/>
+      <parent link="base_link"/>
+      <child link="${side}_${position}_wheel"/>
+      <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
     </joint>
+
     <gazebo reference="${side}_${position}_wheel">
-        <!-- EXTREME SLIP for 3-AXIS FREEDOM -->
-        <mu1>0.05</mu1><mu2>0.05</mu2>
-        <min_depth>0.001</min_depth>
+        <!-- NO FRICTION OVERRIDES - LET THE PLUGIN HANDLE IT -->
         <self_collide>false</self_collide>
     </gazebo>
   </xacro:macro>
@@ -44,29 +65,36 @@
   <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"/>
   <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1"/>
 
+  <!-- Section 3: Gazebo Plugins (PRO CONFIG) -->
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
       <front_left_joint>front_left_wheel_joint</front_left_joint>
       <front_right_joint>front_right_wheel_joint</front_right_joint>
       <back_left_joint>rear_left_wheel_joint</back_left_joint>
       <back_right_joint>rear_right_wheel_joint</back_right_joint>
-      <wheel_separation>0.40</wheel_separation>
-      <wheel_base>0.30</wheel_base>
-      <wheel_radius>0.10</wheel_radius>
+      <wheel_separation>${wheel_sep}</wheel_separation>
+      <wheel_base>${wheel_base}</wheel_base>
+      <wheel_radius>${wheel_radius}</wheel_radius>
       <topic>/cmd_vel</topic>
       <odom_topic>/odom</odom_topic>
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- UNSTOPPABLE TORQUE -->
-      <max_wheel_torque>1000.0</max_wheel_torque>
+      <!-- PRO STABILITY SETTINGS -->
+      <max_wheel_torque>50.0</max_wheel_torque>
+      <max_wheel_velocity>10.0</max_wheel_velocity>
     </plugin>
+
+    <!-- Essential: Feedback systems -->
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
     </plugin>
+    <plugin filename="gz-sim-odometry-publisher-system" name="gz::sim::systems::OdometryPublisher">
+      <odom_frame>odom</odom_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <odom_topic>/odom</odom_topic>
+      <tf_topic>/tf</tf_topic>
+    </plugin>
   </gazebo>
-
-  <!-- FORCE NO-SLEEP FOR STABILITY -->
-  <gazebo><static>false</static><allow_auto_disable>false</allow_auto_disable></gazebo>
 
 </robot>
