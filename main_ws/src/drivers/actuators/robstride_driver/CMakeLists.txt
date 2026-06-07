@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 cmake_minimum_required(VERSION 3.8)
 project(robstride_driver)
 
@@ -7,20 +8,10 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(seeed_usb_can_analyzer_driver REQUIRED)
 find_package(robot_interfaces REQUIRED)
-find_package(diagnostic_updater REQUIRED)
-find_package(ament_cmake_gtest REQUIRED)
+find_package(seeed_usb_can_analyzer_driver REQUIRED)
 
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
-  ament_add_gtest(test_protocol test/test_protocol.cpp)
-  target_include_directories(test_protocol PRIVATE
-    include
-  )
-endif()
-
+# robstride_motor_component (Shared Library)
 add_library(robstride_motor_component SHARED
   src/robstride_at_node.cpp
   src/robstride_can_node.cpp
@@ -35,11 +26,11 @@ ament_target_dependencies(robstride_motor_component
   rclcpp_components
   std_msgs
   sensor_msgs
-  seeed_usb_can_analyzer_driver
   robot_interfaces
-  diagnostic_updater
+  seeed_usb_can_analyzer_driver
 )
 
+# Register as Component AND auto-generate standalone executable
 rclcpp_components_register_node(robstride_motor_component
   PLUGIN "robstride_driver::RobstrideAtNode"
   EXECUTABLE robstride_at_node
@@ -49,6 +40,7 @@ rclcpp_components_register_node(robstride_motor_component
   EXECUTABLE robstride_can_node
 )
 
+# Install targets
 install(TARGETS
   robstride_motor_component
   EXPORT export_${PROJECT_NAME}

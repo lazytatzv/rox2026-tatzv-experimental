@@ -47,8 +47,8 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   auto telemetry_qos = rclcpp::SystemDefaultsQoS();
   auto sensor_qos = rclcpp::SensorDataQoS();
 
-  publisher_wheel_speeds_ = this->create_publisher<robot_interfaces::msg::WheelSpeeds>(
-      topic_wheel_speeds_, sensor_qos);
+  publisher_wheel_speeds_ =
+      this->create_publisher<robot_interfaces::msg::WheelSpeeds>(topic_wheel_speeds_, sensor_qos);
 
   publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", telemetry_qos);
 
@@ -73,10 +73,12 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_->on_activate();
   publisher_odom_->on_activate();
-  
-  // Safe creation of TF broadcaster during activation
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-  
+
+  // Create TF Broadcaster using node interfaces to ensure compatibility in Lifecycle nodes
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(
+      this->get_node_base_interface(), this->get_node_logging_interface(),
+      this->get_node_topics_interface(), this->get_node_options());
+
   last_time_ = this->now();
   last_command_time_ = this->now();
   first_odom_ = true;
@@ -161,6 +163,9 @@ void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointSt
   int found_count = 0;
 
   for (size_t i = 0; i < msg->name.size(); ++i) {
+    // Safety check: ensure arrays have consistent sizes to prevent Segfault
+    if (msg->velocity.size() <= i) continue;
+
     if (msg->name[i] == "front_left_wheel_joint") {
       wheel_speeds[0] = msg->velocity[i];
       found_count++;
