@@ -63,9 +63,6 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   watchdog_timer_ =
       this->create_wall_timer(100ms, std::bind(&MecanumKinematicsNode::watchdog_callback, this));
 
-  // TF Broadcaster is safe to create in configure, but initialized during activation
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-
   RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s' watchdog=%.2fs",
               topic_cmd_vel_.c_str(), topic_wheel_speeds_.c_str(), watchdog_timeout_);
 
@@ -76,6 +73,10 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_->on_activate();
   publisher_odom_->on_activate();
+  
+  // Safe creation of TF broadcaster during activation
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
+  
   last_time_ = this->now();
   last_command_time_ = this->now();
   first_odom_ = true;
@@ -87,6 +88,7 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_->on_deactivate();
   publisher_odom_->on_deactivate();
+  tf_broadcaster_.reset();
   RCLCPP_INFO(get_logger(), "Deactivated");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -151,7 +153,7 @@ void MecanumKinematicsNode::command_velocity_callback(
 }
 
 void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg) {
-  if (!publisher_odom_->is_activated()) {
+  if (!publisher_odom_->is_activated() || !tf_broadcaster_) {
     return;
   }
 

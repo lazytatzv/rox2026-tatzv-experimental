@@ -25,6 +25,10 @@ SerialGateway::SerialGateway(const rclcpp::NodeOptions& options)
   this->declare_parameter("serial_port", "/dev/ttyUSB1");
   this->declare_parameter("baud_rate", 921600);
   this->declare_parameter("reconnect_interval_ms", 2000);
+
+  // Resources are tied to the node object's lifetime, not the lifecycle state.
+  io_context_ = std::make_unique<boost::asio::io_context>();
+  strand_ = std::make_unique<boost::asio::io_context::strand>(*io_context_);
 }
 
 SerialGateway::~SerialGateway() {
@@ -45,13 +49,12 @@ SerialGateway::on_configure(const rclcpp_lifecycle::State&) {
       "/communication/tx_queue", sensor_qos,
       std::bind(&SerialGateway::serial_frame_callback, this, std::placeholders::_1));
 
-  if (!io_context_) {
-    io_context_ = std::make_unique<boost::asio::io_context>();
-    strand_ = std::make_unique<boost::asio::io_context::strand>(*io_context_);
-  }
+  // Ensure port is ready
+  boost::asio::post(*strand_, [this]() {
+    std::lock_guard<std::recursive_mutex> lock(port_mutex_);
+    init_serial_port();
+  });
   
-  std::lock_guard<std::recursive_mutex> lock(port_mutex_);
-  init_serial_port();
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -94,13 +97,11 @@ SerialGateway::on_deactivate(const rclcpp_lifecycle::State&) {
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 SerialGateway::on_cleanup(const rclcpp_lifecycle::State&) {
-  if (io_context_) io_context_->stop();
-  if (io_thread_.joinable()) io_thread_.join();
-
   std::lock_guard<std::recursive_mutex> lock(port_mutex_);
   if (serial_port_ && serial_port_->is_open()) serial_port_->close();
   write_queue_.clear();
   serial_port_.reset();
+  is_connected_ = false;
 
   subscription_serial_frames_.reset();
   publisher_rx_frames_.reset();
