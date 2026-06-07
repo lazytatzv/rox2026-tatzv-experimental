@@ -1,5 +1,5 @@
 {
-  description = "Working env";
+  description = "Ultimate Working Environment for ROX2026 - Hyprland/Wayland Optimized";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -28,11 +28,16 @@
             python3Packages.black
             ripgrep
 
-            # --- System / GUI ---            xorg.xhost
+            # --- System / GUI / Hyprland Support ---
+            xorg.xhost
+            wf-recorder   # Wayland Screen Recorder
+            slurp         # Mouse Region Selector
+            grim          # Screenshot Tool
+            libnotify     # Desktop Notifications
           ];
 
           shellHook = ''
-            echo "--- Environment Loaded via Nix Flakes ---"
+            echo "--- 🚀 Ultimate Environment Loaded (Hyprland Ready) ---"
 
             # Auto-setup for Docker GUI if on Linux
             if [ "$(uname)" = "Linux" ]; then
@@ -41,6 +46,13 @@
 
             # Convenience Aliases
             alias dc='docker compose'
+            
+            # --- Recording Aliases (Pro level) ---
+            # record-region: Select window/region and record to robot_run.mp4
+            alias record-region='wf-recorder -g "$(slurp)" -f robot_run.mp4 && notify-send "Recording Saved" "robot_run.mp4 created"'
+            
+            # record-full: Record full screen
+            alias record-full='wf-recorder -f robot_run.mp4'
 
             export ROS_DOMAIN_ID=0
             export DOCKER_BUILDKIT=1

@@ -28,6 +28,8 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-${ROS_DISTRO}-joint-state-publisher \
     ros-${ROS_DISTRO}-serial-driver \
     ros-${ROS_DISTRO}-io-context \
+    ros-${ROS_DISTRO}-ros-gz \
+    ros-${ROS_DISTRO}-xacro \
     black \
     && rm -rf /var/lib/apt/lists/*
 
