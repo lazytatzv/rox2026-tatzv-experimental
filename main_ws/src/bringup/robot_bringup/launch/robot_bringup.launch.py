@@ -29,11 +29,7 @@ def generate_launch_description():
     urdf_path = os.path.join(pkg_bringup, "urdf", "robot.urdf")
 
     # --- 2. Dynamic Managed Nodes Logic ---
-    # We use a standard set of nodes for lifecycle management
-    # For simplicity in this refactor, we list all possible nodes.
-    # Unused nodes will just be ignored by the manager if they don't exist.
     managed_nodes = [
-        "/serial_driver",
         "/hal/speed_dispatcher",
         "/mecanum_kinematics_node",
         "/motors/front_left",
@@ -60,8 +56,6 @@ def generate_launch_description():
                 plugin="mecanum_kinematics::WheelSpeedsDispatcher",
                 name="speed_dispatcher",
                 namespace="hal",
-                # Pass the correct actuator config based on type would be ideal, 
-                # but we use a shared one for simplicity here
                 parameters=[os.path.join(pkg_bringup, "config", "actuators_robstride.yaml")],
             ),
         ],
@@ -95,20 +89,20 @@ def generate_launch_description():
 
     joy_node = Node(package="joy", executable="joy_node", name="joy_node", parameters=[teleop_config])
     
+    # We no longer use 'remappings' here. Instead, we ensure teleop.yaml defines the correct topic names.
     teleop_node = Node(
         package="base_teleop",
         executable="base_teleop_node",
         name="teleop",
         parameters=[teleop_config],
-        remappings=[("cmd_vel", "cmd_vel_joy")],
     )
 
+    # Ensure twist_mux.yaml defines the final output topic as 'cmd_vel'
     twist_mux = Node(
         package="twist_mux",
         executable="twist_mux",
         name="twist_mux",
         parameters=[mux_config],
-        remappings=[("cmd_vel_out", "cmd_vel")],
     )
 
     robot_state_pub = Node(
@@ -141,7 +135,6 @@ def generate_launch_description():
         condition=IfCondition(use_rviz)
     )
 
-    # Return the complete description as a single list
     return LaunchDescription([
         actuator_type_arg,
         use_foxglove_arg,

@@ -22,5 +22,5 @@
 
     # Topics
     topic_joy: "joy"
-    topic_cmd_vel: "cmd_vel"
+    topic_cmd_vel: "cmd_vel_joy"
     topic_stop_lock: "stop_lock"
