@@ -122,7 +122,7 @@ def launch_setup(context, *args, **kwargs):
         name="actuator_control_container",
         namespace="",
         package="rclcpp_components",
-        executable="component_container_mt",
+        executable="component_container",
         composable_node_descriptions=control_nodes,
         output="screen",
     )

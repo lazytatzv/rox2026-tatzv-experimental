@@ -1,6 +1,6 @@
 // Copyright 2026 Tatsukiyano
-#ifndef ROBSTRIDE_DRIVER__ROBSTRIDE_CAN_NODE_HPP_
-#define ROBSTRIDE_DRIVER__ROBSTRIDE_CAN_NODE_HPP_
+#ifndef DDSM115_ROS2_DRIVER__DDSM115_ROS2_DRIVER_NODE_HPP_
+#define DDSM115_ROS2_DRIVER__DDSM115_ROS2_DRIVER_NODE_HPP_
 
 #include <memory>
 #include <string>
@@ -8,17 +8,17 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
-#include "lifecycle_msgs/msg/state.hpp"
-#include "std_msgs/msg/float64_multi_array.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "seeed_usb_can_analyzer_driver/msg/can_frame.hpp"
+#include "std_msgs/msg/float64_multi_array.hpp"
+#include "robot_interfaces/msg/serial_frame.hpp"
 
-namespace robstride_driver
+namespace ddsm115_ros2_driver
 {
 
-class RobstrideCanNode : public rclcpp_lifecycle::LifecycleNode {
+class DDSM115DriverNode : public rclcpp_lifecycle::LifecycleNode
+{
 public:
-  explicit RobstrideCanNode(const rclcpp::NodeOptions & options);
+  explicit DDSM115DriverNode(const rclcpp::NodeOptions & options);
 
   rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
   on_configure(const rclcpp_lifecycle::State & state) override;
@@ -37,10 +37,7 @@ public:
 
 private:
   void velocity_callback(const std_msgs::msg::Float64MultiArray::SharedPtr message);
-  void can_rx_callback(const seeed_usb_can_analyzer_driver::msg::CanFrame::SharedPtr message);
-
-  double uint_to_float(uint16_t value, double low, double high);
-  uint16_t float_to_uint(double value, double low, double high);
+  void serial_rx_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message);
 
   uint8_t motor_id_;
   std::string joint_name_;
@@ -49,19 +46,12 @@ private:
   std::string topic_rx_queue_;
   std::string topic_velocity_command_;
 
-  double pos_min_ = -12.57, pos_max_ = 12.57;
-  double vel_min_ = -50.0, vel_max_ = 50.0;
-  double tor_min_ = -6.0, tor_max_ = 6.0;
-
+  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::SerialFrame>::SharedPtr publisher_serial_frames_;
+  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr publisher_joint_state_;
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subscription_velocity_;
-  rclcpp::Subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr subscription_can_rx_;
-
-  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr
-    publisher_can_frames_;
-  rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr
-    publisher_joint_state_;
+  rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_rx_;
 };
 
-}  // namespace robstride_driver
+}  // namespace ddsm115_ros2_driver
 
-#endif  // ROBSTRIDE_DRIVER__ROBSTRIDE_CAN_NODE_HPP_
+#endif  // DDSM115_ROS2_DRIVER__DDSM115_ROS2_DRIVER_NODE_HPP_
