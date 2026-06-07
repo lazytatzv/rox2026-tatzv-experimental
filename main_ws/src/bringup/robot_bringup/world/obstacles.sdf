@@ -2,7 +2,7 @@
 <sdf version="1.8">
   <world name="obstacle_world">
     <physics name="0.5ms" type="ignored">
-      <max_step_size>0.0005</max_step_size> <!-- Higher precision -->
+      <max_step_size>0.0005</max_step_size> <!-- High precision solver -->
       <real_time_factor>1.0</real_time_factor>
     </physics>
     
@@ -24,7 +24,9 @@
       <link name="link">
         <collision name="collision">
           <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
-          <surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface>
+          <surface>
+            <friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction>
+          </surface>
         </collision>
         <visual name="visual">
           <geometry><plane><normal>0 0 1</normal><size>100 100</size></plane></geometry>
@@ -33,14 +35,10 @@
       </link>
     </model>
 
-    <!-- Ramps and Obstacles -->
+    <!-- Obstacles and Ramps -->
     <model name="ramp_15"><pose>3.0 1.5 0.13 0 -0.26 0</pose><static>true</static><link name="l"><collision name="c"><geometry><box><size>2.0 2.0 0.05</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 2.0 0.05</size></box></geometry><material><diffuse>0.4 0.6 0.4 1</diffuse></material></visual></link></model>
     <model name="ramp_25"><pose>3.0 -1.5 0.21 0 -0.44 0</pose><static>true</static><link name="l"><collision name="c"><geometry><box><size>2.0 2.0 0.05</size></box></geometry></collision><visual name="v"><geometry><box><size>2.0 2.0 0.05</size></box></geometry><material><diffuse>0.6 0.4 0.4 1</diffuse></material></visual></link></model>
 
-    <model name="stone_1"><pose>1.0 0.5 0.1 0 0 0.3</pose><link name="l"><inertial><mass>5</mass></inertial><collision name="c"><geometry><box><size>0.2 0.2 0.2</size></box></geometry></collision><visual name="v"><geometry><box><size>0.2 0.2 0.2</size></box></geometry><material><diffuse>0.5 0.5 0.5 1</diffuse></material></visual></link></model>
-    <model name="stone_2"><pose>1.5 -0.5 0.1 0 0 0</pose><link name="l"><inertial><mass>10</mass></inertial><collision name="c"><geometry><sphere><radius>0.15</radius></sphere></geometry></collision><visual name="v"><geometry><sphere><radius>0.15</radius></sphere></geometry><material><diffuse>0.3 0.3 0.3 1</diffuse></material></visual></link></model>
-
-    <!-- Absolute Barrier -->
     <model name="big_wall">
       <pose>5.0 0 0.5 0 0 0</pose><static>true</static>
       <link name="link">
