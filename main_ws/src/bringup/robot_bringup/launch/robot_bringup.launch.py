@@ -16,7 +16,7 @@ def launch_setup(context, *args, **kwargs):
     is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context)
     
-    # Sim Time is mandatory for Gazebo
+    # Sim Time for Logic, Real Time for Bridge/UI
     use_sim_time = is_gazebo
 
     paths = {
@@ -29,7 +29,7 @@ def launch_setup(context, *args, **kwargs):
     }
 
     if is_gazebo:
-        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (SIM TIME SYNC ACTIVE)")
+        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (HYBRID TIME SYNC ACTIVE)")
     else:
         print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
@@ -52,10 +52,11 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{'use_sim_time': True}], output='screen'
         ))
 
+        # IMPORTANT: Bridge must use REAL TIME to start passing the clock to other nodes!
         actions.append(Node(
             package='ros_gz_bridge', executable='parameter_bridge',
             name='parameter_bridge',
-            parameters=[{'config_file': paths["bridge"], 'use_sim_time': True}],
+            parameters=[{'config_file': paths["bridge"], 'use_sim_time': False}],
             output='screen'
         ))
 
@@ -86,14 +87,25 @@ def launch_setup(context, *args, **kwargs):
         if actuator_type != 'virtual':
             actions.append(Node(package="serial_driver", executable="serial_bridge", name="serial_driver", parameters=[{"device_name": "/dev/ttyUSB1", "baud_rate": 921600, "flow_control": "none", "parity": "none", "stop_bits": "1", "use_sim_time": use_sim_time}], remappings=[("write", "/serial_write"), ("read", "/serial_read")], output="screen"))
 
-    # Core System Nodes (Always need sim_time sync in Gazebo)
+    # UI/System nodes must NOT use sim_time for connection stability
     actions += [
-        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]),
+        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"], {"use_sim_time": False}]),
         Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node", parameters=[{"use_sim_time": use_sim_time}]),
         Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]),
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"], {"use_sim_time": use_sim_time}], remappings=[("cmd_vel_out", "/cmd_vel")]),
         Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": open(paths["urdf"]).read(), "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
     ]
+
+    # Foxglove Bridge: REAL TIME for connectivity
+    if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
+        try:
+            foxglove_pkg = get_package_share_directory("foxglove_bridge")
+            actions.append(IncludeLaunchDescription(
+                AnyLaunchDescriptionSource(os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml")),
+                launch_arguments={'use_sim_time': 'false'}.items()
+            ))
+        except Exception:
+            pass
 
     return actions
 
