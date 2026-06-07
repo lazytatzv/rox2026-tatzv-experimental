@@ -75,11 +75,11 @@
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-  <!-- Gazebo Physics -->
-  <gazebo reference="front_left_wheel"><mu1>1.0</mu1><mu2>1.0</mu2></gazebo>
-  <gazebo reference="front_right_wheel"><mu1>1.0</mu1><mu2>1.0</mu2></gazebo>
-  <gazebo reference="rear_left_wheel"><mu1>1.0</mu1><mu2>1.0</mu2></gazebo>
-  <gazebo reference="rear_right_wheel"><mu1>1.0</mu1><mu2>1.0</mu2></gazebo>
+  <!-- Gazebo Physics (Competition Floor - Smooth/Slippery) -->
+  <gazebo reference="front_left_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
+  <gazebo reference="front_right_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
+  <gazebo reference="rear_left_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
+  <gazebo reference="rear_right_wheel"><mu1>0.4</mu1><mu2>0.4</mu2></gazebo>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
