@@ -1,48 +1,62 @@
-# ROX2026 Tatzv Experimental
+# ROX2026 Experimental
 
-The ultimate high-performance mecanum robot controller. Optimized for reliability, speed, and developer experience.
+rox2026の個人的かつ試験的なプロジェクト. AI(主にgemini)を使っています.
 
-## 🚀 Key Features
-- **All-C++ Zero-Copy Architecture**: High-speed communication using ROS 2 Composable Components.
-- **Safety First**: Hardware-level Watchdog, DualSense Emergency Stop, and Lifecycle management.
-- **Modern Stack**: Nix Flakes for tools, Docker for runtime, and Foxglove for visualization.
-- **Self-Healing CI**: Automated style fixing and cross-distribution (Humble/Jazzy) validation.
+## Env
 
-## 🏗️ System Architecture
-```mermaid
-graph TD
-    subgraph "Input & UI"
-        DualSense[DualSense Controller] --> joy_node
-        joy_node --> base_teleop[base_teleop: ARM/STOP Logic]
-        base_teleop --> twist_mux
-    end
+Docker(compose)を使っています.
 
-    subgraph "Logic & Calculation (HAL)"
-        twist_mux --> kinematics[mecanum_kinematics: Watchdog & Odom]
-        kinematics --> dispatcher[speed_dispatcher]
-    end
+- Ubuntu24.04 (ROS:jazzy)
 
-    subgraph "Actuator Layer (Zero-Copy)"
-        dispatcher -- rad/s --> robstride[robstride_at/can_driver]
-        robstride -- SerialFrame/CanFrame --> gateway[bus_gateway]
-        gateway -- Physical --> Motors((EL05 Motors))
-    end
+- Ubuntu22.04 (ROS:humble) <== CIでチェックしてる程度
 
-    subgraph "Monitoring"
-        kinematics -- TF/Odom --> Foxglove[Foxglove Studio]
-        robstride -- JointState --> Foxglove
-    end
+
+## description
+
+- nodeは基本C++固定
+- joystickはDualSense想定
+- 対応は基本jazzy
+
+## Usage
+
+### Dev
+
+基本的に`Docker`の使用を想定しています.
+
+```bash
+$ git clone <this repo>
+$ cd <REPO>
+
+# build & up
+$ docker compose up -d
+
+# enter
+$ docker compose exec lazy_container bash
 ```
 
-## 🛠️ Quick Start
-1. **Prepare Host**: Install Nix and `direnv`.
-2. **Setup**: `direnv allow` (This installs all tools and sets up X11 automatically).
-3. **Build**: `make build` then `make colcon`.
-4. **Launch**: `make launch` (or `make virtual` for mock testing).
+.devcontainerを使う場合は、`git clone`して、vscodeを開いてそのまま使えます.
 
-## 🎮 Controls (DualSense)
-- **Select (Create)**: ARM system (Activate movement).
-- **Touchpad Click**: STOP system (Universal lock).
-- **L Stick / R Stick**: Strafe and Yaw movement.
-- **R1 / L1**: High-precision deadband control.
+### Visualization
+
+Foxgloveを使うこと推奨です.
+
+Foxglove-studioをいれるか、ブラウザでfoxgloveを開いて、`websocket`で接続できます.
+
+### Simulation
+
+Foxgloveで足回りのkinematicsを確認したい場合(物理simなし)
+
+```bash
+$ cd main_ws
+$ make virtual
 ```
+
+物理シミュレーション
+
+```bash
+$ make sim-gui
+```
+
+
+
+## Caution
