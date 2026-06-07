@@ -1,0 +1,27 @@
+# Build artifacts
+build/
+install/
+log/
+
+# CodeQL
+_codeql_detected_source_root
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vscode
+.vscode/
