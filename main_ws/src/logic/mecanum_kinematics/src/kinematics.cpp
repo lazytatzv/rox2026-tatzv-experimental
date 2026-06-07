@@ -3,8 +3,6 @@
 #include <algorithm>
 #include <cmath>
 
-// Pure Kinematics computations for mecanum wheels.
-
 namespace mecanum_kinematics
 {
 
@@ -20,6 +18,8 @@ std::array<double, 4> compute_wheel_speeds(
   const double inv_r = 1.0 / wheel_radius;
 
   // Wheel angular speeds [rad/s]
+  // ROS Standard: CCW is positive for angular_z
+  // Official mecanum_rc.py logic with proper sign mapping:
   const double fl = inv_r * (linear_x - linear_y - k * angular_z);
   const double fr = inv_r * (linear_x + linear_y + k * angular_z);
   const double rl = inv_r * (linear_x + linear_y - k * angular_z);
@@ -41,10 +41,16 @@ std::array<double, 3> compute_body_twist(
 
   const double k = half_length + half_width;
 
-  // Body linear velocities [m/s] and angular velocity [rad/s]
-  // Forward kinematics based on mecanum geometry
+  // Forward Kinematics (Mecanum Matrix Inverse)
+  // vx = Average of all wheels (when all same direction)
   double vx = (fl + fr + rl + rr) * wheel_radius / 4.0;
+  
+  // vy = Lateral component
+  // When fl=-1, fr=1, rl=1, rr=-1 => moves left (positive y in ROS)
   double vy = (-fl + fr + rl - rr) * wheel_radius / 4.0;
+  
+  // omega = Rotational component
+  // When fl=-k, fr=k, rl=-k, rr=k => rotates CCW (positive omega in ROS)
   double omega = (-fl + fr - rl + rr) * wheel_radius / (4.0 * k);
 
   return {vx, vy, omega};
