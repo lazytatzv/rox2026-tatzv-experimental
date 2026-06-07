@@ -50,7 +50,6 @@ ament_target_dependencies(mecanum_kinematics_component
   tf2_ros
   tf2_geometry_msgs
   std_msgs
-  robot_interfaces
   rcl_interfaces
   diagnostic_updater
 )

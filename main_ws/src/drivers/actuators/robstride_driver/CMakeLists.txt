@@ -26,7 +26,6 @@ ament_target_dependencies(robstride_motor_component
   rclcpp_components
   std_msgs
   sensor_msgs
-  robot_interfaces
   seeed_usb_can_analyzer_driver
 )
 

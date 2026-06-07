@@ -8,7 +8,6 @@ find_package(lifecycle_msgs REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(robot_interfaces REQUIRED)
 
 add_library(virtual_actuator_component SHARED
   src/virtual_actuator_node.cpp
@@ -40,4 +39,6 @@ install(TARGETS
 )
 
 ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+ament_package()
+GET)
 ament_package()

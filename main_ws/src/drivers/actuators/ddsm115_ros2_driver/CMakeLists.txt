@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 cmake_minimum_required(VERSION 3.8)
 project(ddsm115_ros2_driver)
 
@@ -9,11 +10,6 @@ if(POLICY CMP0167)
   cmake_policy(SET CMP0167 NEW)
 endif()
 
-if(DEFINED ENV{CONDA_PREFIX})
-  include_directories(SYSTEM "$ENV{CONDA_PREFIX}/include")
-  string(APPEND CMAKE_CXX_FLAGS " -isystem $ENV{CONDA_PREFIX}/include")
-endif()
-
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -21,7 +17,6 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(robot_interfaces REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 find_package(Boost REQUIRED CONFIG COMPONENTS headers)
 find_package(rosidl_default_generators REQUIRED)
@@ -60,7 +55,6 @@ ament_target_dependencies(ddsm115_driver_component
   rclcpp_components
   std_msgs
   sensor_msgs
-  robot_interfaces
   diagnostic_updater
 )
 
