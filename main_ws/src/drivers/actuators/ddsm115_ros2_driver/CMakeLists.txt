@@ -84,16 +84,6 @@ install(TARGETS
   RUNTIME DESTINATION bin
 )
 
-# Install launch files
-install(DIRECTORY launch
-  DESTINATION share/${PROJECT_NAME}/
-)
-
-# Install config files
-install(DIRECTORY config
-  DESTINATION share/${PROJECT_NAME}/
-)
-
 # Install scripts files
 install(PROGRAMS scripts/set_motor_id.py
   DESTINATION lib/${PROJECT_NAME}
