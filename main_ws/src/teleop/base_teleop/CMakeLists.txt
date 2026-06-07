@@ -1,4 +1,4 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 cmake_minimum_required(VERSION 3.8)
 project(base_teleop)
 
