@@ -1,6 +1,7 @@
-# Copyright 2026 Tatsukiyano
+// Copyright 2026 Tatsukiyano
 import os
 import yaml
+import shutil
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import OpaqueFunction, DeclareLaunchArgument
@@ -14,7 +15,7 @@ def launch_setup(context, *args, **kwargs):
     # --- 1. SETTINGS & PATHS ---
     pkg_bringup = get_package_share_directory("robot_bringup")
 
-    use_foxglove = LaunchConfiguration("use_foxglove")
+    use_foxglove_cfg = LaunchConfiguration("use_foxglove").perform(context).lower() == 'true'
     use_rviz = LaunchConfiguration("use_rviz")
 
     paths = {
@@ -126,8 +127,8 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    # --- System Actions ---
-    return [
+    # --- Actions ---
+    actions = [
         control_container,
         Node(
             package="nav2_lifecycle_manager",
@@ -171,15 +172,23 @@ def launch_setup(context, *args, **kwargs):
             ],
         ),
         Node(
-            package="foxglove_bridge",
-            executable="foxglove_bridge_node",
-            name="foxglove_bridge",
-            condition=IfCondition(use_foxglove),
-        ),
-        Node(
             package="rviz2", executable="rviz2", name="rviz2", condition=IfCondition(use_rviz)
         ),
     ]
+
+    # --- Foxglove Bridge (Safety Check) ---
+    # Only add if specifically requested AND binary exists
+    if use_foxglove_cfg:
+        if shutil.which("foxglove_bridge_node") or os.path.exists("/opt/ros/jazzy/lib/foxglove_bridge/foxglove_bridge_node"):
+            actions.append(Node(
+                package="foxglove_bridge",
+                executable="foxglove_bridge_node",
+                name="foxglove_bridge"
+            ))
+        else:
+            print("[WARNING] foxglove_bridge_node NOT FOUND. Skipping Foxglove.")
+
+    return actions
 
 
 def generate_launch_description():
