@@ -1,0 +1,45 @@
+name: ROS 2 CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ros_build_test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ros_distro: [jazzy, humble]
+    container:
+      image: ros:${{ matrix.ros_distro }}-ros-base
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        shell: bash
+        run: |
+          apt-get update && apt-get install -y python3-pip
+          rosdep update
+          rosdep install --from-paths main_ws/src --ignore-src -y -r --rosdistro ${{ matrix.ros_distro }}
+
+      - name: Build Workspace
+        shell: bash
+        run: |
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          cd main_ws
+          colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+      - name: Run Tests
+        shell: bash
+        run: |
+          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
+          source main_ws/install/setup.bash
+          cd main_ws
+          colcon test --event-handlers console_direct+
+          colcon test-result --verbose
