@@ -1,15 +1,11 @@
 <?xml version="1.0"?>
-<robot name="nexus_10011_ultimate" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="nexus_10011_optimized" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Nexus 14162 Physical Specs (PRO CALIBRATED) -->
+  <!-- Section 1: Specs -->
   <xacro:property name="base_mass"    value="3.0"/>
-  <xacro:property name="hub_mass"     value="0.15"/>
-  <xacro:property name="barrel_mass"  value="0.02"/>
+  <xacro:property name="wheel_mass"   value="0.4"/>
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.05"/>
-  <xacro:property name="barrel_radius" value="0.012"/>
-  <xacro:property name="barrel_length" value="0.03"/>
-  
   <xacro:property name="wheel_base"   value="0.25"/>
   <xacro:property name="wheel_sep"    value="0.30"/>
 
@@ -27,16 +23,8 @@
       <mass value="${base_mass}"/>
       <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
     </inertial>
-    <!-- Chassis Box (Optimized width for 0.5mm clearance) -->
-    <visual>
-      <origin xyz="0 0 0.03" rpy="0 0 0"/>
-      <geometry><box size="0.36 0.249 0.06"/></geometry>
-      <material name="nexus_yellow"/>
-    </visual>
-    <collision>
-      <origin xyz="0 0 0.03" rpy="0 0 0"/>
-      <geometry><box size="0.36 0.249 0.06"/></geometry>
-    </collision>
+    <visual><origin xyz="0 0 0.03"/><geometry><box size="0.36 0.249 0.06"/></geometry><material name="nexus_yellow"/></visual>
+    <collision><origin xyz="0 0 0.03"/><geometry><box size="0.36 0.249 0.06"/></geometry></collision>
   </link>
 
   <joint name="base_joint" type="fixed">
@@ -44,68 +32,64 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Section 2: Barrel Macro (Free Spinning Roller) -->
-  <xacro:macro name="barrel" params="wheel_prefix num angle_deg roller_type">
-    <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
-      <parent link="${wheel_prefix}_hub_link"/>
-      <child link="${wheel_prefix}_barrel_${num}_link"/>
-      <origin xyz="${0.038 * cos(radians(angle_deg))} ${0.038 * sin(radians(angle_deg))} 0" 
+  <!-- --- VISUAL-ONLY ROLLER MACRO (No Physics, Pure Beauty) --- -->
+  <xacro:macro name="roller_visual" params="angle_deg roller_type">
+    <visual>
+      <origin xyz="${0.04 * cos(radians(angle_deg))} ${0.04 * sin(radians(angle_deg))} 0" 
               rpy="${roller_type * pi/4} 0 ${radians(angle_deg)}"/>
-      <axis xyz="0 0 1"/>
-      <dynamics damping="0.001" friction="0.001"/>
-    </joint>
-    <link name="${wheel_prefix}_barrel_${num}_link">
-      <inertial>
-        <mass value="${barrel_mass}"/>
-        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
-      </inertial>
-      <visual><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry><material name="black"/></visual>
-      <collision><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry></collision>
-    </link>
-    <gazebo reference="${wheel_prefix}_barrel_${num}_link">
-      <mu1>1.5</mu1><mu2>1.5</mu2>
-      <material>Gazebo/Black</material>
-    </gazebo>
+      <geometry><cylinder radius="0.012" length="0.035"/></geometry>
+      <material name="black"/>
+    </visual>
   </xacro:macro>
 
-  <!-- Section 3: Ultimate Mecanum Wheel Macro -->
-  <xacro:macro name="ultimate_mecanum_wheel" params="side position x_sign y_sign roller_type">
-    <xacro:property name="w_prefix" value="${side}_${position}"/>
-    
-    <link name="${w_prefix}_hub_link">
-      <inertial><mass value="${hub_mass}"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
-      <!-- Central core -->
-      <visual><origin rpy="0 0 0"/><geometry><cylinder radius="0.02" length="0.04"/></geometry><material name="aluminum"/></visual>
-      <!-- Side Plate Inner -->
+  <!-- --- THE OPTIMIZED MECANUM WHEEL MACRO --- -->
+  <xacro:macro name="pro_mecanum_wheel" params="side position x_sign y_sign roller_type fdir">
+    <link name="${side}_${position}_wheel">
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+      </inertial>
+      <!-- Hub Plates -->
+      <visual><origin rpy="0 0 0"/><geometry><cylinder radius="0.04" length="0.005"/></geometry><material name="aluminum"/></visual>
       <visual><origin xyz="0 0 0.02"/><geometry><cylinder radius="0.04" length="0.005"/></geometry><material name="aluminum"/></visual>
-      <!-- Side Plate Outer -->
       <visual><origin xyz="0 0 -0.02"/><geometry><cylinder radius="0.04" length="0.005"/></geometry><material name="aluminum"/></visual>
+      
+      <!-- Visual Rollers (No joints = Zero CPU load) -->
+      <xacro:roller_visual angle_deg="0"   roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="40"  roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="80"  roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="120" roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="160" roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="200" roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="240" roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="280" roller_type="${roller_type}"/>
+      <xacro:roller_visual angle_deg="320" roller_type="${roller_type}"/>
+
+      <!-- Single Sphere Collision (Fastest possible physics) -->
+      <collision>
+        <geometry><sphere radius="${wheel_radius}"/></geometry>
+      </collision>
     </link>
 
-    <joint name="${w_prefix}_wheel_joint" type="continuous">
-      <parent link="base_link"/><child link="${w_prefix}_hub_link"/>
+    <joint name="${side}_${position}_wheel_joint" type="continuous">
+      <parent link="base_link"/><child link="${side}_${position}_wheel"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="-1.57 0 0"/>
       <axis xyz="0 0 1"/>
       <dynamics damping="0.05" friction="0.02"/>
     </joint>
 
-    <!-- Instantiate 9 Realistic Rollers -->
-    <xacro:barrel wheel_prefix="${w_prefix}" num="0" angle_deg="0"   roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="1" angle_deg="40"  roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="2" angle_deg="80"  roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="3" angle_deg="120" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="4" angle_deg="160" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="5" angle_deg="200" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="6" angle_deg="240" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="7" angle_deg="280" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="8" angle_deg="320" roller_type="${roller_type}"/>
+    <gazebo reference="${side}_${position}_wheel">
+        <!-- THE PERFORMANCE SECRET: mu1=0.0 on roller axis emulates the physical rollers -->
+        <mu1>0.01</mu1><mu2>1.0</mu2>
+        <fdir1>${fdir}</fdir1>
+        <min_depth>0.001</min_depth>
+    </gazebo>
   </xacro:macro>
 
-  <!-- Section 4: "True-X" Configuration -->
-  <xacro:ultimate_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="-1"/>
-  <xacro:ultimate_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="1"/>
-  <xacro:ultimate_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="1"/>
-  <xacro:ultimate_mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" roller_type="-1"/>
+  <xacro:pro_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="-1" fdir="1 -1 0"/>
+  <xacro:pro_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="1"  fdir="1 1 0"/>
+  <xacro:pro_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="1"  fdir="1 1 0"/>
+  <xacro:pro_mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" roller_type="-1" fdir="1 -1 0"/>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
@@ -121,7 +105,7 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <max_wheel_torque>10.0</max_wheel_torque>
+      <max_wheel_torque>5.0</max_wheel_torque>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
