@@ -13,6 +13,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(Boost CONFIG REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
@@ -78,8 +79,5 @@ install(TARGETS
 
 ament_export_include_directories(include)
 ament_export_dependencies(rosidl_default_runtime)
-
-ament_package()
-me)
 
 ament_package()
