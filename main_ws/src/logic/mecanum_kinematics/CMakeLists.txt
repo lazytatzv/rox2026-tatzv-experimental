@@ -66,13 +66,17 @@ rclcpp_components_register_node(mecanum_kinematics_component
   EXECUTABLE wheel_speeds_dispatcher
 )
 
+add_executable(zero_twist_node src/zero_twist_node.cpp)
+ament_target_dependencies(zero_twist_node rclcpp geometry_msgs)
+
 install(TARGETS
   mecanum_kinematics_component
   mecanum_kinematics_kinematics
+  zero_twist_node
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/

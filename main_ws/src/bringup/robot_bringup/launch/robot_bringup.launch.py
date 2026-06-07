@@ -135,6 +135,7 @@ def launch_setup(context, *args, **kwargs):
     # --- 3. Base UI & System (Always Active) ---
     actions += [
         Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
+        Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node"),
         Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"]]),
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", 
              parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
