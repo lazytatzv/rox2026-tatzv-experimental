@@ -58,12 +58,6 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         ))
 
-        # Vision: Dynamic Marker Visualizer (Gazebo Ground Truth)
-        actions.append(Node(
-            package='mecanum_kinematics', executable='obstacle_visualizer_node',
-            name='obstacle_visualizer', output='screen'
-        ))
-
     else:
         managed_nodes = ["/hal/speed_dispatcher", "/mecanum_kinematics_node", "/motors/front_left", "/motors/front_right", "/motors/rear_left", "/motors/rear_right"]
         
