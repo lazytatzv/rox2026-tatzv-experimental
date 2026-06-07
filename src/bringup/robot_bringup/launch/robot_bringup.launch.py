@@ -14,7 +14,6 @@ def launch_setup(context, *args, **kwargs):
     # --- 1. SETTINGS & PATHS ---
     pkg_bringup = get_package_share_directory("robot_bringup")
 
-    # Launch Configurations
     use_foxglove = LaunchConfiguration("use_foxglove")
     use_rviz = LaunchConfiguration("use_rviz")
 
@@ -127,7 +126,7 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    # --- Actions ---
+    # --- System Actions ---
     return [
         control_container,
         Node(
@@ -171,7 +170,6 @@ def launch_setup(context, *args, **kwargs):
                 }
             ],
         ),
-        # Optional Visualization
         Node(
             package="foxglove_bridge",
             executable="foxglove_bridge_node",

@@ -1,9 +1,0 @@
-usb_can_analyzer_node:
-  ros__parameters:
-    usb_path: /dev/tty.usbserial-1130
-    serial_baud: 2000000
-    bitrate: 1000000
-    tx_extended: false
-    filter_id: 0
-    mask_id: 0
-    operation_mode: 0
