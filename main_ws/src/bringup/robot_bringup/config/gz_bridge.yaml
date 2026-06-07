@@ -1,5 +1,5 @@
 # ros_gz_bridge configuration
-# "The Strongest Way to Sync ROS 2 and Gazebo"
+# "The Final Bridge to Truth"
 
 - ros_topic_name: "/cmd_vel"
   gz_topic_name: "/cmd_vel"
@@ -25,7 +25,7 @@
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
 
-# NEW: Joint States Feedback
+# Fixed: Match the EXACT Gazebo topic name seen in 'gz topic -l'
 - ros_topic_name: "/joint_states"
   gz_topic_name: "/joint_states"
   ros_type_name: "sensor_msgs/msg/JointState"
