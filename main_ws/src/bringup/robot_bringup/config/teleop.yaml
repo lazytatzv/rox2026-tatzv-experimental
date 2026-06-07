@@ -17,8 +17,8 @@
 
     # Sensitivities
     scale_linear_velocity: 1.0
-    scale_angular_velocity: 0.3   # Reduced further for heavy-duty feel
-    smoothing_factor: 0.2         # More smoothing to prevent jitter
+    scale_angular_velocity: 1.0   # Snappy rotation
+    smoothing_factor: 1.0         # 1.0 means NO smoothing (instant response)
 
     # Topics
     topic_joy: "joy"
