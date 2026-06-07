@@ -46,6 +46,7 @@ target_include_directories(usb_can_analyzer_node PUBLIC
 ament_target_dependencies(usb_can_analyzer_node
   rclcpp
   rclcpp_lifecycle
+  rclcpp_components
   lifecycle_msgs
 )
 
@@ -77,5 +78,8 @@ install(TARGETS
 
 ament_export_include_directories(include)
 ament_export_dependencies(rosidl_default_runtime)
+
+ament_package()
+me)
 
 ament_package()
