@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot name="nexus_10011_ultimate" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Nexus 14162 Physical Specs -->
+  <!-- Section 1: Nexus 14162 Physical Specs (PRO CALIBRATED) -->
   <xacro:property name="base_mass"    value="3.0"/>
   <xacro:property name="hub_mass"     value="0.2"/>
   <xacro:property name="barrel_mass"  value="0.02"/>
@@ -9,8 +9,9 @@
   <xacro:property name="wheel_width"  value="0.05"/>
   <xacro:property name="barrel_radius" value="0.01"/>
   <xacro:property name="barrel_length" value="0.04"/>
-  <xacro:property name="wheel_base"   value="0.25"/>
-  <xacro:property name="wheel_sep"    value="0.30"/>
+  
+  <xacro:property name="wheel_base"   value="0.25"/> <!-- Front to Back -->
+  <xacro:property name="wheel_sep"    value="0.30"/> <!-- Left to Right (Center-to-Center) -->
 
   <material name="nexus_yellow"><color rgba="1.0 0.8 0.0 1"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
@@ -25,8 +26,16 @@
       <mass value="${base_mass}"/>
       <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
     </inertial>
-    <visual><geometry><box size="0.36 0.30 0.06"/></geometry><material name="nexus_yellow"/></visual>
-    <collision><geometry><box size="0.36 0.30 0.06"/></geometry></collision>
+    <!-- Chassis Box (Narrower to stop clipping) -->
+    <visual>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><box size="0.36 0.20 0.06"/></geometry>
+      <material name="nexus_yellow"/>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><box size="0.36 0.20 0.06"/></geometry>
+    </collision>
   </link>
 
   <joint name="base_joint" type="fixed">
@@ -39,7 +48,7 @@
     <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
       <parent link="${wheel_prefix}_hub_link"/>
       <child link="${wheel_prefix}_barrel_${num}_link"/>
-      <!-- Place on hub surface -->
+      <!-- Rollers are in the Hub's local XY plane (which is robot XZ plane) -->
       <origin xyz="${0.042 * cos(radians(angle_deg))} ${0.042 * sin(radians(angle_deg))} 0" 
               rpy="${roller_type * pi/4} 0 ${radians(angle_deg)}"/>
       <axis xyz="0 0 1"/>
@@ -54,7 +63,7 @@
       <collision><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry></collision>
     </link>
     <gazebo reference="${wheel_prefix}_barrel_${num}_link">
-      <mu1>1.5</mu1><mu2>1.5</mu2> <!-- High friction barrels -->
+      <mu1>1.5</mu1><mu2>1.5</mu2>
       <material>Gazebo/Black</material>
     </gazebo>
   </xacro:macro>
@@ -62,16 +71,23 @@
   <!-- Section 3: Mecanum Wheel Macro -->
   <xacro:macro name="ultimate_mecanum_wheel" params="side position x_sign y_sign roller_type">
     <xacro:property name="w_prefix" value="${side}_${position}"/>
+    
     <link name="${w_prefix}_hub_link">
       <inertial><mass value="${hub_mass}"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
-      <visual><origin rpy="1.57 0 0"/><geometry><cylinder radius="0.035" length="0.04"/></geometry><material name="black"/></visual>
+      <visual>
+        <!-- Hub is just a visual center -->
+        <origin rpy="0 0 0"/><geometry><cylinder radius="0.035" length="0.04"/></geometry><material name="black"/>
+      </visual>
     </link>
+
     <joint name="${w_prefix}_wheel_joint" type="continuous">
       <parent link="base_link"/><child link="${w_prefix}_hub_link"/>
-      <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="1.57 0 0"/>
-      <axis xyz="0 0 -1"/>
+      <!-- Rotation AXIS set to global Y via RPY -->
+      <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="-1.57 0 0"/>
+      <axis xyz="0 0 1"/>
       <dynamics damping="0.05" friction="0.02"/>
     </joint>
+
     <xacro:barrel wheel_prefix="${w_prefix}" num="0" angle_deg="0"   roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${w_prefix}" num="1" angle_deg="40"  roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${w_prefix}" num="2" angle_deg="80"  roller_type="${roller_type}"/>
@@ -83,8 +99,7 @@
     <xacro:barrel wheel_prefix="${w_prefix}" num="8" angle_deg="320" roller_type="${roller_type}"/>
   </xacro:macro>
 
-  <!-- Section 4: "True-X" Configuration (Visual X from top) -->
-  <!-- FL/RR: Reversed Tilt (-1), FR/RL: Standard Tilt (1) -->
+  <!-- Section 4: "True-X" Configuration -->
   <xacro:ultimate_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="-1"/>
   <xacro:ultimate_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="1"/>
   <xacro:ultimate_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="1"/>
@@ -104,7 +119,7 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <max_wheel_torque>10.0</max_wheel_torque>
+      <max_wheel_torque>5.0</max_wheel_torque>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
