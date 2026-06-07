@@ -25,10 +25,10 @@
 
             # --- Python & Utils ---
             python3
-            black
+            python3Packages.black
+            ripgrep
 
-            # --- System / GUI ---
-            xorg.xhost
+            # --- System / GUI ---            xorg.xhost
           ];
 
           shellHook = ''
