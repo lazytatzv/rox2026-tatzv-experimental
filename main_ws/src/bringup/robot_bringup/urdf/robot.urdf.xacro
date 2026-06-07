@@ -1,42 +1,53 @@
 <?xml version="1.0"?>
-<robot name="lazytatzv_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="nexus_10011" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Nexus 100mm Specs (14161) -->
-  <xacro:property name="base_mass"   value="15.0"/>
-  <xacro:property name="wheel_mass"  value="0.4"/>  <!-- Nexus 100mm standard -->
+  <!-- Section 1: Nexus 10011 Official Specs -->
+  <xacro:property name="base_mass"   value="3.0"/>
+  <xacro:property name="wheel_mass"  value="0.3"/>  <!-- Aluminum 100mm (14094) -->
   <xacro:property name="wheel_radius" value="0.05"/> <!-- 100mm diameter -->
   <xacro:property name="wheel_width"  value="0.05"/>
-  <xacro:property name="wheel_base"   value="0.24"/>
-  <xacro:property name="wheel_sep"    value="0.30"/>
+  <xacro:property name="wheel_base"   value="0.25"/>  <!-- Longitudinal -->
+  <xacro:property name="wheel_sep"    value="0.30"/>  <!-- Transverse -->
 
-  <material name="blue"><color rgba="0 0 0.8 1"/></material>
-  <material name="red"><color rgba="1 0 0 1"/></material>
-  <material name="black"><color rgba="0 0 0 1"/></material>
+  <!-- Materials (Nexus Yellow/Aluminum) -->
+  <material name="nexus_yellow"><color rgba="1.0 0.8 0.0 1"/></material>
+  <material name="aluminum"><color rgba="0.8 0.8 0.8 1"/></material>
+  <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
 
-  <!-- Section 2: Chassis -->
   <link name="base_footprint"/>
   
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="${base_mass}"/>
-      <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.4" iyz="0" izz="0.5"/>
+      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
     </inertial>
-    <visual><geometry><box size="0.35 0.25 0.1"/></geometry><material name="blue"/></visual>
+    <!-- Upper Plate -->
     <visual>
-        <origin xyz="0.175 0 0.05" rpy="0 0 0"/>
-        <geometry><box size="0.05 0.05 0.05"/></geometry><material name="red"/>
+      <origin xyz="0 0 0.05" rpy="0 0 0"/>
+      <geometry><box size="0.4 0.3 0.01"/></geometry>
+      <material name="nexus_yellow"/>
     </visual>
-    <collision><geometry><box size="0.35 0.25 0.1"/></geometry></collision>
+    <!-- Lower Plate -->
+    <visual>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>
+      <geometry><box size="0.4 0.3 0.01"/></geometry>
+      <material name="nexus_yellow"/>
+    </visual>
+    <!-- Collision (Main Body) -->
+    <collision>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><box size="0.4 0.3 0.05"/></geometry>
+    </collision>
   </link>
 
   <joint name="base_joint" type="fixed">
     <parent link="base_footprint"/><child link="base_link"/>
-    <origin xyz="0 0 0.05" rpy="0 0 0"/>
+    <origin xyz="0 0 0.05" rpy="0 0 0"/> <!-- 5cm off the ground -->
   </joint>
 
-  <!-- Wheel Macro: Sphere contact + Anisotropic friction -->
-  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign fdir">
+  <!-- Nexus 100mm Wheel Macro -->
+  <xacro:macro name="nexus_wheel" params="side position x_sign y_sign fdir">
     <link name="${side}_${position}_wheel">
       <inertial>
         <mass value="${wheel_mass}"/>
@@ -47,6 +58,7 @@
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
+      <!-- Point Contact Sphere for smooth 3-axis travel -->
       <collision>
         <geometry><sphere radius="${wheel_radius}"/></geometry>
       </collision>
@@ -57,22 +69,21 @@
       <child link="${side}_${position}_wheel"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
+      <dynamics damping="0.1" friction="0.05"/>
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
-        <!-- mu1=0.0 on roller axis is the ONLY way for lateral mobility in Gz Sim -->
-        <mu1>0.0</mu1><mu2>1.0</mu2>
+        <mu1>0.0</mu1><mu2>1.0</mu2> <!-- Slip along roller, grip laterally -->
         <fdir1>${fdir}</fdir1>
         <min_depth>0.001</min_depth>
-        <self_collide>false</self_collide>
     </gazebo>
   </xacro:macro>
 
-  <!-- Correct O-Pattern (45 degrees) -->
-  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  fdir="1 1 0"/>
-  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" fdir="1 -1 0"/>
-  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  fdir="1 -1 0"/>
-  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" fdir="1 1 0"/>
+  <!-- Instantiate Wheels with O-Pattern -->
+  <xacro:nexus_wheel side="front" position="left"  x_sign="1"  y_sign="1"  fdir="1 1 0"/>
+  <xacro:nexus_wheel side="front" position="right" x_sign="1"  y_sign="-1" fdir="1 -1 0"/>
+  <xacro:nexus_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  fdir="1 -1 0"/>
+  <xacro:nexus_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" fdir="1 1 0"/>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
@@ -88,11 +99,9 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- UNLEASH TORQUE: Overcome static friction -->
-      <max_wheel_torque>500.0</max_wheel_torque>
+      <!-- Nexus 12V Coreless Torque (Realistic) -->
+      <max_wheel_torque>10.0</max_wheel_torque>
     </plugin>
-
-    <!-- Essential: Feedback systems -->
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
     </plugin>
