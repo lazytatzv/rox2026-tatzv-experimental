@@ -16,8 +16,8 @@
     joy_button_joy_mode_on: 8     # Create (Select)
 
     # Sensitivities
-    scale_linear_velocity: 1.5    # Increased for heavier 50kg robot
-    scale_angular_velocity: 2.0   # Snappy rotation
+    scale_linear_velocity: 1.0    # Balanced for 20kg robot
+    scale_angular_velocity: 0.8   # Controllable rotation speed
     smoothing_factor: 0.3
 
     # Topics
