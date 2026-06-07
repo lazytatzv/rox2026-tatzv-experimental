@@ -1,4 +1,4 @@
-# Teleoperation and Input settings
+# Teleoperation and Input settings for ROX2026
 /joystick_driver_node:
   ros__parameters:
     deadzone: 0.1
@@ -6,18 +6,18 @@
 
 /base_teleop:
   ros__parameters:
-    # Axis Mappings
-    joy_axis_forward_backward: 1
-    joy_axis_left_right: 0
-    joy_axis_yaw: 2
+    # --- 3-Axis Pro Mapping (DualSense Standard) ---
+    joy_axis_linear_x: 1    # Left Stick Vertical
+    joy_axis_linear_y: 0    # Left Stick Horizontal (Strafe)
+    joy_axis_angular_z: 2   # Right Stick Horizontal (Rotation)
 
-    # Button Mappings (DualSense)
+    # Button Mappings
     joy_button_software_stop: 15  # Touchpad Click
     joy_button_joy_mode_on: 8     # Create (Select)
 
     # Sensitivities
-    scale_linear_velocity: 1.0
-    scale_angular_velocity: 1.0
+    scale_linear_velocity: 1.5    # Increased for heavier 50kg robot
+    scale_angular_velocity: 2.0   # Snappy rotation
     smoothing_factor: 0.3
 
     # Topics
