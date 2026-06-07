@@ -32,13 +32,15 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
 
   timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
 
-  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode (Smart Stream) initialized.");
+  RCLCPP_INFO(this->get_logger(), "BaseTeleopNode (3-Axis Pro) initialized.");
 }
 
 void BaseTeleopNode::declare_parameters() {
-  this->declare_parameter("joy_axis_forward_backward", 1);
-  this->declare_parameter("joy_axis_left_right", 0);
-  this->declare_parameter("joy_axis_yaw", 2);
+  // Axis Mappings (DualSense Standard)
+  this->declare_parameter("joy_axis_linear_x", 1);    // Left Stick Vertical
+  this->declare_parameter("joy_axis_linear_y", 0);    // Left Stick Horizontal (Strafe!)
+  this->declare_parameter("joy_axis_angular_z", 2);   // Right Stick Horizontal (Rotate)
+  
   this->declare_parameter("joy_button_software_stop", 15);
   this->declare_parameter("joy_button_joy_mode_on", 8);
   this->declare_parameter("scale_linear_velocity", 1.0);
@@ -50,9 +52,10 @@ void BaseTeleopNode::declare_parameters() {
 }
 
 void BaseTeleopNode::cache_parameters() {
-  axis_forward_backward_ = this->get_parameter("joy_axis_forward_backward").as_int();
-  axis_left_right_ = this->get_parameter("joy_axis_left_right").as_int();
-  axis_yaw_ = this->get_parameter("joy_axis_yaw").as_int();
+  axis_linear_x_ = this->get_parameter("joy_axis_linear_x").as_int();
+  axis_linear_y_ = this->get_parameter("joy_axis_linear_y").as_int();
+  axis_angular_z_ = this->get_parameter("joy_axis_angular_z").as_int();
+  
   button_software_stop_ = this->get_parameter("joy_button_software_stop").as_int();
   button_joy_mode_on_ = this->get_parameter("joy_button_joy_mode_on").as_int();
   scale_linear_velocity_ = this->get_parameter("scale_linear_velocity").as_double();
@@ -64,10 +67,7 @@ void BaseTeleopNode::cache_parameters() {
 }
 
 void BaseTeleopNode::timer_callback() {
-  // Pro Rule: If not armed, remain silent to allow other controllers to work
-  if (!joy_mode_active_) {
-    return;
-  }
+  if (!joy_mode_active_) return;
 
   auto smooth = [this](double current, double target) {
     return current + smoothing_factor_ * (target - current);
@@ -82,65 +82,35 @@ void BaseTeleopNode::timer_callback() {
   current_twist_.linear.y = apply_deadband(current_twist_.linear.y);
   current_twist_.angular.z = apply_deadband(current_twist_.angular.z);
 
-  static bool was_moving = false;
-  bool is_moving = (current_twist_.linear.x != 0.0 || current_twist_.linear.y != 0.0 ||
-                    current_twist_.angular.z != 0.0);
-
-  // When active, we always publish to ensure Gazebo brakes correctly
   auto msg = std::make_unique<geometry_msgs::msg::Twist>(current_twist_);
   publisher_command_velocity_->publish(std::move(msg));
-  
-  was_moving = is_moving;
 }
 
 void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg) {
   size_t req_buttons = static_cast<size_t>(std::max(button_software_stop_, button_joy_mode_on_));
-  if (msg->buttons.size() <= req_buttons) {
-    return;
-  }
+  if (msg->buttons.size() <= req_buttons) return;
 
-  // --- 1. STOP (Touchpad) ---
-  static bool last_stop_state = false;
-  if (msg->buttons[button_software_stop_] == 1 && !last_stop_state) {
+  // STOP (Touchpad)
+  if (msg->buttons[button_software_stop_] == 1) {
     joy_mode_active_ = false;
-    auto lock = std::make_unique<std_msgs::msg::Bool>();
-    lock->data = true;
-    publisher_stop_lock_->publish(std::move(lock));
-    RCLCPP_WARN(get_logger(), "SYSTEM LOCKED / DISARMED");
+    RCLCPP_WARN(get_logger(), "SYSTEM DISARMED");
+    return;
   }
-  last_stop_state = (msg->buttons[button_software_stop_] == 1);
 
-  // --- 2. JOY (Select) ---
-  static bool last_joy_state = false;
-  if (msg->buttons[button_joy_mode_on_] == 1 && !last_joy_state) {
+  // ARM (Select)
+  if (msg->buttons[button_joy_mode_on_] == 1) {
     joy_mode_active_ = true;
-    auto lock = std::make_unique<std_msgs::msg::Bool>();
-    lock->data = false;
-    publisher_stop_lock_->publish(std::move(lock));
-    RCLCPP_INFO(get_logger(), "SYSTEM ARMED / JOY MODE ACTIVE");
-  }
-  last_joy_state = (msg->buttons[button_joy_mode_on_] == 1);
-
-  // --- 3. PROCESSING ---
-  if (!joy_mode_active_) {
-    target_twist_.linear.x = 0.0;
-    target_twist_.linear.y = 0.0;
-    target_twist_.angular.z = 0.0;
-    current_twist_.linear.x = 0.0;
-    current_twist_.linear.y = 0.0;
-    current_twist_.angular.z = 0.0;
-    return;
+    RCLCPP_INFO(get_logger(), "SYSTEM ARMED (3-Axis Mode)");
   }
 
-  size_t req_axes =
-      static_cast<size_t>(std::max({axis_forward_backward_, axis_left_right_, axis_yaw_}));
-  if (msg->axes.size() <= req_axes) {
-    return;
-  }
+  if (!joy_mode_active_) return;
 
-  target_twist_.linear.x = msg->axes[axis_forward_backward_] * scale_linear_velocity_;
-  target_twist_.linear.y = msg->axes[axis_left_right_] * scale_linear_velocity_;
-  target_twist_.angular.z = msg->axes[axis_yaw_] * scale_angular_velocity_;
+  size_t req_axes = static_cast<size_t>(std::max({axis_linear_x_, axis_linear_y_, axis_angular_z_}));
+  if (msg->axes.size() <= req_axes) return;
+
+  target_twist_.linear.x = msg->axes[axis_linear_x_] * scale_linear_velocity_;
+  target_twist_.linear.y = msg->axes[axis_linear_y_] * scale_linear_velocity_;
+  target_twist_.angular.z = msg->axes[axis_angular_z_] * scale_angular_velocity_;
 }
 
 }  // namespace base_teleop
