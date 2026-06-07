@@ -26,7 +26,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-${ROS_DISTRO}-foxglove-bridge \
     ros-${ROS_DISTRO}-twist-mux \
     ros-${ROS_DISTRO}-joint-state-publisher \
-    python3-black \
+    black \
     && rm -rf /var/lib/apt/lists/*
 
 # --- 2. Environment Configuration ---
