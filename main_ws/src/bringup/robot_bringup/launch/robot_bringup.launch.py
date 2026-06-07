@@ -27,7 +27,6 @@ def launch_setup(context, *args, **kwargs):
     }
 
     # 2. Dynamic Managed Nodes Logic
-    # We match the absolute node names for lifecycle management
     managed_nodes = [
         "/hal/speed_dispatcher",
         "/mecanum_kinematics_node",
@@ -36,7 +35,6 @@ def launch_setup(context, *args, **kwargs):
         "/motors/rear_left",
         "/motors/rear_right"
     ]
-    # Standard serial driver doesn't support lifecycle, so we don't manage it
 
     print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
@@ -56,42 +54,48 @@ def launch_setup(context, *args, **kwargs):
     else:
         raise RuntimeError(f"Unknown actuator_type: {actuator_type}")
 
-    # 4. Composable Container (HAL & Kinematics)
-    container = ComposableNodeContainer(
-        name="actuator_control_container",
-        namespace="",
-        package="rclcpp_components",
-        executable="component_container",
-        composable_node_descriptions=[
-            ComposableNode(
-                package="mecanum_kinematics",
-                plugin="mecanum_kinematics::MecanumKinematicsNode",
-                name="mecanum_kinematics_node",
-                # Hardcode absolute topic for reliability
-                parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds"}],
-            ),
-            ComposableNode(
-                package="mecanum_kinematics",
-                plugin="mecanum_kinematics::WheelSpeedsDispatcher",
-                name="speed_dispatcher",
-                namespace="hal",
-                parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds"}],
-            ),
-        ],
-        output="screen",
-    )
+    # --- 4. Assemble Composable Nodes List ---
+    composable_nodes = [
+        ComposableNode(
+            package="mecanum_kinematics",
+            plugin="mecanum_kinematics::MecanumKinematicsNode",
+            name="mecanum_kinematics_node",
+            parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds"}],
+        ),
+        ComposableNode(
+            package="mecanum_kinematics",
+            plugin="mecanum_kinematics::WheelSpeedsDispatcher",
+            name="speed_dispatcher",
+            namespace="hal",
+            parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds"}],
+        ),
+    ]
 
-    # Individual motor components
+    # Add individual motor components to the list
     for side in ["front_left", "front_right", "rear_left", "rear_right"]:
-        container.composable_node_descriptions.append(
+        composable_nodes.append(
             ComposableNode(
                 package=m_pkg,
                 plugin=m_plugin,
                 name=side,
                 namespace="motors",
-                parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read"}],
+                parameters=[act_yaml, {
+                    "joint_name": f"{side}_wheel_joint",
+                    "topic_tx_queue": "/serial_write",
+                    "topic_rx_queue": "/serial_read"
+                }],
             )
         )
+
+    # Create the container with the FULL list
+    container = ComposableNodeContainer(
+        name="actuator_control_container",
+        namespace="",
+        package="rclcpp_components",
+        executable="component_container",
+        composable_node_descriptions=composable_nodes,
+        output="screen",
+    )
 
     # 5. Core System Nodes
     actions = [
@@ -133,7 +137,7 @@ def launch_setup(context, *args, **kwargs):
         ),
     ]
 
-    # Standard Serial Driver (Optional based on type)
+    # Standard Serial Driver
     if actuator_type != 'virtual':
         actions.append(Node(
             package="serial_driver",
@@ -151,7 +155,7 @@ def launch_setup(context, *args, **kwargs):
         ))
 
     # Optional Visualization
-    if use_foxglove.perform(context).lower() == 'true':
+    if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
         try:
             foxglove_pkg = get_package_share_directory("foxglove_bridge")
             actions.append(IncludeLaunchDescription(
@@ -162,7 +166,7 @@ def launch_setup(context, *args, **kwargs):
         except Exception:
             pass
 
-    if use_rviz.perform(context).lower() == 'true':
+    if LaunchConfiguration("use_rviz").perform(context).lower() == 'true':
         actions.append(Node(package="rviz2", executable="rviz2", name="rviz2"))
 
     return actions
