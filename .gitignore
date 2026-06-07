@@ -1,35 +1,23 @@
+# direnv cached environment
+.direnv/
 
-#ROS2 /about colcon build
+# Nix build artifacts
+result
+result-*
+
+# ROS 2 build artifacts
 build/
 install/
 log/
+.ccache/
 
-#colcon metadata
-.colcon/
-
-#python cache
+# Python artifacts
 __pycache__/
-*.py[cod]
-*.egg-info/
+*.pyc
+.venv/
 
-#ROS bag
-*.db3
-*.mcap
-rosbag2_*/
-
-# about vscode setting
+# VS Code
 .vscode/
-!.vscode/extensions.json
-!.vscode/settings.json
 
-# env
-.env
-.env.*
-
-#CMake
-CMakeCache.txt
-CMakeFiles/
-compile_commands.json
-
-# local test dumps
-/tmp/
+# Docker
+.docker/
