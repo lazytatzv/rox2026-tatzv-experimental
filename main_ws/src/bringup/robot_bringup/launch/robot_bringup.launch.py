@@ -23,10 +23,13 @@ def launch_setup(context, *args, **kwargs):
         "phys": os.path.join(pkg_bringup, "config", "physical.yaml"),
         "mux": os.path.join(pkg_bringup, "config", "twist_mux.yaml"),
         "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
-        "urdf": os.path.join(pkg_bringup, "urdf", "robot.urdf"),
+        "xacro": os.path.join(pkg_bringup, "urdf", "robot.urdf.xacro"),
         "world": os.path.join(pkg_bringup, "world", "obstacles.sdf"),
         "bridge": os.path.join(pkg_bringup, "config", "gz_bridge.yaml"),
     }
+
+    import xacro
+    robot_description_xml = xacro.process_file(paths["xacro"]).toxml()
 
     if is_gazebo:
         print(f"\n[MASTER LAUNCH] Mode: GAZEBO (HYBRID TIME SYNC ACTIVE)")
@@ -48,7 +51,7 @@ def launch_setup(context, *args, **kwargs):
 
         actions.append(Node(
             package='ros_gz_sim', executable='create',
-            arguments=['-name', 'lazytatzv_robot', '-file', paths["urdf"]],
+            arguments=['-name', 'lazytatzv_robot', '-string', robot_description_xml],
             parameters=[{'use_sim_time': True}], output='screen'
         ))
 
@@ -93,7 +96,7 @@ def launch_setup(context, *args, **kwargs):
         Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node", parameters=[{"use_sim_time": use_sim_time}]),
         Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]),
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"], {"use_sim_time": use_sim_time}], remappings=[("cmd_vel_out", "/cmd_vel")]),
-        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": open(paths["urdf"]).read(), "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
+        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": robot_description_xml, "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
     ]
 
     # Foxglove Bridge: REAL TIME for connectivity
