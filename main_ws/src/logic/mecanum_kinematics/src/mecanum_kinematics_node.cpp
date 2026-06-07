@@ -74,10 +74,8 @@ MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_->on_activate();
   publisher_odom_->on_activate();
 
-  // Create TF Broadcaster using node interfaces to ensure compatibility in Lifecycle nodes
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(
-      this->get_node_base_interface(), this->get_node_logging_interface(),
-      this->get_node_topics_interface(), this->get_node_options());
+  // Create TF Broadcaster using the node itself to ensure compatibility
+  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   last_time_ = this->now();
   last_command_time_ = this->now();
