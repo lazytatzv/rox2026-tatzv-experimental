@@ -12,7 +12,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(robot_interfaces REQUIRED)
 find_package(rcl_interfaces REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 

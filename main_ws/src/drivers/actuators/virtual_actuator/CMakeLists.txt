@@ -22,7 +22,6 @@ ament_target_dependencies(virtual_actuator_component
   rclcpp_components
   sensor_msgs
   std_msgs
-  robot_interfaces
 )
 
 rclcpp_components_register_node(virtual_actuator_component
