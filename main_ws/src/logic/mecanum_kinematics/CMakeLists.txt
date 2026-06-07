@@ -63,6 +63,10 @@ rclcpp_components_register_node(mecanum_kinematics_component
   PLUGIN "mecanum_kinematics::MecanumKinematicsNode"
   EXECUTABLE mecanum_kinematics_node
 )
+rclcpp_components_register_node(mecanum_kinematics_component
+  PLUGIN "mecanum_kinematics::WheelSpeedsDispatcher"
+  EXECUTABLE wheel_speeds_dispatcher
+)
 
 install(TARGETS
   mecanum_kinematics_component
