@@ -5,15 +5,15 @@ twist_mux:
     topics:
       teleop:
         topic: "cmd_vel_joy"
-        timeout: 0.5
+        timeout: 1.0 # Increased from 0.5s to handle web/simulation jitter
         priority: 100
       navigation:
         topic: "cmd_vel_nav"
-        timeout: 0.5
+        timeout: 1.0
         priority: 10
       external:
         topic: "cmd_vel_ext"
-        timeout: 0.5
+        timeout: 1.0
         priority: 5
       # Baseline signal to ensure robot stops when no one is talking
       # timeout: 0.0 means this source NEVER expires, providing a perfect floor.
