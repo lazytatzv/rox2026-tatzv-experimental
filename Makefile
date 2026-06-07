@@ -1,5 +1,4 @@
 # ROX2026 Tatzv Experimental - Master Makefile
-# "The Strongest Way to Control Your Robot"
 
 .PHONY: build up down shell launch virtual format clean help
 

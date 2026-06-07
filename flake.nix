@@ -1,5 +1,5 @@
 {
-  description = "ROX2026 Tatzv Experimental - Ultimate Development Environment";
+  description = "Working env";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -26,15 +26,14 @@
             # --- Python & Utils ---
             python3
             black
-            
+
             # --- System / GUI ---
             xorg.xhost
           ];
 
           shellHook = ''
-            echo "🚀 WELCOME TO ROX2026 TATZV EXPERIMENTAL"
             echo "--- Environment Loaded via Nix Flakes ---"
-            
+
             # Auto-setup for Docker GUI if on Linux
             if [ "$(uname)" = "Linux" ]; then
               xhost +local:docker > /dev/null 2>&1
@@ -42,7 +41,7 @@
 
             # Convenience Aliases
             alias dc='docker compose'
-            
+
             export ROS_DOMAIN_ID=0
             export DOCKER_BUILDKIT=1
 
