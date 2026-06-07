@@ -36,6 +36,15 @@ $ docker compose exec lazy_container bash
 
 .devcontainerを使う場合は、`git clone`して、vscodeを開いてそのまま使えます.
 
+以下推奨の方法
+
+```bash
+$ nix develop
+$ code .
+
+# ==> devcontainer使う
+```
+
 ### Visualization
 
 Foxgloveを使うこと推奨です.
