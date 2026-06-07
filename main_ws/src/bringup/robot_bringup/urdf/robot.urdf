@@ -6,6 +6,7 @@
 
   <link name="base_footprint"/>
 
+  <!-- Base Link (15kg - Solid Baseline) -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -21,43 +22,59 @@
     <origin xyz="0 0 0.08" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheels - 2kg each for better physics stability -->
+  <!-- Wheels - Standardized for Mecanum Plugin -->
+  <!-- Axis 0 0 1 + RPY -1.57 0 0 = Pro Standard -->
+  
   <link name="front_left_wheel">
-    <inertial><mass value="2.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
-    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <inertial><mass value="1.0"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><geometry><sphere radius="0.05"/></geometry></collision>
   </link>
-  <joint name="front_left_wheel_joint" type="continuous"><parent link="base_link"/><child link="front_left_wheel"/><origin xyz="0.12 0.15 -0.03"/><axis xyz="0 1 0"/><dynamics damping="0.1" friction="0.1"/></joint>
+  <joint name="front_left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="front_left_wheel"/>
+    <origin xyz="0.12 0.15 -0.03" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
 
   <link name="front_right_wheel">
-    <inertial><mass value="2.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
-    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <inertial><mass value="1.0"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><geometry><sphere radius="0.05"/></geometry></collision>
   </link>
-  <joint name="front_right_wheel_joint" type="continuous"><parent link="base_link"/><child link="front_right_wheel"/><origin xyz="0.12 -0.15 -0.03"/><axis xyz="0 1 0"/><dynamics damping="0.1" friction="0.1"/></joint>
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="front_right_wheel"/>
+    <origin xyz="0.12 -0.15 -0.03" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
 
   <link name="rear_left_wheel">
-    <inertial><mass value="2.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
-    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <inertial><mass value="1.0"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><geometry><sphere radius="0.05"/></geometry></collision>
   </link>
-  <joint name="rear_left_wheel_joint" type="continuous"><parent link="base_link"/><child link="rear_left_wheel"/><origin xyz="-0.12 0.15 -0.03"/><axis xyz="0 1 0"/><dynamics damping="0.1" friction="0.1"/></joint>
+  <joint name="rear_left_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="rear_left_wheel"/>
+    <origin xyz="-0.12 0.15 -0.03" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
 
   <link name="rear_right_wheel">
-    <inertial><mass value="2.0"/><inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/></inertial>
-    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <inertial><mass value="1.0"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
+    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><geometry><sphere radius="0.05"/></geometry></collision>
   </link>
-  <joint name="rear_right_wheel_joint" type="continuous"><parent link="base_link"/><child link="rear_right_wheel"/><origin xyz="-0.12 -0.15 -0.03"/><axis xyz="0 1 0"/><dynamics damping="0.1" friction="0.1"/></joint>
+  <joint name="rear_right_wheel_joint" type="continuous">
+    <parent link="base_link"/><child link="rear_right_wheel"/>
+    <origin xyz="-0.12 -0.15 -0.03" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <dynamics damping="0.1" friction="0.1"/>
+  </joint>
 
-  <!-- Gazebo Physics - ANISOTROPIC FRICTION (THE CORE FIX) -->
-  <!-- mu1: Friction along fdir1 (Roller Axis), set low to allow sliding -->
-  <!-- mu2: Friction perpendicular to fdir1 (Grip), set high for traction -->
-  <!-- fdir1: 45 degree vectors for O-shape mecanum configuration -->
-  <gazebo reference="front_left_wheel"><mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 1 0</fdir1></gazebo>
-  <gazebo reference="front_right_wheel"><mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 -1 0</fdir1></gazebo>
-  <gazebo reference="rear_left_wheel"><mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 -1 0</fdir1></gazebo>
-  <gazebo reference="rear_right_wheel"><mu1>0.1</mu1><mu2>1.0</mu2><fdir1>1 1 0</fdir1></gazebo>
+  <!-- Gazebo Physics - UNIFORM LOW FRICTION (The real secret) -->
+  <!-- mu=0.1 allows the plugin to slide the base without resistance -->
+  <gazebo reference="front_left_wheel"><mu1>0.1</mu1><mu2>0.1</mu2></gazebo>
+  <gazebo reference="front_right_wheel"><mu1>0.1</mu1><mu2>0.1</mu2></gazebo>
+  <gazebo reference="rear_left_wheel"><mu1>0.1</mu1><mu2>0.1</mu2></gazebo>
+  <gazebo reference="rear_right_wheel"><mu1>0.1</mu1><mu2>0.1</mu2></gazebo>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
@@ -73,7 +90,7 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <max_wheel_torque>200.0</max_wheel_torque> <!-- Balanced Power -->
+      <max_wheel_torque>100.0</max_wheel_torque>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
