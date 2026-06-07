@@ -49,7 +49,7 @@ class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
   bool init_serial_port();
   void start_async_read();
   void try_reconnect();
-  
+
   // Async Write Queue Logic
   void start_next_write();
 

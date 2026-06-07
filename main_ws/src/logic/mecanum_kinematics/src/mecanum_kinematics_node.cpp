@@ -3,6 +3,8 @@
 
 #include <cmath>
 #include <functional>
+#include <memory>
+#include <string>
 #include <vector>
 
 #include "lifecycle_msgs/msg/state.hpp"
@@ -13,17 +15,14 @@
 
 using namespace std::chrono_literals;
 
-namespace mecanum_kinematics
-{
+namespace mecanum_kinematics {
 
-MecanumKinematicsNode::MecanumKinematicsNode(const rclcpp::NodeOptions & options)
-: rclcpp_lifecycle::LifecycleNode("mecanum_kinematics_node", options)
-{
+MecanumKinematicsNode::MecanumKinematicsNode(const rclcpp::NodeOptions& options)
+    : rclcpp_lifecycle::LifecycleNode("mecanum_kinematics_node", options) {
   declare_parameters();
 }
 
-void MecanumKinematicsNode::declare_parameters()
-{
+void MecanumKinematicsNode::declare_parameters() {
   this->declare_parameter("half_length", 0.12);
   this->declare_parameter("half_width", 0.10);
   this->declare_parameter("wheel_radius", 0.05);
@@ -32,8 +31,7 @@ void MecanumKinematicsNode::declare_parameters()
   this->declare_parameter("topic_wheel_speeds", "wheel_speeds");
 }
 
-void MecanumKinematicsNode::update_parameters()
-{
+void MecanumKinematicsNode::update_parameters() {
   half_length_ = this->get_parameter("half_length").as_double();
   half_width_ = this->get_parameter("half_width").as_double();
   wheel_radius_ = this->get_parameter("wheel_radius").as_double();
@@ -43,41 +41,38 @@ void MecanumKinematicsNode::update_parameters()
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State &)
-{
+MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   update_parameters();
 
-  publisher_wheel_speeds_ = this->create_publisher<robot_interfaces::msg::WheelSpeeds>(
-    topic_wheel_speeds_, rclcpp::SystemDefaultsQoS());
+  auto telemetry_qos = rclcpp::SystemDefaultsQoS();
+  auto sensor_qos = rclcpp::SensorDataQoS();
 
-  publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>(
-    "odom", rclcpp::SystemDefaultsQoS());
+  publisher_wheel_speeds_ = this->create_publisher<robot_interfaces::msg::WheelSpeeds>(
+      topic_wheel_speeds_, sensor_qos);
+
+  publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", telemetry_qos);
 
   subscription_command_velocity_ = this->create_subscription<geometry_msgs::msg::Twist>(
-    topic_cmd_vel_,
-    rclcpp::SystemDefaultsQoS(),
-    std::bind(&MecanumKinematicsNode::command_velocity_callback, this, std::placeholders::_1));
+      topic_cmd_vel_, telemetry_qos,
+      std::bind(&MecanumKinematicsNode::command_velocity_callback, this, std::placeholders::_1));
 
   subscription_joint_states_ = this->create_subscription<sensor_msgs::msg::JointState>(
-    "/joint_states",
-    rclcpp::SystemDefaultsQoS(),
-    std::bind(&MecanumKinematicsNode::joint_state_callback, this, std::placeholders::_1));
+      "/joint_states", sensor_qos,
+      std::bind(&MecanumKinematicsNode::joint_state_callback, this, std::placeholders::_1));
 
-  watchdog_timer_ = this->create_wall_timer(
-    100ms, std::bind(&MecanumKinematicsNode::watchdog_callback, this));
+  watchdog_timer_ =
+      this->create_wall_timer(100ms, std::bind(&MecanumKinematicsNode::watchdog_callback, this));
 
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
-  RCLCPP_INFO(
-    get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s' watchdog=%.2fs",
-    topic_cmd_vel_.c_str(), topic_wheel_speeds_.c_str(), watchdog_timeout_);
+  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s' watchdog=%.2fs",
+              topic_cmd_vel_.c_str(), topic_wheel_speeds_.c_str(), watchdog_timeout_);
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State &)
-{
+MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_->on_activate();
   publisher_odom_->on_activate();
   last_time_ = this->now();
@@ -88,8 +83,7 @@ MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State &)
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State &)
-{
+MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_->on_deactivate();
   publisher_odom_->on_deactivate();
   RCLCPP_INFO(get_logger(), "Deactivated");
@@ -97,8 +91,7 @@ MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State &)
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-MecanumKinematicsNode::on_cleanup(const rclcpp_lifecycle::State &)
-{
+MecanumKinematicsNode::on_cleanup(const rclcpp_lifecycle::State&) {
   publisher_wheel_speeds_.reset();
   publisher_odom_.reset();
   subscription_command_velocity_.reset();
@@ -110,14 +103,12 @@ MecanumKinematicsNode::on_cleanup(const rclcpp_lifecycle::State &)
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-MecanumKinematicsNode::on_shutdown(const rclcpp_lifecycle::State &)
-{
+MecanumKinematicsNode::on_shutdown(const rclcpp_lifecycle::State&) {
   RCLCPP_INFO(get_logger(), "Shutting down");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
-void MecanumKinematicsNode::watchdog_callback()
-{
+void MecanumKinematicsNode::watchdog_callback() {
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
     return;
   }
@@ -134,15 +125,13 @@ void MecanumKinematicsNode::watchdog_callback()
     out->rear_right_velocity = 0.0;
     publisher_wheel_speeds_->publish(std::move(out));
 
-    RCLCPP_ERROR_THROTTLE(
-      get_logger(), *get_clock(), 2000,
-      "Watchdog Triggered: Command stream lost for %.2fs!", elapsed);
+    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000,
+                          "Watchdog Triggered: Command stream lost for %.2fs!", elapsed);
   }
 }
 
 void MecanumKinematicsNode::command_velocity_callback(
-  const geometry_msgs::msg::Twist::SharedPtr msg)
-{
+    const geometry_msgs::msg::Twist::SharedPtr msg) {
   if (!publisher_wheel_speeds_->is_activated()) {
     return;
   }
@@ -150,8 +139,7 @@ void MecanumKinematicsNode::command_velocity_callback(
   last_command_time_ = this->now();
 
   const auto wheels = mecanum_kinematics::compute_wheel_speeds(
-    msg->linear.x, msg->linear.y, msg->angular.z,
-    half_length_, half_width_, wheel_radius_);
+      msg->linear.x, msg->linear.y, msg->angular.z, half_length_, half_width_, wheel_radius_);
 
   auto out = std::make_unique<robot_interfaces::msg::WheelSpeeds>();
   out->front_left_velocity = wheels[0];
@@ -162,8 +150,7 @@ void MecanumKinematicsNode::command_velocity_callback(
   publisher_wheel_speeds_->publish(std::move(out));
 }
 
-void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg)
-{
+void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg) {
   if (!publisher_odom_->is_activated()) {
     return;
   }
@@ -191,8 +178,8 @@ void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointSt
     return;
   }
 
-  const auto twist = mecanum_kinematics::compute_body_twist(
-    wheel_speeds, half_length_, half_width_, wheel_radius_);
+  const auto twist = mecanum_kinematics::compute_body_twist(wheel_speeds, half_length_, half_width_,
+                                                            wheel_radius_);
 
   double vx = twist[0];
   double vy = twist[1];
