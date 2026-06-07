@@ -11,21 +11,18 @@ public:
   ObstacleVisualizer() : Node("obstacle_visualizer") {
     publisher_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("/obstacles", 10);
     timer_ = this->create_wall_timer(std::chrono::milliseconds(500), std::bind(&ObstacleVisualizer::publish_markers, this));
-    RCLCPP_INFO(this->get_logger(), "Obstacle Visualizer active");
+    RCLCPP_INFO(this->get_logger(), "Obstacle Visualizer active (Sync with SDF)");
   }
 
 private:
   void publish_markers() {
     visualization_msgs::msg::MarkerArray array;
 
-    // Stone 1 (Replaced by Big Red Wall)
-    array.markers.push_back(make_marker(0, 2.0, 0.0, 0.5, 0.1, 5.0, 1.0, 1.0, 0.0, 0.0, visualization_msgs::msg::Marker::CUBE));
-    // Stone 2 (Sphere)
-    array.markers.push_back(make_marker(1, 1.5, -0.3, 0.05, 0.16, 0.16, 0.16, 0.4, 0.4, 0.4, visualization_msgs::msg::Marker::SPHERE));
-    // Step 1 (Thin Plate)
-    array.markers.push_back(make_marker(2, 2.5, 0.0, 0.01, 1.0, 2.0, 0.02, 0.7, 0.7, 0.7, visualization_msgs::msg::Marker::CUBE));
-    // Stone 3 (Small Box)
-    array.markers.push_back(make_marker(3, 0.8, -0.8, 0.05, 0.05, 0.1, 0.05, 0.3, 0.3, 0.3, visualization_msgs::msg::Marker::CUBE));
+    // The Big Red Wall (Sync with SDF: starts at 2.0m, center 2.5m, thickness 1.0m)
+    array.markers.push_back(make_marker(0, 2.5, 0.0, 0.5, 1.0, 10.0, 2.0, 1.0, 0.0, 0.0, visualization_msgs::msg::Marker::CUBE));
+    
+    // Stone Sphere (Sync with SDF: 1.5m)
+    array.markers.push_back(make_marker(1, 1.5, -0.5, 0.1, 0.2, 0.2, 0.2, 0.4, 0.4, 0.4, visualization_msgs::msg::Marker::SPHERE));
 
     publisher_->publish(array);
   }
