@@ -4,6 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
       network: host
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     container_name: lazy_container
     init: true
     stdin_open: true
