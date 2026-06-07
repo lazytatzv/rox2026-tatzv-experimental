@@ -9,16 +9,21 @@
   <!-- Base Footprint -->
   <link name="base_footprint"/>
 
-  <!-- Base Link (Realistic Grade - 20kg Total) -->
+  <!-- Base Link -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="16.0"/>
+      <mass value="20.0"/>
       <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.4" iyz="0" izz="0.4"/>
     </inertial>
     <visual>
       <geometry><box size="0.35 0.25 0.1"/></geometry>
       <material name="blue"/>
+    </visual>
+    <visual>
+      <origin xyz="0.17 0 0.05" rpy="0 0 0"/>
+      <geometry><box size="0.05 0.05 0.05"/></geometry>
+      <material name="red"/>
     </visual>
     <collision>
       <geometry><box size="0.35 0.25 0.1"/></geometry>
@@ -30,48 +35,50 @@
     <origin xyz="0 0 0.08" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheels (1kg each) -->
+  <!-- Wheels - Gazebo Optimized Orientation -->
+  <!-- Standard: rotate cylinders around Y axis for Gazebo compatibility -->
+  
   <link name="front_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
-    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="front_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_left_wheel"/>
-    <origin xyz="0.12 0.15 -0.02" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <origin xyz="0.12 0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/> <!-- Rotate around Y -->
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="front_right_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
-    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="front_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_right_wheel"/>
-    <origin xyz="0.12 -0.15 -0.02" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <origin xyz="0.12 -0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="rear_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
-    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="rear_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_left_wheel"/>
-    <origin xyz="-0.12 0.15 -0.02" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <origin xyz="-0.12 0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="rear_right_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
-    <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
+    <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
+    <collision><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="rear_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_right_wheel"/>
-    <origin xyz="-0.12 -0.15 -0.02" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+    <origin xyz="-0.12 -0.15 -0.02" rpy="0 0 0"/><axis xyz="0 1 0"/>
     <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
