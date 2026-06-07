@@ -7,13 +7,12 @@
   <xacro:property name="barrel_mass"  value="0.02"/>
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.05"/>
-  <xacro:property name="barrel_radius" value="0.012"/> <!-- Thicker rollers -->
-  <xacro:property name="barrel_length" value="0.03"/>  <!-- Realistic length -->
+  <xacro:property name="barrel_radius" value="0.012"/>
+  <xacro:property name="barrel_length" value="0.03"/>
   
   <xacro:property name="wheel_base"   value="0.25"/>
   <xacro:property name="wheel_sep"    value="0.30"/>
 
-  <!-- Materials for high-fidelity look -->
   <material name="nexus_yellow"><color rgba="1.0 0.8 0.0 1"/></material>
   <material name="aluminum"><color rgba="0.8 0.8 0.8 1"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
@@ -28,14 +27,15 @@
       <mass value="${base_mass}"/>
       <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
     </inertial>
+    <!-- Chassis Box (Optimized width for 0.5mm clearance) -->
     <visual>
       <origin xyz="0 0 0.03" rpy="0 0 0"/>
-      <geometry><box size="0.36 0.20 0.06"/></geometry>
+      <geometry><box size="0.36 0.249 0.06"/></geometry>
       <material name="nexus_yellow"/>
     </visual>
     <collision>
       <origin xyz="0 0 0.03" rpy="0 0 0"/>
-      <geometry><box size="0.36 0.20 0.06"/></geometry>
+      <geometry><box size="0.36 0.249 0.06"/></geometry>
     </collision>
   </link>
 
@@ -49,7 +49,6 @@
     <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
       <parent link="${wheel_prefix}_hub_link"/>
       <child link="${wheel_prefix}_barrel_${num}_link"/>
-      <!-- Rollers are slightly outside the hub disk -->
       <origin xyz="${0.038 * cos(radians(angle_deg))} ${0.038 * sin(radians(angle_deg))} 0" 
               rpy="${roller_type * pi/4} 0 ${radians(angle_deg)}"/>
       <axis xyz="0 0 1"/>
@@ -60,13 +59,8 @@
         <mass value="${barrel_mass}"/>
         <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
       </inertial>
-      <visual>
-        <geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry>
-        <material name="black"/>
-      </visual>
-      <collision>
-        <geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry>
-      </collision>
+      <visual><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry><material name="black"/></visual>
+      <collision><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry></collision>
     </link>
     <gazebo reference="${wheel_prefix}_barrel_${num}_link">
       <mu1>1.5</mu1><mu2>1.5</mu2>
@@ -74,7 +68,7 @@
     </gazebo>
   </xacro:macro>
 
-  <!-- Section 3: Ultimate Mecanum Wheel Macro (The Pro Look) -->
+  <!-- Section 3: Ultimate Mecanum Wheel Macro -->
   <xacro:macro name="ultimate_mecanum_wheel" params="side position x_sign y_sign roller_type">
     <xacro:property name="w_prefix" value="${side}_${position}"/>
     
