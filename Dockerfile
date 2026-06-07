@@ -6,9 +6,24 @@ FROM ros:${ROS_DISTRO}-ros-base
 # Use bash
 SHELL ["/bin/bash", "-c"]
 
-# --- 1. Infrastructure Optimization ---
-# Using --mount=type=cache to speed up apt-get and keeping official mirrors for stability
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# --- 1. Network & DNS & Mirror Optimization ---
+# Force Google DNS for build process and use robust retry/mirror logic
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    (if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then \
+        sed -i 's@http://archive.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources; \
+    else \
+        sed -i 's@http://archive.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt/sources.list; \
+    fi) && \
+    apt-get update || ( \
+        echo "JP Mirror failed, reverting to official..." && \
+        if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then \
+            sed -i 's@http://jp.archive.ubuntu.com@http://archive.ubuntu.com@g' /etc/apt/sources.list.d/ubuntu.sources; \
+        else \
+            sed -i 's@http://jp.archive.ubuntu.com@http://archive.ubuntu.com@g' /etc/apt/sources.list; \
+        fi && \
+        apt-get update \
+    ) && \
+    apt-get install -y --no-install-recommends \
     build-essential curl git python3-colcon-common-extensions \
     python3-pip python3-rosdep python3-vcstool \
     evtest libboost-all-dev ccache \
@@ -24,12 +39,14 @@ ENV CCACHE_DIR=/root/.ccache
 WORKDIR /root/lazytatzv_ws
 
 # --- 3. Dependency Layer (rosdep) ---
-COPY ./main_ws/src /tmp/src
-RUN apt-get update && \
+# Ensure DNS is still active for rosdep
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf && \
+    COPY ./main_ws/src /tmp/src && \
+    apt-get update && \
     rosdep update --include-eol-distros && \
     rosdep install --from-paths /tmp/src --ignore-src -y -r && \
     rm -rf /var/lib/apt/lists/* && \
-    rm -rf /tmp/src
+    rm -rf /tmp/src || true
 
 # --- 4. Development Tools Setup ---
 RUN ln -sf /usr/bin/ccache /usr/local/bin/gcc && \
