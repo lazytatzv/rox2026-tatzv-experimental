@@ -64,7 +64,7 @@ ament_target_dependencies(ddsm115_driver_component
   diagnostic_updater
 )
 
-target_link_libraries(ddsm115_driver_component PUBLIC
+target_link_libraries(ddsm115_driver_component
   Boost::headers
   "${cpp_typesupport_target}"
 )
