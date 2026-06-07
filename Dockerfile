@@ -23,7 +23,10 @@ RUN apt-get update --allow-releaseinfo-change && \
     ccache \
     ros-${ROS_DISTRO}-teleop-twist-joy \
     ros-${ROS_DISTRO}-ament-uncrustify \
-    black \
+    ros-${ROS_DISTRO}-foxglove-bridge \
+    ros-${ROS_DISTRO}-twist-mux \
+    ros-${ROS_DISTRO}-joint-state-publisher \
+    python3-black \
     && rm -rf /var/lib/apt/lists/*
 
 # --- 2. Environment Configuration ---
