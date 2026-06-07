@@ -4,11 +4,11 @@
   <!-- Section 1: Nexus 14162 Physical Specs -->
   <xacro:property name="base_mass"    value="3.0"/>
   <xacro:property name="hub_mass"     value="0.2"/>
-  <xacro:property name="barrel_mass"  value="0.02"/> <!-- 9 barrels + hub = 400g approx -->
+  <xacro:property name="barrel_mass"  value="0.02"/>
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.05"/>
   <xacro:property name="barrel_radius" value="0.01"/>
-  <xacro:property name="barrel_length" value="0.035"/>
+  <xacro:property name="barrel_length" value="0.04"/>
   <xacro:property name="wheel_base"   value="0.25"/>
   <xacro:property name="wheel_sep"    value="0.30"/>
 
@@ -39,7 +39,8 @@
     <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
       <parent link="${wheel_prefix}_hub_link"/>
       <child link="${wheel_prefix}_barrel_${num}_link"/>
-      <origin xyz="${0.04 * cos(radians(angle_deg))} ${0.04 * sin(radians(angle_deg))} 0" 
+      <!-- Place on hub surface -->
+      <origin xyz="${0.042 * cos(radians(angle_deg))} ${0.042 * sin(radians(angle_deg))} 0" 
               rpy="${roller_type * pi/4} 0 ${radians(angle_deg)}"/>
       <axis xyz="0 0 1"/>
       <dynamics damping="0.001" friction="0.001"/>
@@ -49,41 +50,28 @@
         <mass value="${barrel_mass}"/>
         <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
       </inertial>
-      <visual>
-        <geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry>
-        <material name="black"/>
-      </visual>
-      <collision>
-        <geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry>
-      </collision>
+      <visual><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry><material name="black"/></visual>
+      <collision><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry></collision>
     </link>
     <gazebo reference="${wheel_prefix}_barrel_${num}_link">
-      <mu1>1.0</mu1><mu2>1.0</mu2>
+      <mu1>1.5</mu1><mu2>1.5</mu2> <!-- High friction barrels -->
       <material>Gazebo/Black</material>
     </gazebo>
   </xacro:macro>
 
-  <!-- Section 3: Mecanum Wheel Macro (Hub + 9 Barrels) -->
+  <!-- Section 3: Mecanum Wheel Macro -->
   <xacro:macro name="ultimate_mecanum_wheel" params="side position x_sign y_sign roller_type">
     <xacro:property name="w_prefix" value="${side}_${position}"/>
-    
     <link name="${w_prefix}_hub_link">
-      <inertial>
-        <mass value="${hub_mass}"/>
-        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
-      </inertial>
-      <visual>
-        <origin rpy="1.57 0 0"/><geometry><cylinder radius="0.035" length="0.04"/></geometry><material name="black"/>
-      </visual>
+      <inertial><mass value="${hub_mass}"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
+      <visual><origin rpy="1.57 0 0"/><geometry><cylinder radius="0.035" length="0.04"/></geometry><material name="black"/></visual>
     </link>
-
     <joint name="${w_prefix}_wheel_joint" type="continuous">
       <parent link="base_link"/><child link="${w_prefix}_hub_link"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="1.57 0 0"/>
       <axis xyz="0 0 -1"/>
       <dynamics damping="0.05" friction="0.02"/>
     </joint>
-
     <xacro:barrel wheel_prefix="${w_prefix}" num="0" angle_deg="0"   roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${w_prefix}" num="1" angle_deg="40"  roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${w_prefix}" num="2" angle_deg="80"  roller_type="${roller_type}"/>
@@ -95,11 +83,12 @@
     <xacro:barrel wheel_prefix="${w_prefix}" num="8" angle_deg="320" roller_type="${roller_type}"/>
   </xacro:macro>
 
-  <!-- Section 4: 4 Wheels (O-Pattern) -->
-  <xacro:ultimate_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="1"/>
-  <xacro:ultimate_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="-1"/>
-  <xacro:ultimate_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="-1"/>
-  <xacro:ultimate_mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" roller_type="1"/>
+  <!-- Section 4: "True-X" Configuration (Visual X from top) -->
+  <!-- FL/RR: Reversed Tilt (-1), FR/RL: Standard Tilt (1) -->
+  <xacro:ultimate_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="-1"/>
+  <xacro:ultimate_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="1"/>
+  <xacro:ultimate_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="1"/>
+  <xacro:ultimate_mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" roller_type="-1"/>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
