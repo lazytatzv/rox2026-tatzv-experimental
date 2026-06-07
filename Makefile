@@ -1,6 +1,8 @@
 # ROX2026 Tatzv Experimental - Master Makefile
 # "The Strongest Way to Control Your Robot"
 
+SHELL := /bin/bash
+
 .PHONY: build up down shell colcon launch virtual format clean help
 
 # Determine if we are running inside the Docker container

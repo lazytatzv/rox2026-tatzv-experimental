@@ -1,6 +1,8 @@
 # Copyright 2026 Tatsukiyano
 # ROS 2 Workspace Internal Makefile
 
+SHELL := /bin/bash
+
 .PHONY: build test clean launch virtual help
 
 build: ## [OPTIMIZED] Build all packages
