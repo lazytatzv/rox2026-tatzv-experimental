@@ -12,11 +12,11 @@ class ZeroTwistNode : public rclcpp::Node {
 public:
   ZeroTwistNode() : Node("zero_twist_node") {
     publisher_ = this->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel_idle", 10);
-    timer_ = this->create_wall_timer(50ms, [this]() {
+    timer_ = this->create_wall_timer(20ms, [this]() {
       auto msg = std::make_unique<geometry_msgs::msg::Twist>();
       publisher_->publish(std::move(msg));
     });
-    RCLCPP_INFO(this->get_logger(), "Zero Twist Baseline active at 20Hz");
+    RCLCPP_INFO(this->get_logger(), "Zero Twist Baseline active at 50Hz");
   }
 private:
   rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_;
