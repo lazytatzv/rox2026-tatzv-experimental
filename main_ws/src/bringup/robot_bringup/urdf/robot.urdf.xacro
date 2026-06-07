@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <robot name="lazytatzv_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- --- 1. Properties --- -->
-  <xacro:property name="base_mass" value="15.0"/>
+  <!-- --- 1. Properties (20kg Industrial Grade) --- -->
+  <xacro:property name="base_mass" value="16.0"/>
   <xacro:property name="wheel_mass" value="1.0"/>
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width" value="0.04"/>
-  <xacro:property name="wheel_base" value="0.24"/>    <!-- Distance between front/rear axles -->
-  <xacro:property name="wheel_sep" value="0.30"/>     <!-- Distance between left/right wheels -->
+  <xacro:property name="wheel_base" value="0.24"/>
+  <xacro:property name="wheel_sep" value="0.30"/>
 
   <material name="blue"><color rgba="0 0 0.8 1"/></material>
   <material name="red"><color rgba="1 0 0 1"/></material>
@@ -23,6 +23,10 @@
       <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.4" iyz="0" izz="0.5"/>
     </inertial>
     <visual><geometry><box size="0.35 0.25 0.1"/></geometry><material name="blue"/></visual>
+    <visual>
+        <origin xyz="0.175 0 0.05" rpy="0 0 0"/>
+        <geometry><box size="0.05 0.05 0.05"/></geometry><material name="red"/>
+    </visual>
     <collision><geometry><box size="0.35 0.25 0.1"/></geometry></collision>
   </link>
 
@@ -31,8 +35,8 @@
     <origin xyz="0 0 0.08" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheel Macro -->
-  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign fdir">
+  <!-- Wheel Macro - Simplified for Plugin Control -->
+  <xacro:macro name="mecanum_wheel" params="side position x_sign y_sign">
     <link name="${side}_${position}_wheel">
       <inertial>
         <mass value="${wheel_mass}"/>
@@ -43,7 +47,6 @@
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
-      <!-- PRO TIP: Use SPHERE for collision to ensure smooth mecanum sliding -->
       <collision>
         <origin xyz="0 0 0" rpy="1.57 0 0"/>
         <geometry><sphere radius="${wheel_radius}"/></geometry>
@@ -58,20 +61,17 @@
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
-      <mu1>0.0</mu1>
-      <mu2>1.0</mu2>
-      <fdir1>${fdir}</fdir1>
+      <mu1>0.5</mu1><mu2>0.5</mu2>
       <self_collide>false</self_collide>
     </gazebo>
   </xacro:macro>
 
-  <!-- Instantiate Wheels with exact 45-degree friction vectors -->
-  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  fdir="1 1 0"/>
-  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" fdir="1 -1 0"/>
-  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  fdir="1 -1 0"/>
-  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" fdir="1 1 0"/>
+  <xacro:mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"/>
+  <xacro:mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1"/>
+  <xacro:mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"/>
+  <xacro:mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1"/>
 
-  <!-- --- 3. Gazebo Plugins --- -->
+  <!-- --- 3. Gazebo Plugins (PRO CONFIG) --- -->
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
       <front_left_joint>front_left_wheel_joint</front_left_joint>
@@ -86,8 +86,10 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <max_wheel_torque>200.0</max_wheel_torque>
+      <max_wheel_torque>50.0</max_wheel_torque>
+      <max_wheel_velocity>10.0</max_wheel_velocity>
     </plugin>
+
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
     </plugin>
