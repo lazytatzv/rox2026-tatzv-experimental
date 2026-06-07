@@ -16,8 +16,8 @@
     joy_button_joy_mode_on: 8     # Create (Select)
 
     # Sensitivities
-    scale_linear_velocity: 1.0    # Balanced for 20kg robot
-    scale_angular_velocity: 0.8   # Controllable rotation speed
+    scale_linear_velocity: 1.0
+    scale_angular_velocity: 0.5   # Pro-tuned for stability
     smoothing_factor: 0.3
 
     # Topics
