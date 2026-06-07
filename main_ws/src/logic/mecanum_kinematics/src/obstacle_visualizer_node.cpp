@@ -18,8 +18,8 @@ private:
   void publish_markers() {
     visualization_msgs::msg::MarkerArray array;
 
-    // Stone 1 (Box)
-    array.markers.push_back(make_marker(0, 1.0, 0.5, 0.05, 0.1, 0.1, 0.1, 0.5, 0.5, 0.5, visualization_msgs::msg::Marker::CUBE));
+    // Stone 1 (Replaced by Big Red Wall)
+    array.markers.push_back(make_marker(0, 2.0, 0.0, 0.5, 0.1, 5.0, 1.0, 1.0, 0.0, 0.0, visualization_msgs::msg::Marker::CUBE));
     // Stone 2 (Sphere)
     array.markers.push_back(make_marker(1, 1.5, -0.3, 0.05, 0.16, 0.16, 0.16, 0.4, 0.4, 0.4, visualization_msgs::msg::Marker::SPHERE));
     // Step 1 (Thin Plate)
