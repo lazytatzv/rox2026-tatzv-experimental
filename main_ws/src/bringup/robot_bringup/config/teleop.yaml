@@ -17,8 +17,8 @@
 
     # Sensitivities
     scale_linear_velocity: 1.0
-    scale_angular_velocity: 1.0   # Snappy rotation
-    smoothing_factor: 1.0         # 1.0 means NO smoothing (instant response)
+    scale_angular_velocity: 0.4   # Precision tuned for EduLite 05
+    smoothing_factor: 1.0         # Snappy stop performance
 
     # Topics
     topic_joy: "joy"
