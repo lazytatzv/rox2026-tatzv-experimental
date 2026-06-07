@@ -1,10 +1,10 @@
 <?xml version="1.0"?>
 <robot name="nexus_mecanum_robstride" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Core Physical Specs -->
-  <xacro:property name="base_mass"    value="3.5"/> <!-- Robot Body + Battery -->
-  <xacro:property name="wheel_mass"   value="0.63"/> <!-- 400g Wheel + 230g EduLite 05 -->
-  <xacro:property name="wheel_radius" value="0.05"/> <!-- 100mm Diameter -->
+  <!-- Section 1: Core Physical Specs (Balanced for Simulation Stability) -->
+  <xacro:property name="base_mass"    value="10.0"/> <!-- Increased for better contact -->
+  <xacro:property name="wheel_mass"   value="1.0"/>
+  <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.05"/>
   <xacro:property name="wheel_base"   value="0.25"/>
   <xacro:property name="wheel_sep"    value="0.30"/>
@@ -18,9 +18,8 @@
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <mass value="${base_mass}"/>
-      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
+      <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.2" iyz="0" izz="1.0"/> <!-- Heavy Yaw Inertia -->
     </inertial>
-    <!-- Simple Box Body as requested -->
     <visual>
       <origin xyz="0 0 0.03" rpy="0 0 0"/>
       <geometry><box size="0.36 0.30 0.06"/></geometry>
@@ -37,19 +36,18 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Nexus 100mm Wheel Macro with Robstride EduLite 05 Power -->
+  <!-- PRO MACRO: High-Precision Friction & Damping -->
   <xacro:macro name="nexus_wheel" params="side position x_sign y_sign fdir">
     <link name="${side}_${position}_wheel">
       <inertial>
         <mass value="${wheel_mass}"/>
-        <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+        <inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/>
       </inertial>
       <visual>
         <origin xyz="0 0 0" rpy="1.57 0 0"/>
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
-      <!-- PRO STANDARD: Sphere collision for smooth strafing -->
       <collision>
         <geometry><sphere radius="${wheel_radius}"/></geometry>
       </collision>
@@ -60,12 +58,12 @@
       <child link="${side}_${position}_wheel"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <dynamics damping="0.05" friction="0.02"/>
+      <dynamics damping="0.5" friction="0.1"/> <!-- Professional Resistance -->
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
-        <!-- THE SECRET TO LATERAL MOVEMENT: Anisotropic Friction -->
-        <mu1>0.0</mu1><mu2>1.0</mu2>
+        <!-- THE SECRET: 0.05 is the minimum for numerical stability -->
+        <mu1>0.05</mu1><mu2>1.0</mu2>
         <fdir1>${fdir}</fdir1>
         <min_depth>0.001</min_depth>
     </gazebo>
@@ -90,9 +88,8 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- Robstride EduLite 05 @ 40V Power Profile -->
-      <max_wheel_torque>5.0</max_wheel_torque>
-      <max_wheel_velocity>40.0</max_wheel_velocity>
+      <max_wheel_torque>50.0</max_wheel_torque>
+      <max_wheel_velocity>30.0</max_wheel_velocity>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
