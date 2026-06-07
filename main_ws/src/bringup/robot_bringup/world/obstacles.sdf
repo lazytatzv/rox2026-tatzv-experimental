@@ -35,38 +35,36 @@
       </link>
     </model>
 
-    <!-- THE UNSTOPPABLE WALL (Non-static but 10 Tons) -->
+    <!-- THE ABSOLUTE WALL (Static & Hard) -->
     <model name="big_wall">
       <pose>2.0 0 0.5 0 0 0</pose>
+      <static>true</static>
       <link name="link">
-        <inertial>
-          <mass>10000.0</mass>
-          <inertia>
-            <ixx>1000</ixx><ixy>0</ixy><ixz>0</ixz>
-            <iyy>1000</iyy><iyz>0</iyz><izz>1000</izz>
-          </inertia>
-        </inertial>
         <collision name="c">
-          <geometry><box><size>0.5 5.0 1.0</size></box></geometry>
+          <geometry><box><size>1.0 10.0 2.0</size></box></geometry>
           <surface>
-            <contact><ode><min_depth>0.001</min_depth></ode></contact>
-            <friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction>
+            <contact>
+              <ode>
+                <kp>10000000.0</kp> <!-- Stiffness: Extreme -->
+                <kd>1.0</kd>          <!-- Damping -->
+              </ode>
+            </contact>
           </surface>
         </collision>
         <visual name="v">
-          <geometry><box><size>0.5 5.0 1.0</size></box></geometry>
+          <geometry><box><size>1.0 10.0 2.0</size></box></geometry>
           <material><diffuse>1 0 0 1</diffuse></material>
         </visual>
       </link>
     </model>
 
-    <!-- Physical Stones -->
-    <model name="stone_sphere">
-      <pose>1.0 -0.5 0.1 0 0 0</pose>
+    <!-- Test Stones (Dense and heavy) -->
+    <model name="stone_1">
+      <pose>1.0 0.5 0.1 0 0 0</pose>
       <link name="link">
-        <inertial><mass>1.0</mass></inertial>
-        <collision name="c"><geometry><sphere><radius>0.1</radius></sphere></geometry></collision>
-        <visual name="v"><geometry><sphere><radius>0.1</radius></sphere></geometry><material><diffuse>0.4 0.4 0.4 1</diffuse></material></visual>
+        <inertial><mass>5.0</mass></inertial>
+        <collision name="c"><geometry><box><size>0.2 0.2 0.2</size></box></geometry></collision>
+        <visual name="v"><geometry><box><size>0.2 0.2 0.2</size></box></geometry><material><diffuse>0.5 0.5 0.5 1</diffuse></material></visual>
       </link>
     </model>
 

@@ -6,7 +6,7 @@
   <material name="red"><color rgba="1 0 0 1"/></material>
   <material name="black"><color rgba="0 0 0 1"/></material>
 
-  <!-- Base Footprint -->
+  <!-- Base Footprint (The root, minimal physics) -->
   <link name="base_footprint">
     <inertial>
       <mass value="0.1"/>
@@ -14,12 +14,12 @@
     </inertial>
   </link>
 
-  <!-- Base Link (Heavy Body) -->
+  <!-- Base Link (The Physical Shell) -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="15.0"/>
-      <inertia ixx="0.1" ixy="0" ixz="0" iyy="0.2" iyz="0" izz="0.2"/>
+      <mass value="20.0"/> <!-- Heavier is better for stability -->
+      <inertia ixx="0.5" ixy="0" ixz="0" iyy="0.5" iyz="0" izz="0.5"/>
     </inertial>
     <visual>
       <geometry><box size="0.3 0.2 0.1"/></geometry>
@@ -28,7 +28,7 @@
     <collision>
       <geometry><box size="0.3 0.2 0.1"/></geometry>
       <surface>
-        <contact><ode><min_depth>0.005</min_depth></ode></contact>
+        <contact><ode><kp>1000000.0</kp><kd>1.0</kd><min_depth>0.001</min_depth></ode></contact>
       </surface>
     </collision>
   </link>
@@ -38,67 +38,56 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Wheels with High Grip -->
+  <!-- Wheels (High Grip Tires) -->
   <link name="front_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry>
-      <surface><friction><ode><mu>10.0</mu><mu2>10.0</mu2></ode></friction></surface>
-    </collision>
+    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="front_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_left_wheel"/>
     <origin xyz="0.12 0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.5" friction="0.5"/>
+    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="front_right_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry>
-      <surface><friction><ode><mu>10.0</mu><mu2>10.0</mu2></ode></friction></surface>
-    </collision>
+    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="front_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_right_wheel"/>
     <origin xyz="0.12 -0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.5" friction="0.5"/>
+    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="rear_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry>
-      <surface><friction><ode><mu>10.0</mu><mu2>10.0</mu2></ode></friction></surface>
-    </collision>
+    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="rear_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_left_wheel"/>
     <origin xyz="-0.12 0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.5" friction="0.5"/>
+    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
   <link name="rear_right_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
-    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry>
-      <surface><friction><ode><mu>10.0</mu><mu2>10.0</mu2></ode></friction></surface>
-    </collision>
+    <collision><geometry><cylinder radius="0.05" length="0.04"/></geometry></collision>
   </link>
   <joint name="rear_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_right_wheel"/>
     <origin xyz="-0.12 -0.10 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-    <dynamics damping="0.5" friction="0.5"/>
+    <dynamics damping="0.1" friction="0.1"/>
   </joint>
 
-  <!-- Gazebo Physics and Visuals -->
-  <gazebo reference="base_link">
-    <visual><material><ambient>0 0 0.8 1</ambient><diffuse>0 0 0.8 1</diffuse></material></visual>
-  </gazebo>
-  <gazebo reference="front_left_wheel"><mu1>10.0</mu1><mu2>10.0</mu2></gazebo>
-  <gazebo reference="front_right_wheel"><mu1>10.0</mu1><mu2>10.0</mu2></gazebo>
-  <gazebo reference="rear_left_wheel"><mu1>10.0</mu1><mu2>10.0</mu2></gazebo>
-  <gazebo reference="rear_right_wheel"><mu1>10.0</mu1><mu2>10.0</mu2></gazebo>
+  <!-- Gazebo System Overrides -->
+  <gazebo reference="front_left_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
+  <gazebo reference="front_right_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
+  <gazebo reference="rear_left_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
+  <gazebo reference="rear_right_wheel"><mu1>100.0</mu1><mu2>100.0</mu2></gazebo>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
