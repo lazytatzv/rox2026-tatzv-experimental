@@ -5,8 +5,8 @@
 
 # --- [ Docker Management ] ---
 
-build: ## Build the Docker image with BuildKit and JP mirrors
-	DOCKER_BUILDKIT=1 docker compose build
+build: ## Build the Docker image with host network for robust DNS resolution
+	DOCKER_BUILDKIT=1 docker compose build --build-arg ROS_DISTRO=jazzy
 
 up: ## Start the container in background
 	xhost +local:docker > /dev/null 2>&1 || true
