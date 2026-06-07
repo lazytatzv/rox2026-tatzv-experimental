@@ -9,7 +9,7 @@
   <!-- Base Footprint -->
   <link name="base_footprint"/>
 
-  <!-- Base Link (Solid 20kg body) -->
+  <!-- Base Link -->
   <link name="base_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -36,8 +36,6 @@
   </joint>
 
   <!-- Wheels - RE-ALIGNED FOR GAZEBO SIM STANDARD -->
-  <!-- Cylinder must be rotated 1.57 around X to stand up along Y axis -->
-  
   <link name="front_left_wheel">
     <inertial><mass value="1.0"/><inertia ixx="0.005" ixy="0" ixz="0" iyy="0.005" iyz="0" izz="0.005"/></inertial>
     <visual><origin xyz="0 0 0" rpy="1.57 0 0"/><geometry><cylinder radius="0.05" length="0.04"/></geometry><material name="black"/></visual>
@@ -46,7 +44,7 @@
   <joint name="front_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_left_wheel"/>
     <origin xyz="0.12 0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
-    <dynamics damping="1.0" friction="1.0"/>
+    <dynamics damping="0.05" friction="0.05"/> <!-- Low friction for maximum torque -->
   </joint>
 
   <link name="front_right_wheel">
@@ -57,7 +55,7 @@
   <joint name="front_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="front_right_wheel"/>
     <origin xyz="0.12 -0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
-    <dynamics damping="1.0" friction="1.0"/>
+    <dynamics damping="0.05" friction="0.05"/>
   </joint>
 
   <link name="rear_left_wheel">
@@ -68,7 +66,7 @@
   <joint name="rear_left_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_left_wheel"/>
     <origin xyz="-0.12 0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
-    <dynamics damping="1.0" friction="1.0"/>
+    <dynamics damping="0.05" friction="0.05"/>
   </joint>
 
   <link name="rear_right_wheel">
@@ -79,14 +77,16 @@
   <joint name="rear_right_wheel_joint" type="continuous">
     <parent link="base_link"/><child link="rear_right_wheel"/>
     <origin xyz="-0.12 -0.15 0" rpy="0 0 0"/><axis xyz="0 1 0"/>
-    <dynamics damping="1.0" friction="1.0"/>
+    <dynamics damping="0.05" friction="0.05"/>
   </joint>
 
-  <!-- Gazebo Physics - EXTREME GRIP for Ramps -->
-  <gazebo reference="front_left_wheel"><mu1>100.0</mu1><mu2>100.0</mu2><min_depth>0.001</min_depth></gazebo>
-  <gazebo reference="front_right_wheel"><mu1>100.0</mu1><mu2>100.0</mu2><min_depth>0.001</min_depth></gazebo>
-  <gazebo reference="rear_left_wheel"><mu1>100.0</mu1><mu2>100.0</mu2><min_depth>0.001</min_depth></gazebo>
-  <gazebo reference="rear_right_wheel"><mu1>100.0</mu1><mu2>100.0</mu2><min_depth>0.001</min_depth></gazebo>
+  <!-- Gazebo Physics - ANISOTROPIC FRICTION FOR PERFECT MECANUM -->
+  <!-- fdir1: 45 degree vector for rollers -->
+  <!-- mu1=0.1 (slide direction), mu2=10.0 (grip direction) -->
+  <gazebo reference="front_left_wheel"><mu1>0.1</mu1><mu2>10.0</mu2><fdir1>1 1 0</fdir1></gazebo>
+  <gazebo reference="front_right_wheel"><mu1>0.1</mu1><mu2>10.0</mu2><fdir1>1 -1 0</fdir1></gazebo>
+  <gazebo reference="rear_left_wheel"><mu1>0.1</mu1><mu2>10.0</mu2><fdir1>1 -1 0</fdir1></gazebo>
+  <gazebo reference="rear_right_wheel"><mu1>0.1</mu1><mu2>10.0</mu2><fdir1>1 1 0</fdir1></gazebo>
 
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
@@ -94,7 +94,6 @@
       <front_right_joint>front_right_wheel_joint</front_right_joint>
       <back_left_joint>rear_left_wheel_joint</back_left_joint>
       <back_right_joint>rear_right_wheel_joint</back_right_joint>
-      <!-- Perfect Symmetry Parameters -->
       <wheel_separation>0.30</wheel_separation>
       <wheel_base>0.24</wheel_base>
       <wheel_radius>0.05</wheel_radius>

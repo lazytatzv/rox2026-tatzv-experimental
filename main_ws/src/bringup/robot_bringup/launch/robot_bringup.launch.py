@@ -15,6 +15,9 @@ def launch_setup(context, *args, **kwargs):
     is_gazebo = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
     is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context)
+    
+    # Sim Time is mandatory for Gazebo
+    use_sim_time = is_gazebo
 
     paths = {
         "phys": os.path.join(pkg_bringup, "config", "physical.yaml"),
@@ -26,7 +29,7 @@ def launch_setup(context, *args, **kwargs):
     }
 
     if is_gazebo:
-        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (PRO-SYNC ACTIVE)")
+        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (SIM TIME SYNC ACTIVE)")
     else:
         print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
@@ -34,7 +37,6 @@ def launch_setup(context, *args, **kwargs):
 
     if is_gazebo:
         actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
-        
         gz_args = f"-r -v 1 {paths['world']}"
         if is_headless:
             gz_args = "-s " + gz_args
@@ -47,14 +49,13 @@ def launch_setup(context, *args, **kwargs):
         actions.append(Node(
             package='ros_gz_sim', executable='create',
             arguments=['-name', 'lazytatzv_robot', '-file', paths["urdf"]],
-            output='screen'
+            parameters=[{'use_sim_time': True}], output='screen'
         ))
 
-        # PRO WAY: Use YAML config for bridge
         actions.append(Node(
             package='ros_gz_bridge', executable='parameter_bridge',
             name='parameter_bridge',
-            parameters=[{'config_file': paths["bridge"]}],
+            parameters=[{'config_file': paths["bridge"], 'use_sim_time': True}],
             output='screen'
         ))
 
@@ -73,35 +74,26 @@ def launch_setup(context, *args, **kwargs):
         actions.append(ComposableNodeContainer(
             name="actuator_control_container", namespace="", package="rclcpp_components",
             executable="component_container", composable_node_descriptions=[
-                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::MecanumKinematicsNode", name="mecanum_kinematics_node", parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds"}]),
-                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::WheelSpeedsDispatcher", name="speed_dispatcher", namespace="hal", parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds"}]),
-                *[ComposableNode(package=m_pkg, plugin=m_plugin, name=side, namespace="motors", parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read"}]) for side in ["front_left", "front_right", "rear_left", "rear_right"]]
+                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::MecanumKinematicsNode", name="mecanum_kinematics_node", parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds", "use_sim_time": use_sim_time}]),
+                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::WheelSpeedsDispatcher", name="speed_dispatcher", namespace="hal", parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds", "use_sim_time": use_sim_time}]),
+                *[ComposableNode(package=m_pkg, plugin=m_plugin, name=side, namespace="motors", parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read", "use_sim_time": use_sim_time}]) for side in ["front_left", "front_right", "rear_left", "rear_right"]]
             ],
             output="screen",
         ))
 
-        actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0}]))
+        actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0, "use_sim_time": use_sim_time}]))
 
         if actuator_type != 'virtual':
-            actions.append(Node(package="serial_driver", executable="serial_bridge", name="serial_driver", parameters=[{"device_name": "/dev/ttyUSB1", "baud_rate": 921600, "flow_control": "none", "parity": "none", "stop_bits": "1"}], remappings=[("write", "/serial_write"), ("read", "/serial_read")], output="screen"))
+            actions.append(Node(package="serial_driver", executable="serial_bridge", name="serial_driver", parameters=[{"device_name": "/dev/ttyUSB1", "baud_rate": 921600, "flow_control": "none", "parity": "none", "stop_bits": "1", "use_sim_time": use_sim_time}], remappings=[("write", "/serial_write"), ("read", "/serial_read")], output="screen"))
 
+    # Core System Nodes (Always need sim_time sync in Gazebo)
     actions += [
-        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
-        Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node"),
-        Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"]]),
-        Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
-        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": open(paths["urdf"]).read(), "publish_frequency": 20.0}]),
+        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]),
+        Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node", parameters=[{"use_sim_time": use_sim_time}]),
+        Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]),
+        Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"], {"use_sim_time": use_sim_time}], remappings=[("cmd_vel_out", "/cmd_vel")]),
+        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": open(paths["urdf"]).read(), "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
     ]
-
-    # Optional Visualization
-    if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
-        try:
-            foxglove_pkg = get_package_share_directory("foxglove_bridge")
-            actions.append(IncludeLaunchDescription(
-                AnyLaunchDescriptionSource(os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml"))
-            ))
-        except Exception:
-            pass
 
     return actions
 
