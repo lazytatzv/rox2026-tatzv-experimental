@@ -26,7 +26,7 @@ void MecanumKinematicsNode::declare_parameters() {
   this->declare_parameter("half_length", 0.12);
   this->declare_parameter("half_width", 0.10);
   this->declare_parameter("wheel_radius", 0.05);
-  this->declare_parameter("watchdog_timeout", 0.5);
+  this->declare_parameter("watchdog_timeout", 1.0);
   this->declare_parameter("topic_cmd_vel", "cmd_vel");
   this->declare_parameter("topic_wheel_speeds", "wheel_speeds");
 }

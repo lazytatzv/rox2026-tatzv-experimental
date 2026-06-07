@@ -59,7 +59,7 @@ private:
   rclcpp::Time last_time_;
   rclcpp::Time last_command_time_;
   bool first_odom_ = true;
-  double watchdog_timeout_ = 0.5;
+  double watchdog_timeout_ = 1.0;
 
   std::string topic_cmd_vel_;
   std::string topic_wheel_speeds_;
