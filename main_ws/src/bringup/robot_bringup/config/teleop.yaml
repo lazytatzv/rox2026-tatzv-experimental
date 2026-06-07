@@ -17,8 +17,8 @@
 
     # Sensitivities
     scale_linear_velocity: 1.0
-    scale_angular_velocity: 0.5   # Pro-tuned for stability
-    smoothing_factor: 0.3
+    scale_angular_velocity: 0.3   # Reduced further for heavy-duty feel
+    smoothing_factor: 0.2         # More smoothing to prevent jitter
 
     # Topics
     topic_joy: "joy"
