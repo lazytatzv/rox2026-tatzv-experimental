@@ -1,9 +1,8 @@
-# rox2026
-ROX2026用レポジトリ
+# ROX2026 Tatzv Experimental
+The ultimate mecanum robot controller. Pure. Fast. Reliable.
 
-## Branch Rules
-
-- `main`への直接pushは禁止(PR only) <== Ruleset入れてあるので大会前に削除
-- Merge前にビルドチェックを行う
-- branchを必ず切って作業する
+## Quick Start
+1. xhost +local:docker
+2. docker compose up -d
+3. ros2 launch robot_bringup robot_bringup.launch.py
 
