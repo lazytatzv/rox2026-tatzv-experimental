@@ -26,6 +26,8 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-${ROS_DISTRO}-foxglove-bridge \
     ros-${ROS_DISTRO}-twist-mux \
     ros-${ROS_DISTRO}-joint-state-publisher \
+    ros-${ROS_DISTRO}-transport-drivers \
+    ros-${ROS_DISTRO}-serial-driver \
     black \
     && rm -rf /var/lib/apt/lists/*
 

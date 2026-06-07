@@ -5,6 +5,7 @@
 #include <cstring>
 #include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 
 namespace robstride_driver {
 
@@ -13,8 +14,8 @@ RobstrideCanNode::RobstrideCanNode(const rclcpp::NodeOptions& options)
   this->declare_parameter("motor_id", 0x01);
   this->declare_parameter("joint_name", "motor_joint");
   this->declare_parameter("invert_direction", false);
-  this->declare_parameter("topic_tx_queue", "/communication/tx_queue");
-  this->declare_parameter("topic_rx_queue", "/communication/rx_queue");
+  this->declare_parameter("topic_tx_queue", "/serial_write");
+  this->declare_parameter("topic_rx_queue", "/serial_read");
   this->declare_parameter("topic_velocity_command", "~/velocity_command");
 }
 
@@ -33,13 +34,13 @@ RobstrideCanNode::on_configure(const rclcpp_lifecycle::State &)
   auto sensor_qos = rclcpp::SensorDataQoS();
   auto command_qos = rclcpp::QoS(1).best_effort();
 
-  publisher_can_frames_ = this->create_publisher<seeed_usb_can_analyzer_driver::msg::CanFrame>(topic_tx_queue_, sensor_qos);
+  publisher_can_frames_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(topic_tx_queue_, sensor_qos);
   publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", telemetry_qos);
   
   subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     topic_velocity_command_, command_qos, std::bind(&RobstrideCanNode::velocity_callback, this, std::placeholders::_1));
 
-  subscription_can_rx_ = this->create_subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>(
+  subscription_can_rx_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
     topic_rx_queue_, sensor_qos, std::bind(&RobstrideCanNode::can_rx_callback, this, std::placeholders::_1));
 
   RCLCPP_INFO(get_logger(), "Configured motor 0x%02X (CAN)", motor_id_);
@@ -87,28 +88,39 @@ void RobstrideCanNode::velocity_callback(const std_msgs::msg::Float64MultiArray:
   double velocity_rad_s = message->data[0];
   if (invert_direction_) velocity_rad_s = -velocity_rad_s;
 
-  auto msg = std::make_unique<seeed_usb_can_analyzer_driver::msg::CanFrame>();
-  msg->id = 0x400 + motor_id_;
-  msg->extended = false;
-  msg->remote = false;
-  msg->dlc = 8;
+  // Manual packing of Seeed USB-CAN frame into UInt8MultiArray
+  // Standard Seeed Frame: [AA] [ID(4)] [EXT] [REMOTE] [DLC] [DATA(8)] [55]
+  auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
+  msg->data.resize(16);
+  msg->data[0] = 0xAA;
+  uint32_t id = 0x400 + motor_id_;
+  std::memcpy(&msg->data[1], &id, 4);
+  msg->data[5] = 0x00; // Standard
+  msg->data[6] = 0x00; // Data frame
+  msg->data[7] = 0x08; // DLC
   
   int32_t raw_vel = static_cast<int32_t>(velocity_rad_s * 1000.0);
-  std::memcpy(&msg->data[0], &raw_vel, 4);
+  std::memcpy(&msg->data[8], &raw_vel, 4);
+  msg->data[15] = 0x55;
 
   publisher_can_frames_->publish(std::move(msg));
 }
 
-void RobstrideCanNode::can_rx_callback(const seeed_usb_can_analyzer_driver::msg::CanFrame::SharedPtr message) {
+void RobstrideCanNode::can_rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message) {
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
-  if (message->id != static_cast<uint32_t>(0x500 + motor_id_)) return;
+  const auto& data = message->data;
+  if (data.size() < 16 || data[0] != 0xAA) return;
+
+  uint32_t id;
+  std::memcpy(&id, &data[1], 4);
+  if (id != static_cast<uint32_t>(0x500 + motor_id_)) return;
 
   int32_t pos_raw;
   int16_t vel_raw;
   int16_t tor_raw;
-  std::memcpy(&pos_raw, &message->data[0], 4);
-  std::memcpy(&vel_raw, &message->data[4], 2);
-  std::memcpy(&tor_raw, &message->data[6], 2);
+  std::memcpy(&pos_raw, &data[8], 4);
+  std::memcpy(&vel_raw, &data[12], 2);
+  std::memcpy(&tor_raw, &data[14], 2);
 
   double position = static_cast<double>(pos_raw) / 1000.0;
   double velocity = static_cast<double>(vel_raw) / 1000.0;

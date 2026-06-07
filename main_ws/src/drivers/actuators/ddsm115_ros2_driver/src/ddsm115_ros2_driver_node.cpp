@@ -7,6 +7,7 @@
 
 #include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 
 namespace ddsm115_ros2_driver {
 
@@ -15,8 +16,8 @@ DDSM115DriverNode::DDSM115DriverNode(const rclcpp::NodeOptions& options)
   this->declare_parameter("motor_id", 1);
   this->declare_parameter("joint_name", "motor_joint");
   this->declare_parameter("invert_direction", false);
-  this->declare_parameter("topic_tx_queue", "/communication/tx_queue");
-  this->declare_parameter("topic_rx_queue", "/communication/rx_queue");
+  this->declare_parameter("topic_tx_queue", "/serial_write");
+  this->declare_parameter("topic_rx_queue", "/serial_read");
   this->declare_parameter("topic_velocity_command", "~/velocity_command");
 }
 
@@ -35,7 +36,7 @@ DDSM115DriverNode::on_configure(const rclcpp_lifecycle::State&) {
   auto command_qos = rclcpp::QoS(1).best_effort();
 
   publisher_serial_frames_ =
-      this->create_publisher<robot_interfaces::msg::SerialFrame>(topic_tx_queue_, sensor_qos);
+      this->create_publisher<std_msgs::msg::UInt8MultiArray>(topic_tx_queue_, sensor_qos);
   publisher_joint_state_ =
       this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", telemetry_qos);
 
@@ -43,7 +44,7 @@ DDSM115DriverNode::on_configure(const rclcpp_lifecycle::State&) {
       topic_velocity_command_, command_qos,
       std::bind(&DDSM115DriverNode::velocity_callback, this, std::placeholders::_1));
 
-  subscription_serial_rx_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
+  subscription_serial_rx_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
       topic_rx_queue_, sensor_qos,
       std::bind(&DDSM115DriverNode::serial_rx_callback, this, std::placeholders::_1));
 
@@ -88,13 +89,11 @@ void DDSM115DriverNode::velocity_callback(const std_msgs::msg::Float64MultiArray
   double velocity_rad_s = message->data[0];
   if (invert_direction_) velocity_rad_s = -velocity_rad_s;
 
-  // DDSM specific RPM conversion
   double rpm = (velocity_rad_s * 60.0) / (2.0 * M_PI);
   int16_t rpm_i16 = static_cast<int16_t>(rpm);
 
-  auto frame = std::make_unique<robot_interfaces::msg::SerialFrame>();
-  // Correctly packing RPM value into DDSM command frame
-  frame->frame_data = {motor_id_,
+  auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
+  msg->data = {motor_id_,
                        0x64,
                        static_cast<uint8_t>((rpm_i16 >> 8) & 0xFF),
                        static_cast<uint8_t>(rpm_i16 & 0xFF),
@@ -104,12 +103,12 @@ void DDSM115DriverNode::velocity_callback(const std_msgs::msg::Float64MultiArray
                        0x00,
                        0x00,
                        0x00};
-  publisher_serial_frames_->publish(std::move(frame));
+  publisher_serial_frames_->publish(std::move(msg));
 }
 
-void DDSM115DriverNode::serial_rx_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message) {
+void DDSM115DriverNode::serial_rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message) {
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
-  const auto& data = message->frame_data;
+  const auto& data = message->data;
   if (data.size() < 10 || data[0] != motor_id_) return;
 
   auto joint_state = std::make_unique<sensor_msgs::msg::JointState>();

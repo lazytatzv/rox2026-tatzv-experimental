@@ -10,8 +10,8 @@
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "robot_interfaces/msg/serial_frame.hpp"
 #include "robstride_driver/at_protocol.hpp"
 
 namespace robstride_driver
@@ -39,7 +39,7 @@ public:
 
 private:
   void velocity_callback(const std_msgs::msg::Float64MultiArray::SharedPtr message);
-  void serial_rx_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message);
+  void serial_rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message);
   void send_enable_command();
   void send_disable_command();
 
@@ -55,7 +55,7 @@ private:
   std::string topic_velocity_command_;
   std::string joint_name_;
 
-  // Range parameters (Standard EL05 specs from senior's code)
+  // Range parameters
   double pos_min_ = -12.57;
   double pos_max_ = 12.57;
   double vel_min_ = -50.0;
@@ -65,10 +65,10 @@ private:
 
   // ROS components
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subscription_velocity_;
-  rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_rx_;
+  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscription_serial_rx_;
 
-  rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::SerialFrame>::SharedPtr
-    publisher_serial_frames_;
+  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::UInt8MultiArray>::SharedPtr
+    publisher_serial_tx_;
   rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr
     publisher_joint_state_;
 };

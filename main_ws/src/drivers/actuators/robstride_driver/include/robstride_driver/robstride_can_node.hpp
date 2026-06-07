@@ -10,8 +10,8 @@
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "lifecycle_msgs/msg/state.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 #include "sensor_msgs/msg/joint_state.hpp"
-#include "seeed_usb_can_analyzer_driver/msg/can_frame.hpp"
 
 namespace robstride_driver
 {
@@ -37,10 +37,7 @@ public:
 
 private:
   void velocity_callback(const std_msgs::msg::Float64MultiArray::SharedPtr message);
-  void can_rx_callback(const seeed_usb_can_analyzer_driver::msg::CanFrame::SharedPtr message);
-
-  double uint_to_float(uint16_t value, double low, double high);
-  uint16_t float_to_uint(double value, double low, double high);
+  void can_rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message);
 
   uint8_t motor_id_;
   std::string joint_name_;
@@ -54,9 +51,9 @@ private:
   double tor_min_ = -6.0, tor_max_ = 6.0;
 
   rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr subscription_velocity_;
-  rclcpp::Subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr subscription_can_rx_;
+  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscription_can_rx_;
 
-  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr
+  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::UInt8MultiArray>::SharedPtr
     publisher_can_frames_;
   rclcpp_lifecycle::LifecyclePublisher<sensor_msgs::msg::JointState>::SharedPtr
     publisher_joint_state_;

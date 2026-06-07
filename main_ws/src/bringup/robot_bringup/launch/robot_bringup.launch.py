@@ -35,10 +35,8 @@ def launch_setup(context, *args, **kwargs):
 
     # Build managed nodes list
     dynamic_managed_nodes = []
-    if actuator_type in ["at", "ddsm"]:
-        dynamic_managed_nodes.append("/communication/serial_gateway")
-    elif actuator_type == "can":
-        dynamic_managed_nodes.append("/communication/usb_can_analyzer")
+    # Note: serial_driver is not a lifecycle node by default, so we might not manage it here
+    # but we will keep it for compatibility if needed.
 
     for side in ["front_left", "front_right", "rear_left", "rear_right"]:
         dynamic_managed_nodes.append(f"/motors/{side}")
@@ -53,7 +51,7 @@ def launch_setup(context, *args, **kwargs):
     )
     total_managed_nodes = dynamic_managed_nodes + user_nodes
 
-    print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
+    print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()} (Using Standard Serial Driver)")
 
     # --- Setup Actuator Config ---
     if actuator_type == "at":
@@ -86,27 +84,6 @@ def launch_setup(context, *args, **kwargs):
         ),
     ]
 
-    if actuator_type in ["at", "ddsm"]:
-        control_nodes.append(
-            ComposableNode(
-                package="serial_gateway",
-                plugin="serial_gateway::SerialGateway",
-                name="serial_gateway",
-                namespace="communication",
-                parameters=[act_yaml],
-            )
-        )
-    elif actuator_type == "can":
-        control_nodes.append(
-            ComposableNode(
-                package="seeed_usb_can_analyzer_driver",
-                plugin="seeed_usb_can_analyzer_driver::UsbCanAnalyzerNode",
-                name="usb_can_analyzer",
-                namespace="communication",
-                parameters=[act_yaml],
-            )
-        )
-
     for side in ["front_left", "front_right", "rear_left", "rear_right"]:
         control_nodes.append(
             ComposableNode(
@@ -127,9 +104,30 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
+    # --- Standard Serial Driver (Replacement for SerialGateway) ---
+    # We use the official serial_driver_node from transport_drivers
+    serial_node = Node(
+        package="serial_driver",
+        executable="serial_driver_node",
+        name="serial_driver",
+        parameters=[{
+            "device_name": "/dev/ttyUSB1",
+            "baud_rate": 921600,
+            "flow_control": "none",
+            "parity": "none",
+            "stop_bits": "1"
+        }],
+        remappings=[
+            ("write", "/serial_write"),
+            ("read", "/serial_read"),
+        ],
+        output="screen"
+    )
+
     # --- Actions ---
     actions = [
         control_container,
+        serial_node,
         Node(
             package="nav2_lifecycle_manager",
             executable="lifecycle_manager",

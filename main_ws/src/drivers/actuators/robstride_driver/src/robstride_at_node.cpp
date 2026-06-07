@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 
 namespace robstride_driver {
 
@@ -15,8 +16,8 @@ RobstrideAtNode::RobstrideAtNode(const rclcpp::NodeOptions& options)
   this->declare_parameter("joint_name", "motor_joint");
   this->declare_parameter("invert_direction", false);
   this->declare_parameter("max_speed_limit_percentage", 50.0);
-  this->declare_parameter("topic_tx_queue", "/communication/tx_queue");
-  this->declare_parameter("topic_rx_queue", "/communication/rx_queue");
+  this->declare_parameter("topic_tx_queue", "/serial_write");
+  this->declare_parameter("topic_rx_queue", "/serial_read");
   this->declare_parameter("topic_velocity_command", "~/velocity_command");
 
   this->declare_parameter("position_min_rad", -12.57);
@@ -47,20 +48,18 @@ RobstrideAtNode::on_configure(const rclcpp_lifecycle::State &)
   double max_speed_percentage = this->get_parameter("max_speed_limit_percentage").as_double();
   max_at_command_delta_ = static_cast<int>(NEUTRAL_VELOCITY_VALUE * (max_speed_percentage / 100.0));
 
-  // --- QoS SYNCHRONIZATION ---
-  // JointState MUST be Reliable to work with standard tools (joint_state_publisher, etc.)
   auto telemetry_qos = rclcpp::SystemDefaultsQoS(); 
-  // Internal high-speed queues use Best Effort
   auto sensor_qos = rclcpp::SensorDataQoS();
   auto command_qos = rclcpp::QoS(1).best_effort();
 
-  publisher_serial_frames_ = this->create_publisher<robot_interfaces::msg::SerialFrame>(topic_tx_queue_, sensor_qos);
+  // Use std_msgs::msg::UInt8MultiArray for compatibility with standard serial_driver
+  publisher_serial_tx_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(topic_tx_queue_, sensor_qos);
   publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", telemetry_qos);
   
   subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     topic_velocity_command_, command_qos, std::bind(&RobstrideAtNode::velocity_callback, this, std::placeholders::_1));
 
-  subscription_serial_rx_ = this->create_subscription<robot_interfaces::msg::SerialFrame>(
+  subscription_serial_rx_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
     topic_rx_queue_, sensor_qos, std::bind(&RobstrideAtNode::serial_rx_callback, this, std::placeholders::_1));
 
   RCLCPP_INFO(get_logger(), "Configured motor 0x%02X", motor_id_);
@@ -70,10 +69,10 @@ RobstrideAtNode::on_configure(const rclcpp_lifecycle::State &)
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 RobstrideAtNode::on_activate(const rclcpp_lifecycle::State &)
 {
-  publisher_serial_frames_->on_activate();
+  publisher_serial_tx_->on_activate();
   publisher_joint_state_->on_activate();
   send_enable_command();
-  RCLCPP_INFO(get_logger(), "Activated & Motor Enabled");
+  RCLCPP_INFO(get_logger(), "Activated");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -81,27 +80,24 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 RobstrideAtNode::on_deactivate(const rclcpp_lifecycle::State &)
 {
   send_disable_command();
-  publisher_serial_frames_->on_deactivate();
+  publisher_serial_tx_->on_deactivate();
   publisher_joint_state_->on_deactivate();
-  RCLCPP_INFO(get_logger(), "Deactivated & Motor Disabled");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 RobstrideAtNode::on_cleanup(const rclcpp_lifecycle::State &)
 {
-  publisher_serial_frames_.reset();
+  publisher_serial_tx_.reset();
   publisher_joint_state_.reset();
   subscription_velocity_.reset();
   subscription_serial_rx_.reset();
-  RCLCPP_INFO(get_logger(), "Cleaned up");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 RobstrideAtNode::on_shutdown(const rclcpp_lifecycle::State &)
 {
-  RCLCPP_INFO(get_logger(), "Shutting down");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
@@ -111,27 +107,27 @@ double RobstrideAtNode::uint_to_float(uint16_t value, double low, double high) {
 }
 
 void RobstrideAtNode::send_enable_command() {
-  auto frame = std::make_unique<robot_interfaces::msg::SerialFrame>();
-  frame->frame_data = {
+  auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
+  msg->data = {
     FRAME_HEADER_A, FRAME_HEADER_T, CMD_BASIC_CONFIG,
     DEFAULT_SOURCE_ID_HI, DEFAULT_SOURCE_ID_LO, motor_id_,
     DATA_LEN_8_BYTES, 0x00, REG_ADDR_MOTOR_ENABLE,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     FRAME_FOOTER_CR, FRAME_FOOTER_LF
   };
-  publisher_serial_frames_->publish(std::move(frame));
+  publisher_serial_tx_->publish(std::move(msg));
 }
 
 void RobstrideAtNode::send_disable_command() {
-  auto frame = std::make_unique<robot_interfaces::msg::SerialFrame>();
-  frame->frame_data = {
+  auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
+  msg->data = {
     FRAME_HEADER_A, FRAME_HEADER_T, CMD_BASIC_CONFIG,
     DEFAULT_SOURCE_ID_HI, DEFAULT_SOURCE_ID_LO, motor_id_,
     DATA_LEN_8_BYTES, 0x00, REG_ADDR_MOTOR_ENABLE,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
     FRAME_FOOTER_CR, FRAME_FOOTER_LF
   };
-  publisher_serial_frames_->publish(std::move(frame));
+  publisher_serial_tx_->publish(std::move(msg));
 }
 
 void RobstrideAtNode::velocity_callback(const std_msgs::msg::Float64MultiArray::SharedPtr message) {
@@ -146,8 +142,8 @@ void RobstrideAtNode::velocity_callback(const std_msgs::msg::Float64MultiArray::
   uint16_t at_value = NEUTRAL_VELOCITY_VALUE + delta;
   uint8_t direction_flag = (at_value == NEUTRAL_VELOCITY_VALUE) ? DIR_STOP : DIR_ROTATING;
 
-  auto frame = std::make_unique<robot_interfaces::msg::SerialFrame>();
-  frame->frame_data = {
+  auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
+  msg->data = {
     FRAME_HEADER_A, FRAME_HEADER_T, CMD_DATA_STREAMING,
     DEFAULT_SOURCE_ID_HI, DEFAULT_SOURCE_ID_LO, motor_id_,
     DATA_LEN_8_BYTES, SPEED_CMD_INDICATOR, REG_ADDR_VELOCITY_CTRL,
@@ -156,12 +152,12 @@ void RobstrideAtNode::velocity_callback(const std_msgs::msg::Float64MultiArray::
     static_cast<uint8_t>(at_value & 0xFF),
     FRAME_FOOTER_CR, FRAME_FOOTER_LF
   };
-  publisher_serial_frames_->publish(std::move(frame));
+  publisher_serial_tx_->publish(std::move(msg));
 }
 
-void RobstrideAtNode::serial_rx_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message) {
+void RobstrideAtNode::serial_rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message) {
   if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
-  const auto& data = message->frame_data;
+  const auto& data = message->data;
   
   if (data.size() < 16) return;
   if (data[0] != FRAME_HEADER_A || data[1] != FRAME_HEADER_T) return;
