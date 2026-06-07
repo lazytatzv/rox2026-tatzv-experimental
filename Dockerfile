@@ -1,4 +1,4 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 # Flexible ROS 2 Distro selection
 ARG ROS_DISTRO=jazzy
 FROM ros:${ROS_DISTRO}-ros-base
