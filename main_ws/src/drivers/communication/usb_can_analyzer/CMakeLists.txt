@@ -1,4 +1,4 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 cmake_minimum_required(VERSION 3.14)
 project(seeed_usb_can_analyzer_driver)
 
