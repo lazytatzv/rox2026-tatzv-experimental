@@ -1,4 +1,4 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 # ROS 2 Workspace Internal Makefile
 
 .PHONY: build test clean help
