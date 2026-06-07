@@ -105,10 +105,10 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # --- Standard Serial Driver (Replacement for SerialGateway) ---
-    # We use the official serial_driver_node from transport_drivers
+    # We use the official serial_bridge from transport_drivers
     serial_node = Node(
         package="serial_driver",
-        executable="serial_driver_node",
+        executable="serial_bridge",
         name="serial_driver",
         parameters=[{
             "device_name": "/dev/ttyUSB1",
