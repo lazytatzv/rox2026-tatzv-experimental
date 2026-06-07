@@ -1,39 +1,58 @@
 <?xml version="1.0"?>
-<robot name="nexus_10011_robstride" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="nexus_10011" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Nexus 100mm + Robstride EduLite 05 Specs -->
-  <xacro:property name="base_mass"   value="3.5"/> <!-- Increased slightly for 40V Battery/Electronics -->
-  <xacro:property name="wheel_mass"  value="0.63"/> <!-- 400g wheel + 230g EduLite 05 -->
+  <!-- Section 1: Official Nexus 10011 Physical Specs -->
+  <xacro:property name="base_mass"   value="3.0"/>
+  <xacro:property name="wheel_mass"  value="0.3"/> 
   <xacro:property name="wheel_radius" value="0.05"/>
   <xacro:property name="wheel_width"  value="0.05"/>
   <xacro:property name="wheel_base"   value="0.25"/>
   <xacro:property name="wheel_sep"    value="0.30"/>
 
-  <material name="blue"><color rgba="0 0 0.8 1"/></material>
+  <!-- Materials -->
   <material name="nexus_yellow"><color rgba="1.0 0.8 0.0 1"/></material>
+  <material name="aluminum"><color rgba="0.8 0.8 0.8 1"/></material>
   <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
 
   <link name="base_footprint"/>
   
   <link name="base_link">
     <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
       <mass value="${base_mass}"/>
       <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
     </inertial>
-    <visual>
-      <origin xyz="0 0 0.05" rpy="0 0 0"/>
-      <geometry><box size="0.36 0.30 0.01"/></geometry>
-      <material name="nexus_yellow"/>
-    </visual>
+    
+    <!-- Lower Aluminum Plate -->
     <visual>
       <origin xyz="0 0 0.01" rpy="0 0 0"/>
       <geometry><box size="0.36 0.30 0.01"/></geometry>
       <material name="nexus_yellow"/>
     </visual>
+    
+    <!-- Upper Aluminum Plate -->
+    <visual>
+      <origin xyz="0 0 0.06" rpy="0 0 0"/>
+      <geometry><box size="0.36 0.30 0.01"/></geometry>
+      <material name="nexus_yellow"/>
+    </visual>
+
+    <!-- Support Pillars (Four corners) -->
+    <visual><origin xyz="0.15 0.12 0.035"/><geometry><cylinder radius="0.01" length="0.04"/></geometry><material name="aluminum"/></visual>
+    <visual><origin xyz="-0.15 0.12 0.035"/><geometry><cylinder radius="0.01" length="0.04"/></geometry><material name="aluminum"/></visual>
+    <visual><origin xyz="0.15 -0.12 0.035"/><geometry><cylinder radius="0.01" length="0.04"/></geometry><material name="aluminum"/></visual>
+    <visual><origin xyz="-0.15 -0.12 0.035"/><geometry><cylinder radius="0.01" length="0.04"/></geometry><material name="aluminum"/></visual>
+
+    <!-- Central Electronics/Battery Block (Mass Center) -->
+    <visual>
+      <origin xyz="0 0 0.03" rpy="0 0 0"/>
+      <geometry><box size="0.15 0.15 0.03"/></geometry>
+      <material name="black"/>
+    </visual>
+
     <collision>
       <origin xyz="0 0 0.03" rpy="0 0 0"/>
-      <geometry><box size="0.36 0.30 0.05"/></geometry>
+      <geometry><box size="0.36 0.30 0.06"/></geometry>
     </collision>
   </link>
 
@@ -42,18 +61,26 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
-  <!-- Robstride Powered Wheel Macro -->
+  <!-- Nexus Wheel Macro: Specialized Physics + Aesthetics -->
   <xacro:macro name="nexus_wheel" params="side position x_sign y_sign fdir">
     <link name="${side}_${position}_wheel">
       <inertial>
         <mass value="${wheel_mass}"/>
         <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
       </inertial>
+      <!-- Main Tire visual -->
       <visual>
         <origin xyz="0 0 0" rpy="1.57 0 0"/>
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
+      <!-- Rim visual (Aluminum center) -->
+      <visual>
+        <origin xyz="0 0 0" rpy="1.57 0 0"/>
+        <geometry><cylinder radius="0.03" length="0.051"/></geometry>
+        <material name="aluminum"/>
+      </visual>
+      <!-- Point Contact Sphere for smooth 3-axis travel -->
       <collision>
         <geometry><sphere radius="${wheel_radius}"/></geometry>
       </collision>
@@ -64,7 +91,7 @@
       <child link="${side}_${position}_wheel"/>
       <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <dynamics damping="0.05" friction="0.02"/> <!-- EduLite 05 Low-friction dynamics -->
+      <dynamics damping="0.05" friction="0.02"/>
     </joint>
 
     <gazebo reference="${side}_${position}_wheel">
@@ -93,9 +120,7 @@
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
-      <!-- Robstride EduLite 05 @ 40V: High Torque & Speed -->
-      <max_wheel_torque>5.0</max_wheel_torque>
-      <max_wheel_velocity>40.0</max_wheel_velocity>
+      <max_wheel_torque>20.0</max_wheel_torque>
     </plugin>
     <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
       <topic>/joint_states</topic>
