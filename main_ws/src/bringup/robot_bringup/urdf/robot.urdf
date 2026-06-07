@@ -99,6 +99,7 @@
       <back_left_joint>rear_left_wheel_joint</back_left_joint>
       <back_right_joint>rear_right_wheel_joint</back_right_joint>
       <wheel_separation>0.20</wheel_separation>
+      <wheel_base>0.24</wheel_base>
       <wheel_radius>0.05</wheel_radius>
       <topic>/cmd_vel</topic>
       <odom_topic>/odom</odom_topic>

@@ -16,30 +16,26 @@ def launch_setup(context, *args, **kwargs):
     is_gazebo = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
     is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context)
-    use_foxglove = LaunchConfiguration("use_foxglove")
 
-    # Configuration paths
     paths = {
         "phys": os.path.join(pkg_bringup, "config", "physical.yaml"),
         "mux": os.path.join(pkg_bringup, "config", "twist_mux.yaml"),
         "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
         "urdf": os.path.join(pkg_bringup, "urdf", "robot.urdf"),
+        "world": os.path.join(pkg_bringup, "world", "obstacles.sdf"),
     }
 
     if is_gazebo:
-        print(f"\n[MASTER LAUNCH] Mode: GAZEBO (High-Fidelity Physics)")
+        print(f"\n[MASTER LAUNCH] Mode: GAZEBO")
     else:
         print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
 
     actions = []
 
-    # --- 1. Gazebo Simulation Mode ---
     if is_gazebo:
         actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
         
-        world_path = os.path.join(pkg_bringup, "world", "obstacles.sdf")
-        print(f"[SIM] Loading Obstacle World: {world_path}")
-        gz_args = f"-r -v 1 {world_path}"
+        gz_args = f"-r -v 1 {paths['world']}"
         if is_headless:
             gz_args = "-s " + gz_args
 
@@ -54,35 +50,26 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         ))
 
-        # Strict Unidirectional Bridges to prevent multiple channel conflicts
+        # Re-written bridge with standard @ type mapping for maximum compatibility
         actions.append(Node(
             package='ros_gz_bridge', executable='parameter_bridge',
+            name='parameter_bridge',
             arguments=[
-                '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',    # ROS -> GZ
-                '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',     # GZ -> ROS
-                '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',        # GZ -> ROS
-                '/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock'      # GZ -> ROS
+                '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
+                '/odom@nav_msgs/msg/Odometry@gz.msgs.Odometry',
+                '/tf@tf2_msgs/msg/TFMessage@gz.msgs.Pose_V',
+                '/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock'
             ],
             output='screen'
         ))
 
-        # Vision: Broadcast Gazebo obstacles as ROS Markers
         actions.append(Node(
             package='mecanum_kinematics', executable='obstacle_visualizer_node',
             name='obstacle_visualizer', output='screen'
         ))
 
-    # --- 2. ROS 2 Actuator/Logic Mode (Non-Gazebo) ---
     else:
-        # Build managed nodes list
-        managed_nodes = [
-            "/hal/speed_dispatcher",
-            "/mecanum_kinematics_node",
-            "/motors/front_left",
-            "/motors/front_right",
-            "/motors/rear_left",
-            "/motors/rear_right"
-        ]
+        managed_nodes = ["/hal/speed_dispatcher", "/mecanum_kinematics_node", "/motors/front_left", "/motors/front_right", "/motors/rear_left", "/motors/rear_right"]
         
         if actuator_type == "at" or actuator_type == "virtual":
             m_pkg, m_plugin = "robstride_driver", "robstride_driver::RobstrideAtNode"
@@ -93,76 +80,28 @@ def launch_setup(context, *args, **kwargs):
             m_pkg, m_plugin = "ddsm115_ros2_driver", "ddsm115_ros2_driver::DDSM115DriverNode"
             act_yaml = os.path.join(pkg_bringup, "config", "actuators_ddsm.yaml")
 
-        control_nodes = [
-            ComposableNode(
-                package="mecanum_kinematics",
-                plugin="mecanum_kinematics::MecanumKinematicsNode",
-                name="mecanum_kinematics_node",
-                parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds"}],
-            ),
-            ComposableNode(
-                package="mecanum_kinematics",
-                plugin="mecanum_kinematics::WheelSpeedsDispatcher",
-                name="speed_dispatcher",
-                namespace="hal",
-                parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds"}],
-            ),
-        ]
-
-        for side in ["front_left", "front_right", "rear_left", "rear_right"]:
-            control_nodes.append(
-                ComposableNode(
-                    package=m_pkg, plugin=m_plugin, name=side, namespace="motors",
-                    parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read"}],
-                )
-            )
-
         actions.append(ComposableNodeContainer(
             name="actuator_control_container", namespace="", package="rclcpp_components",
-            executable="component_container", composable_node_descriptions=control_nodes,
+            executable="component_container", composable_node_descriptions=[
+                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::MecanumKinematicsNode", name="mecanum_kinematics_node", parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds"}]),
+                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::WheelSpeedsDispatcher", name="speed_dispatcher", namespace="hal", parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds"}]),
+                *[ComposableNode(package=m_pkg, plugin=m_plugin, name=side, namespace="motors", parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read"}]) for side in ["front_left", "front_right", "rear_left", "rear_right"]]
+            ],
             output="screen",
         ))
 
-        actions.append(Node(
-            package="nav2_lifecycle_manager", executable="lifecycle_manager",
-            name="lifecycle_manager_robot",
-            parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0}],
-        ))
+        actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0}]))
 
         if actuator_type != 'virtual':
-            actions.append(Node(
-                package="serial_driver", executable="serial_bridge", name="serial_driver",
-                parameters=[{
-                    "device_name": "/dev/ttyUSB1", "baud_rate": 921600,
-                    "flow_control": "none", "parity": "none", "stop_bits": "1"
-                }],
-                remappings=[("write", "/serial_write"), ("read", "/serial_read")],
-                output="screen"
-            ))
+            actions.append(Node(package="serial_driver", executable="serial_bridge", name="serial_driver", parameters=[{"device_name": "/dev/ttyUSB1", "baud_rate": 921600, "flow_control": "none", "parity": "none", "stop_bits": "1"}], remappings=[("write", "/serial_write"), ("read", "/serial_read")], output="screen"))
 
-    # --- 3. Base UI & System (Always Active) ---
     actions += [
         Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
         Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node"),
         Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"]]),
-        Node(package="twist_mux", executable="twist_mux", name="twist_mux", 
-             parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
-        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher",
-            parameters=[{
-                "robot_description": open(paths["urdf"]).read(),
-                "publish_frequency": 20.0  # Constant re-broadcast
-            }]),
+        Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"]], remappings=[("cmd_vel_out", "/cmd_vel")]),
+        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": open(paths["urdf"]).read(), "publish_frequency": 20.0}]),
     ]
-
-    # Optional Visualization
-    if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
-        try:
-            foxglove_pkg = get_package_share_directory("foxglove_bridge")
-            actions.append(IncludeLaunchDescription(
-                AnyLaunchDescriptionSource(os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml"))
-            ))
-        except Exception:
-            pass
 
     return actions
 
