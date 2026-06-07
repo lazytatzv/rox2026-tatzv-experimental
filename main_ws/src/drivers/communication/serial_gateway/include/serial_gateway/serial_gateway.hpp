@@ -1,51 +1,55 @@
 // Copyright 2026 Tatsukiyano
+//
+// Licensed under the MIT License;
+// you may not use this file except in compliance with the License.
 
 #ifndef SERIAL_GATEWAY__SERIAL_GATEWAY_HPP_
 #define SERIAL_GATEWAY__SERIAL_GATEWAY_HPP_
 
 #include <boost/asio.hpp>
-#include <thread>
+
 #include <atomic>
 #include <memory>
 #include <string>
+#include <thread>
+#include <vector>
 
+#include "diagnostic_updater/diagnostic_updater.hpp"
+#include "lifecycle_msgs/msg/state.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
-#include "lifecycle_msgs/msg/state.hpp"
-#include "diagnostic_updater/diagnostic_updater.hpp"
 #include "robot_interfaces/msg/serial_frame.hpp"
 
-namespace serial_gateway
-{
+namespace serial_gateway {
 
 class SerialGateway : public rclcpp_lifecycle::LifecycleNode {
-public:
-  explicit SerialGateway(const rclcpp::NodeOptions & options);
+ public:
+  explicit SerialGateway(const rclcpp::NodeOptions& options);
   virtual ~SerialGateway();
 
-  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_configure(const rclcpp_lifecycle::State & state) override;
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_configure(
+      const rclcpp_lifecycle::State& state) override;
 
-  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_activate(const rclcpp_lifecycle::State & state) override;
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_activate(
+      const rclcpp_lifecycle::State& state) override;
 
-  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_deactivate(const rclcpp_lifecycle::State & state) override;
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_deactivate(
+      const rclcpp_lifecycle::State& state) override;
 
-  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_cleanup(const rclcpp_lifecycle::State & state) override;
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_cleanup(
+      const rclcpp_lifecycle::State& state) override;
 
-  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-  on_shutdown(const rclcpp_lifecycle::State & state) override;
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn on_shutdown(
+      const rclcpp_lifecycle::State& state) override;
 
-private:
+ private:
   void serial_frame_callback(const robot_interfaces::msg::SerialFrame::SharedPtr message);
   bool init_serial_port();
   void start_async_read();
   void try_reconnect();
 
   // Diagnostics
-  void produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  void produce_diagnostics(diagnostic_updater::DiagnosticStatusWrapper& stat);
 
   // Boost.Asio components
   std::unique_ptr<boost::asio::io_context> io_context_;
@@ -65,7 +69,7 @@ private:
 
   rclcpp::Subscription<robot_interfaces::msg::SerialFrame>::SharedPtr subscription_serial_frames_;
   rclcpp_lifecycle::LifecyclePublisher<robot_interfaces::msg::SerialFrame>::SharedPtr
-    publisher_rx_frames_;
+      publisher_rx_frames_;
 };
 
 }  // namespace serial_gateway
