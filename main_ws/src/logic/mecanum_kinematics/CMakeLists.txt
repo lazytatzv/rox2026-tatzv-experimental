@@ -69,10 +69,14 @@ rclcpp_components_register_node(mecanum_kinematics_component
 add_executable(zero_twist_node src/zero_twist_node.cpp)
 ament_target_dependencies(zero_twist_node rclcpp geometry_msgs)
 
+add_executable(odom_to_tf_node src/odom_to_tf_node.cpp)
+ament_target_dependencies(odom_to_tf_node rclcpp nav_msgs tf2_ros)
+
 install(TARGETS
   mecanum_kinematics_component
   mecanum_kinematics_kinematics
   zero_twist_node
+  odom_to_tf_node
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

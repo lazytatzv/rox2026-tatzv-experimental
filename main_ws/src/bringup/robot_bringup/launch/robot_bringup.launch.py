@@ -63,6 +63,13 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         ))
 
+        # TF Bridge: Convert Odom Message to Odom TF without flickering
+        actions.append(Node(
+            package='mecanum_kinematics', executable='odom_to_tf_node',
+            name='odom_to_tf_bridge', parameters=[{'use_sim_time': True}],
+            output='screen'
+        ))
+
     else:
         managed_nodes = ["/hal/speed_dispatcher", "/mecanum_kinematics_node", "/motors/front_left", "/motors/front_right", "/motors/rear_left", "/motors/rear_right"]
         
