@@ -16,9 +16,10 @@ twist_mux:
         timeout: 0.5
         priority: 5
       # Baseline signal to ensure robot stops when no one is talking
+      # timeout: 0.0 means this source NEVER expires, providing a perfect floor.
       idle:
         topic: "cmd_vel_idle"
-        timeout: 1.0
+        timeout: 0.0
         priority: 1
 
     locks:
