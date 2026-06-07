@@ -24,10 +24,3 @@
   ros_type_name: "rosgraph_msgs/msg/Clock"
   gz_type_name: "gz.msgs.Clock"
   direction: GZ_TO_ROS
-
-# Dynamic Scene Integration (The Magic)
-- ros_topic_name: "/gz_scene"
-  gz_topic_name: "/world/obstacle_world/scene/info"
-  ros_type_name: "ros_gz_interfaces/msg/Scene"
-  gz_type_name: "gz.msgs.Scene"
-  direction: GZ_TO_ROS
