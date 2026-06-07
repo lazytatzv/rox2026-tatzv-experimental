@@ -2,7 +2,7 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, SetEnvironmentVariable
 from launch.launch_description_sources import AnyLaunchDescriptionSource, PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch.conditions import IfCondition, UnlessCondition
@@ -15,6 +15,7 @@ def launch_setup(context, *args, **kwargs):
 
     # Resolve arguments
     is_gazebo = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
+    is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context)
     use_foxglove = LaunchConfiguration("use_foxglove")
     use_rviz = LaunchConfiguration("use_rviz")
@@ -36,12 +37,23 @@ def launch_setup(context, *args, **kwargs):
     # --- 1. Gazebo Specific Actions ---
     gazebo_actions = []
     if is_gazebo:
-        # Launch Gazebo Sim (Empty World)
+        # Force Gazebo to use loopback for transport in Docker
+        gazebo_actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
+
+        # Define gz_args with verbosity and headless mode
+        gz_args = "-r -v 4 empty.sdf"
+        if is_headless:
+            gz_args = "-s " + gz_args
+            print("[SIM] Running Gazebo in HEADLESS mode (Server only)")
+        else:
+            print("[SIM] Running Gazebo with GUI enabled")
+
+        # Launch Gazebo Sim
         gazebo_actions.append(IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(pkg_ros_gz_sim, "launch", "gz_sim.launch.py")
             ),
-            launch_arguments={'gz_args': '-r empty.sdf'}.items(),
+            launch_arguments={'gz_args': gz_args}.items(),
         ))
 
         # Spawn Robot
@@ -91,7 +103,6 @@ def launch_setup(context, *args, **kwargs):
 
     # --- 3. Managed Nodes (Only for Non-Gazebo modes) ---
     if not is_gazebo:
-        # Build managed nodes list
         managed_nodes = [
             "/hal/speed_dispatcher",
             "/mecanum_kinematics_node",
@@ -101,7 +112,6 @@ def launch_setup(context, *args, **kwargs):
             "/motors/rear_right"
         ]
         
-        # Setup Actuator Config
         if actuator_type == "at" or actuator_type == "virtual":
             m_pkg, m_plugin = "robstride_driver", "robstride_driver::RobstrideAtNode"
             if actuator_type == "virtual":
@@ -154,7 +164,6 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0}],
         ))
 
-        # Standard Serial Driver (Only if AT or DDSM)
         if actuator_type != 'virtual':
             actions.append(Node(
                 package="serial_driver",
@@ -171,7 +180,6 @@ def launch_setup(context, *args, **kwargs):
                 output="screen"
             ))
 
-    # Optional Visualization
     if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
         try:
             foxglove_pkg = get_package_share_directory("foxglove_bridge")
@@ -189,6 +197,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("actuator_type", default_value="at"),
         DeclareLaunchArgument("gazebo", default_value="false"),
+        DeclareLaunchArgument("headless", default_value="true"),
         DeclareLaunchArgument("use_foxglove", default_value="true"),
         DeclareLaunchArgument("use_rviz", default_value="false"),
         OpaqueFunction(function=launch_setup),

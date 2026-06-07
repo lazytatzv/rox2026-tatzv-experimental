@@ -44,8 +44,11 @@ launch: ## Launch the robot in physical mode
 virtual: ## Launch the robot in Virtual Mode for testing
 	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
 
-sim: ## [EXPERIMENTAL] Launch Gazebo physical simulation
-	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true"
+sim: ## [EXPERIMENTAL] Launch Gazebo physical simulation (Headless)
+	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true"
+
+sim-gui: ## [EXPERIMENTAL] Launch Gazebo physical simulation with GUI
+	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false"
 
 # --- [ Utility & Maintenance ] ---
 
