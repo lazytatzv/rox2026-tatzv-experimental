@@ -20,13 +20,13 @@ shell: ## Enter the running container
 # --- [ ROS 2 Operations ] ---
 
 colcon: ## Build the workspace inside Docker
-	docker compose exec ros2_rox2026 bash -c "colcon build --symlink-install --parallel-workers 2"
+	docker compose exec ros2_rox2026 bash -c "cd main_ws && colcon build --symlink-install --parallel-workers 2"
 
 launch: ## Launch the robot in physical mode (Defaults to physical.yaml setting)
-	docker compose exec ros2_rox2026 bash -c "source install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
+	docker compose exec ros2_rox2026 bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
 
 virtual: ## Launch the robot in Virtual Mode for testing
-	docker compose exec ros2_rox2026 bash -c "source install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
+	docker compose exec ros2_rox2026 bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
 
 # --- [ Utility & Maintenance ] ---
 

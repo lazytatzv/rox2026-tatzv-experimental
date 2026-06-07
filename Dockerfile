@@ -19,7 +19,7 @@ RUN sed -i 's@http://archive.ubuntu.com@http://jp.archive.ubuntu.com@g' /etc/apt
 
 # --- 2. Environment Configuration (Stable Layer) ---
 ENV DEBIAN_FRONTEND=noninteractive
-ENV WORKSPACE=/root/lazytatzv_ws
+ENV WORKSPACE=/root/lazytatzv_ws/main_ws
 ENV CCACHE_DIR=/root/.ccache
 WORKDIR $WORKSPACE
 

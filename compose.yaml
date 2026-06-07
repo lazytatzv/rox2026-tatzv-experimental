@@ -14,7 +14,7 @@ services:
     environment:
       ROS_DOMAIN_ID: "0"
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
-      FASTRTPS_DEFAULT_PROFILES_FILE: /root/lazytatzv_ws/src/bringup/robot_bringup/config/fastdds_config.xml
+      FASTRTPS_DEFAULT_PROFILES_FILE: /root/lazytatzv_ws/main_ws/src/bringup/robot_bringup/config/fastdds_config.xml
       DEBIAN_FRONTEND: noninteractive
       # GUI Support
       DISPLAY: ${DISPLAY:-:0}
