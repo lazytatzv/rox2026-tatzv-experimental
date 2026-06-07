@@ -34,16 +34,7 @@ shell: ## Enter the running container
 # --- [ ROS 2 Operations - CONTEXT AWARE ] ---
 
 colcon: ## [OPTIMIZED] Build the workspace
-	$(EXEC_PREFIX) bash -c "\
-		cd main_ws && \
-		colcon build \
-			--symlink-install \
-			--parallel-workers $$(nproc || echo 2) \
-			--cmake-args \
-				-DCMAKE_BUILD_TYPE=Release \
-				-DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-			--event-handlers desktop_notification- status- \
-		"
+	$(EXEC_PREFIX) bash -c "make -C main_ws build"
 
 launch: ## Launch the robot in physical mode
 	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
