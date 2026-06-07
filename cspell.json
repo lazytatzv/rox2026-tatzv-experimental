@@ -1,0 +1,38 @@
+{
+    "version": "0.2",
+    "language": "en",
+    "words": [
+        "mecanum",
+        "robstride",
+        "rosdep",
+        "colcon",
+        "direnv",
+        "tatzv",
+        "foxglove",
+        "DDSM",
+        "DDSM115",
+        "twist",
+        "joint",
+        "aggregator",
+        "asio",
+        "streambuf",
+        "rclcpp",
+        "rosidl",
+        "ament",
+        "uncrustify",
+        "ccache",
+        "ripgrep",
+        "teleop",
+        "nav2",
+        "lifecycle",
+        "rviz",
+        "odom",
+        "footprint"
+    ],
+    "ignorePaths": [
+        "**/build/**",
+        "**/install/**",
+        "**/log/**",
+        "**/.git/**"
+    ]
+}
