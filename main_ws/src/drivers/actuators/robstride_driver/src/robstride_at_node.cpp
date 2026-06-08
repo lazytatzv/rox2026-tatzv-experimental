@@ -54,7 +54,7 @@ RobstrideAtNode::on_configure(const rclcpp_lifecycle::State &)
 
   // Use std_msgs::msg::UInt8MultiArray for compatibility with standard serial_driver
   publisher_serial_tx_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(topic_tx_queue_, sensor_qos);
-  publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", telemetry_qos);
+  publisher_joint_state_ = this->create_publisher<sensor_msgs::msg::JointState>("joint_states", telemetry_qos);
   
   subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
     topic_velocity_command_, command_qos, std::bind(&RobstrideAtNode::velocity_callback, this, std::placeholders::_1));

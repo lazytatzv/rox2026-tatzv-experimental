@@ -56,7 +56,10 @@ def launch_setup(context, *args, **kwargs):
     if is_gazebo:
         print(f"\n[MASTER LAUNCH] Mode: GAZEBO (ros2_control={use_ros2_control})")
     else:
-        print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()}")
+        # Currently, ros2_control is only implemented for Gazebo (sim). 
+        # Physical/Virtual modes use the legacy kinematics engine for now.
+        use_ros2_control = False
+        print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()} (Legacy Mode Active)")
 
     actions = []
 
@@ -107,7 +110,8 @@ def launch_setup(context, *args, **kwargs):
                 Node(
                     package="controller_manager",
                     executable="spawner",
-                    arguments=["mecanum_drive_controller", "--controller-manager", "/controller_manager"],
+                    arguments=["mecanum_drive_controller", "--controller-manager", "/controller_manager",
+                               "--rewire", "odom:=odom/wheels", "--rewire", "cmd_vel:=/cmd_vel"],
                     parameters=[{'use_sim_time': True}]
                 ),
             ]
@@ -174,6 +178,21 @@ def launch_setup(context, *args, **kwargs):
         Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"], {"use_sim_time": False}]),
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"], {"use_sim_time": use_sim_time}], remappings=[("cmd_vel_out", "/cmd_vel")]),
         Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": robot_description_xml, "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
+        # Aggregator for Joint States (Required for Virtual/Physical mode to feed Kinematics/RSP)
+        Node(
+            package="joint_state_publisher",
+            executable="joint_state_publisher",
+            name="joint_state_publisher",
+            parameters=[{
+                "source_list": [
+                    "/motors/front_left/joint_states",
+                    "/motors/front_right/joint_states",
+                    "/motors/rear_left/joint_states",
+                    "/motors/rear_right/joint_states"
+                ],
+                "use_sim_time": use_sim_time
+            }]
+        ),
     ]
 
     # Foxglove Bridge: REAL TIME for connectivity

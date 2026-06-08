@@ -32,10 +32,10 @@ class VirtualActuatorNode : public rclcpp_lifecycle::LifecycleNode {
     auto command_qos = rclcpp::QoS(1).best_effort();
 
     publisher_joint_state_ =
-        this->create_publisher<sensor_msgs::msg::JointState>("~/joint_states", telemetry_qos);
+        this->create_publisher<sensor_msgs::msg::JointState>("joint_states", telemetry_qos);
 
     subscription_velocity_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-        "~/velocity_command", command_qos,
+        "velocity_command", command_qos,
         [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
           if (msg->data.size() > 0) target_velocity_ = msg->data[0];
         });
