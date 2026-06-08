@@ -7,7 +7,7 @@ FROM ros:${ROS_DISTRO}-ros-base
 SHELL ["/bin/bash", "-c"]
 
 # --- 1. Infrastructure Optimization ---
-# We use standard mirrors for stability. 
+# We use standard mirrors for stability.
 # We DO NOT touch /etc/resolv.conf here to avoid "Read-only file system" errors.
 RUN apt-get update --allow-releaseinfo-change && \
     apt-get install -y --no-install-recommends \
@@ -30,6 +30,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-${ROS_DISTRO}-io-context \
     ros-${ROS_DISTRO}-ros-gz \
     ros-${ROS_DISTRO}-xacro \
+    ros-${ROS_DISTRO}-plotjuggler-ros \
     black \
     && rm -rf /var/lib/apt/lists/*
 
