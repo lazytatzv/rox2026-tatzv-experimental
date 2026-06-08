@@ -3,7 +3,7 @@
 
 SHELL := /bin/bash
 
-.PHONY: build up down shell colcon launch virtual format clean help
+.PHONY: build up down shell colcon launch virtual format clean help nix
 
 # Determine if we are running inside the Docker container
 IN_CONTAINER := $(shell [ -f /.dockerenv ] && echo "true" || echo "false")
@@ -17,6 +17,9 @@ else
     EXEC_PREFIX := docker compose exec ros2_rox2026
     BASH_PREFIX := bash -c
 endif
+
+nix:
+	nix develop --extra-experimental-features "nix-command flakes"
 
 # --- [ Docker Management ] ---
 
