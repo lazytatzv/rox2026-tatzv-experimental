@@ -26,9 +26,14 @@ void MecanumKinematicsNode::declare_parameters() {
   this->declare_parameter("half_length", 0.12);
   this->declare_parameter("half_width", 0.10);
   this->declare_parameter("wheel_radius", 0.05);
-  this->declare_parameter("watchdog_timeout", 1.0);
+  this->declare_parameter("watchdog_timeout", 0.5); // Reduced default
   this->declare_parameter("topic_cmd_vel", "cmd_vel");
-  this->declare_parameter("topic_wheel_speeds", "wheel_speeds");
+  
+  // Motor Topics
+  this->declare_parameter("front_left_topic", "/motors/front_left/velocity_command");
+  this->declare_parameter("front_right_topic", "/motors/front_right/velocity_command");
+  this->declare_parameter("rear_left_topic", "/motors/rear_left/velocity_command");
+  this->declare_parameter("rear_right_topic", "/motors/rear_right/velocity_command");
 }
 
 void MecanumKinematicsNode::update_parameters() {
@@ -37,7 +42,6 @@ void MecanumKinematicsNode::update_parameters() {
   wheel_radius_ = this->get_parameter("wheel_radius").as_double();
   watchdog_timeout_ = this->get_parameter("watchdog_timeout").as_double();
   topic_cmd_vel_ = this->get_parameter("topic_cmd_vel").as_string();
-  topic_wheel_speeds_ = this->get_parameter("topic_wheel_speeds").as_string();
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
@@ -48,8 +52,17 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   auto sensor_qos = rclcpp::SensorDataQoS();
   auto command_qos = rclcpp::QoS(1).best_effort();
 
-  publisher_wheel_speeds_ =
-      this->create_publisher<std_msgs::msg::Float64MultiArray>(topic_wheel_speeds_, sensor_qos);
+  // Motor Publishers
+  std::array<std::string, 4> motor_topics = {
+    this->get_parameter("front_left_topic").as_string(),
+    this->get_parameter("front_right_topic").as_string(),
+    this->get_parameter("rear_left_topic").as_string(),
+    this->get_parameter("rear_right_topic").as_string()
+  };
+
+  for(size_t i=0; i<4; ++i) {
+    motor_pubs_[i] = this->create_publisher<std_msgs::msg::Float64MultiArray>(motor_topics[i], command_qos);
+  }
 
   publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", telemetry_qos);
 
@@ -64,30 +77,30 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   watchdog_timer_ =
       this->create_wall_timer(100ms, std::bind(&MecanumKinematicsNode::watchdog_callback, this));
 
-  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' wheel_speeds='%s' watchdog=%.2fs",
-              topic_cmd_vel_.c_str(), topic_wheel_speeds_.c_str(), watchdog_timeout_);
+  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' watchdog=%.2fs",
+              topic_cmd_vel_.c_str(), watchdog_timeout_);
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State&) {
-  publisher_wheel_speeds_->on_activate();
+  for(auto & pub : motor_pubs_) pub->on_activate();
   publisher_odom_->on_activate();
 
-  // Create TF Broadcaster using the node itself to ensure compatibility
   tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   last_time_ = this->now();
   last_command_time_ = this->now();
   first_odom_ = true;
+  watchdog_triggered_ = false;
   RCLCPP_INFO(get_logger(), "Activated");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State&) {
-  publisher_wheel_speeds_->on_deactivate();
+  for(auto & pub : motor_pubs_) pub->on_deactivate();
   publisher_odom_->on_deactivate();
   tf_broadcaster_.reset();
   RCLCPP_INFO(get_logger(), "Deactivated");
@@ -96,7 +109,7 @@ MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State&) {
 
 rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_cleanup(const rclcpp_lifecycle::State&) {
-  publisher_wheel_speeds_.reset();
+  for(auto & pub : motor_pubs_) pub.reset();
   publisher_odom_.reset();
   subscription_command_velocity_.reset();
   subscription_joint_states_.reset();
@@ -120,31 +133,36 @@ void MecanumKinematicsNode::watchdog_callback() {
   auto now = this->now();
   double elapsed = (now - last_command_time_).seconds();
 
-  if (elapsed > watchdog_timeout_) {
-    auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
-    out->data.resize(4, 0.0);
-    publisher_wheel_speeds_->publish(std::move(out));
+  if (elapsed > watchdog_timeout_ && !watchdog_triggered_) {
+    publish_wheel_commands({0.0, 0.0, 0.0, 0.0});
+    watchdog_triggered_ = true;
+    RCLCPP_ERROR(get_logger(), "Watchdog Triggered: Stop command sent.");
+  }
+}
 
-    RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 2000,
-                          "Watchdog Triggered: Command stream lost!");
+void MecanumKinematicsNode::publish_wheel_commands(const std::array<double, 4>& speeds) {
+  for(size_t i=0; i<4; ++i) {
+    if (motor_pubs_[i]->is_activated()) {
+        auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
+        out->data = {speeds[i], 1.0}; // velocity, current_limit
+        motor_pubs_[i]->publish(std::move(out));
+    }
   }
 }
 
 void MecanumKinematicsNode::command_velocity_callback(
     const geometry_msgs::msg::Twist::SharedPtr msg) {
-  if (!publisher_wheel_speeds_->is_activated()) {
+  if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
     return;
   }
 
   last_command_time_ = this->now();
+  watchdog_triggered_ = false;
 
   const auto wheels = mecanum_kinematics::compute_wheel_speeds(
       msg->linear.x, msg->linear.y, msg->angular.z, half_length_, half_width_, wheel_radius_);
 
-  auto out = std::make_unique<std_msgs::msg::Float64MultiArray>();
-  out->data = {wheels[0], wheels[1], wheels[2], wheels[3]};
-
-  publisher_wheel_speeds_->publish(std::move(out));
+  publish_wheel_commands(wheels);
 }
 
 void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointState::SharedPtr msg) {
@@ -156,7 +174,6 @@ void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointSt
   int found_count = 0;
 
   for (size_t i = 0; i < msg->name.size(); ++i) {
-    // Safety check: ensure arrays have consistent sizes to prevent Segfault
     if (msg->velocity.size() <= i) continue;
 
     if (msg->name[i] == "front_left_wheel_joint") {

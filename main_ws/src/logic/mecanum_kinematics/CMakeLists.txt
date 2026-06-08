@@ -12,8 +12,6 @@ find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rcl_interfaces REQUIRED)
-find_package(diagnostic_updater REQUIRED)
 
 # kinematics implementation (Internal library)
 add_library(mecanum_kinematics_kinematics SHARED
@@ -30,14 +28,12 @@ ament_target_dependencies(mecanum_kinematics_kinematics
 # Main component
 add_library(mecanum_kinematics_component SHARED
   src/mecanum_kinematics_node.cpp
-  src/wheel_speeds_dispatcher.cpp
 )
 target_include_directories(mecanum_kinematics_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 
-# Crucial: Order and completeness for Jazzy/Humble
 ament_target_dependencies(mecanum_kinematics_component
   rclcpp
   rclcpp_lifecycle
@@ -49,8 +45,6 @@ ament_target_dependencies(mecanum_kinematics_component
   tf2_ros
   tf2_geometry_msgs
   std_msgs
-  rcl_interfaces
-  diagnostic_updater
 )
 
 target_link_libraries(mecanum_kinematics_component
@@ -61,13 +55,6 @@ rclcpp_components_register_node(mecanum_kinematics_component
   PLUGIN "mecanum_kinematics::MecanumKinematicsNode"
   EXECUTABLE mecanum_kinematics_node
 )
-rclcpp_components_register_node(mecanum_kinematics_component
-  PLUGIN "mecanum_kinematics::WheelSpeedsDispatcher"
-  EXECUTABLE wheel_speeds_dispatcher
-)
-
-add_executable(zero_twist_node src/zero_twist_node.cpp)
-ament_target_dependencies(zero_twist_node rclcpp geometry_msgs)
 
 add_executable(odom_to_tf_node src/odom_to_tf_node.cpp)
 ament_target_dependencies(odom_to_tf_node rclcpp nav_msgs tf2_ros)
@@ -75,7 +62,6 @@ ament_target_dependencies(odom_to_tf_node rclcpp nav_msgs tf2_ros)
 install(TARGETS
   mecanum_kinematics_component
   mecanum_kinematics_kinematics
-  zero_twist_node
   odom_to_tf_node
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib

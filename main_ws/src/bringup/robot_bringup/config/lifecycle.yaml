@@ -6,9 +6,7 @@
     bond_timeout: 4.0
     # Common nodes that are always present
     node_names:
-      # comm layerやmotor driversはlaunchで動的に生成されるので追加しない.
-
-      - /hal/speed_dispatcher
+      - /teleop
       - /mecanum_kinematics_node
       # --- Add your extra nodes (IMU, LiDAR, etc.) below ---
       # - /sensors/imu_node

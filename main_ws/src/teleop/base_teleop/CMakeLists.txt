@@ -4,6 +4,7 @@ project(base_teleop)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
@@ -24,6 +25,7 @@ target_include_directories(base_teleop_component PUBLIC
 )
 ament_target_dependencies(base_teleop_component
   rclcpp
+  rclcpp_lifecycle
   rclcpp_components
   sensor_msgs
   geometry_msgs

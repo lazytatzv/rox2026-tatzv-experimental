@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <array>
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
@@ -14,7 +15,6 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "tf2_ros/transform_broadcaster.h"
-#include "rcl_interfaces/msg/set_parameters_result.hpp"
 
 namespace mecanum_kinematics
 {
@@ -46,6 +46,7 @@ private:
   void declare_parameters();
   void update_parameters();
   void watchdog_callback();
+  void publish_wheel_commands(const std::array<double, 4>& speeds);
 
   // Robot Geometry
   double half_length_;
@@ -60,14 +61,15 @@ private:
   rclcpp::Time last_command_time_;
   bool first_odom_ = true;
   double watchdog_timeout_ = 1.0;
+  bool watchdog_triggered_ = false;
 
   std::string topic_cmd_vel_;
-  std::string topic_wheel_speeds_;
 
   // Lifecycle Publishers
-  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr
-    publisher_wheel_speeds_;
   rclcpp_lifecycle::LifecyclePublisher<nav_msgs::msg::Odometry>::SharedPtr publisher_odom_;
+  
+  // Direct Motor Publishers (Consolidated from Dispatcher)
+  std::array<rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Float64MultiArray>::SharedPtr, 4> motor_pubs_;
 
   // Subscriptions & Timers
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr subscription_command_velocity_;
@@ -75,8 +77,6 @@ private:
   rclcpp::TimerBase::SharedPtr watchdog_timer_;
 
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
-
-  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
 };
 
 }  // namespace mecanum_kinematics

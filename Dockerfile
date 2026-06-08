@@ -14,6 +14,12 @@ RUN apt-get update --allow-releaseinfo-change && \
     build-essential \
     curl \
     git \
+    fish \
+    less \
+    nano \
+    vim \
+    neovim \
+    gh \
     python3-colcon-common-extensions \
     python3-pip \
     python3-rosdep \

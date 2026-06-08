@@ -71,7 +71,7 @@ def launch_setup(context, *args, **kwargs):
         ))
 
     else:
-        managed_nodes = ["/hal/speed_dispatcher", "/mecanum_kinematics_node", "/motors/front_left", "/motors/front_right", "/motors/rear_left", "/motors/rear_right"]
+        managed_nodes = ["/teleop", "/mecanum_kinematics_node", "/motors/front_left", "/motors/front_right", "/motors/rear_left", "/motors/rear_right"]
         
         if actuator_type == "at" or actuator_type == "virtual":
             m_pkg, m_plugin = "robstride_driver", "robstride_driver::RobstrideAtNode"
@@ -83,11 +83,24 @@ def launch_setup(context, *args, **kwargs):
             act_yaml = os.path.join(pkg_bringup, "config", "actuators_ddsm.yaml")
 
         actions.append(ComposableNodeContainer(
-            name="actuator_control_container", namespace="", package="rclcpp_components",
-            executable="component_container", composable_node_descriptions=[
-                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::MecanumKinematicsNode", name="mecanum_kinematics_node", parameters=[paths["phys"], {"topic_cmd_vel": "/cmd_vel", "topic_wheel_speeds": "/hal/wheel_speeds", "use_sim_time": use_sim_time}]),
-                ComposableNode(package="mecanum_kinematics", plugin="mecanum_kinematics::WheelSpeedsDispatcher", name="speed_dispatcher", namespace="hal", parameters=[act_yaml, {"subscription_topic": "/hal/wheel_speeds", "use_sim_time": use_sim_time}]),
-                *[ComposableNode(package=m_pkg, plugin=m_plugin, name=side, namespace="motors", parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read", "use_sim_time": use_sim_time}]) for side in ["front_left", "front_right", "rear_left", "rear_right"]]
+            name="robot_core_container", namespace="", package="rclcpp_components",
+            executable="component_container_mt", # Multi-threaded container for better performance
+            composable_node_descriptions=[
+                ComposableNode(
+                    package="base_teleop",
+                    plugin="base_teleop::BaseTeleopNode",
+                    name="teleop",
+                    parameters=[paths["teleop"], {"use_sim_time": use_sim_time}],
+                    extra_arguments=[{'use_intra_process_comms': True}]
+                ),
+                ComposableNode(
+                    package="mecanum_kinematics", 
+                    plugin="mecanum_kinematics::MecanumKinematicsNode", 
+                    name="mecanum_kinematics_node", 
+                    parameters=[paths["phys"], act_yaml, {"topic_cmd_vel": "/cmd_vel", "use_sim_time": use_sim_time}],
+                    extra_arguments=[{'use_intra_process_comms': True}]
+                ),
+                *[ComposableNode(package=m_pkg, plugin=m_plugin, name=side, namespace="motors", parameters=[act_yaml, {"joint_name": f"{side}_wheel_joint", "topic_tx_queue": "/serial_write", "topic_rx_queue": "/serial_read", "use_sim_time": use_sim_time}], extra_arguments=[{'use_intra_process_comms': True}]) for side in ["front_left", "front_right", "rear_left", "rear_right"]]
             ],
             output="screen",
         ))
@@ -100,8 +113,6 @@ def launch_setup(context, *args, **kwargs):
     # UI/System nodes must NOT use sim_time for connection stability
     actions += [
         Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"], {"use_sim_time": False}]),
-        Node(package="mecanum_kinematics", executable="zero_twist_node", name="zero_twist_node", parameters=[{"use_sim_time": use_sim_time}]),
-        Node(package="base_teleop", executable="base_teleop_node", name="teleop", parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]),
         Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"], {"use_sim_time": use_sim_time}], remappings=[("cmd_vel_out", "/cmd_vel")]),
         Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": robot_description_xml, "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
     ]

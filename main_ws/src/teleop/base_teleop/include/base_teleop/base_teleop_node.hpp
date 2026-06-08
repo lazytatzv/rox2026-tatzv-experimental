@@ -7,24 +7,40 @@
 
 #include "geometry_msgs/msg/twist.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "sensor_msgs/msg/joy.hpp"
 #include "std_msgs/msg/bool.hpp"
 
 namespace base_teleop {
 
-class BaseTeleopNode : public rclcpp::Node {
+class BaseTeleopNode : public rclcpp_lifecycle::LifecycleNode {
 public:
   explicit BaseTeleopNode(const rclcpp::NodeOptions& options);
 
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+  on_configure(const rclcpp_lifecycle::State & state) override;
+
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+  on_activate(const rclcpp_lifecycle::State & state) override;
+
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+  on_deactivate(const rclcpp_lifecycle::State & state) override;
+
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+  on_cleanup(const rclcpp_lifecycle::State & state) override;
+
+  rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
+  on_shutdown(const rclcpp_lifecycle::State & state) override;
+
 private:
   void declare_parameters();
-  void cache_parameters();
+  void update_parameters();
   void joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg);
   void timer_callback();
 
   // Publishers and Subscriptions
-  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr publisher_command_velocity_;
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_stop_lock_;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>::SharedPtr publisher_command_velocity_;
+  rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Bool>::SharedPtr publisher_stop_lock_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr subscription_joystick_;
   rclcpp::TimerBase::SharedPtr timer_;
 
