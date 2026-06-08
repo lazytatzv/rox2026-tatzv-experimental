@@ -43,5 +43,5 @@ jobs:
           source main_ws/install/setup.bash
           cd main_ws
           # Run tests but skip all linting tests to reduce noise
-          colcon test --event-handlers console_direct+ --ament-cmake-args -DAMENT_CMAKE_LINT_TESTS=OFF
+          colcon test --event-handlers console_direct+
           colcon test-result --verbose
