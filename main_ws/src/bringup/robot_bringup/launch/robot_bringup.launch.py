@@ -23,6 +23,7 @@ def launch_setup(context, *args, **kwargs):
         "phys": os.path.join(pkg_bringup, "config", "physical.yaml"),
         "mux": os.path.join(pkg_bringup, "config", "twist_mux.yaml"),
         "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
+        "ekf": os.path.join(pkg_bringup, "config", "ekf.yaml"),
         "xacro": os.path.join(pkg_bringup, "urdf", "robot.urdf.xacro"),
         "world": os.path.join(pkg_bringup, "world", "obstacles.sdf"),
         "bridge": os.path.join(pkg_bringup, "config", "gz_bridge.yaml"),
@@ -63,10 +64,11 @@ def launch_setup(context, *args, **kwargs):
             output='screen'
         ))
 
-        # TF Bridge: Convert Odom Message to Odom TF without flickering
+        # EKF: High-Performance Sensor Fusion
         actions.append(Node(
-            package='mecanum_kinematics', executable='odom_to_tf_node',
-            name='odom_to_tf_bridge', parameters=[{'use_sim_time': True}],
+            package='robot_localization', executable='ekf_node',
+            name='ekf_filter_node',
+            parameters=[paths["ekf"], {'use_sim_time': True}],
             output='screen'
         ))
 
@@ -106,6 +108,14 @@ def launch_setup(context, *args, **kwargs):
         ))
 
         actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", parameters=[{"autostart": True, "node_names": managed_nodes, "bond_timeout": 0.0, "use_sim_time": use_sim_time}]))
+
+        # EKF: High-Performance Sensor Fusion (Common for Physical/Virtual)
+        actions.append(Node(
+            package='robot_localization', executable='ekf_node',
+            name='ekf_filter_node',
+            parameters=[paths["ekf"], {'use_sim_time': use_sim_time}],
+            output='screen'
+        ))
 
         if actuator_type != 'virtual':
             actions.append(Node(package="serial_driver", executable="serial_bridge", name="serial_driver", parameters=[{"device_name": "/dev/ttyUSB1", "baud_rate": 921600, "flow_control": "none", "parity": "none", "stop_bits": "1", "use_sim_time": use_sim_time}], remappings=[("write", "/serial_write"), ("read", "/serial_read")], output="screen"))

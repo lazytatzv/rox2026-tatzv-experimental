@@ -35,6 +35,33 @@
     <origin xyz="0 0 0.05" rpy="0 0 0"/>
   </joint>
 
+  <!-- Section 1.5: Sensors (IMU) -->
+  <link name="imu_link">
+    <inertial>
+      <mass value="0.01"/>
+      <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/>
+    </inertial>
+    <visual>
+      <geometry><box size="0.02 0.02 0.01"/></geometry>
+      <material name="black"/>
+    </visual>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="imu_link"/>
+    <origin xyz="0 0 0.06" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="imu_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>1</always_on>
+      <update_rate>100</update_rate>
+      <visualize>true</visualize>
+      <topic>imu</topic>
+    </sensor>
+  </gazebo>
+
   <!-- Section 2: Barrel Macro (Free Spinning Roller) -->
   <xacro:macro name="barrel" params="wheel_prefix num angle_deg roller_type">
     <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
@@ -100,8 +127,8 @@
       <wheel_base>${wheel_base}</wheel_base>
       <wheel_radius>${wheel_radius}</wheel_radius>
       <topic>/cmd_vel</topic>
-      <odom_topic>/odom</odom_topic>
-      <tf_topic>/tf</tf_topic>
+      <odom_topic>/odom/ground_truth</odom_topic>
+      <tf_topic>/tf_ignored</tf_topic>
       <frame_id>odom</frame_id>
       <child_frame_id>base_footprint</child_frame_id>
       <!-- PERFORMANCE TUNING -->

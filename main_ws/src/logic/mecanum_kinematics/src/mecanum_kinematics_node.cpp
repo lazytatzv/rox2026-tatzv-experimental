@@ -64,7 +64,7 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
     motor_pubs_[i] = this->create_publisher<std_msgs::msg::Float64MultiArray>(motor_topics[i], command_qos);
   }
 
-  publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom", telemetry_qos);
+  publisher_odom_ = this->create_publisher<nav_msgs::msg::Odometry>("odom/wheels", telemetry_qos);
 
   subscription_command_velocity_ = this->create_subscription<geometry_msgs::msg::Twist>(
       topic_cmd_vel_, command_qos,
@@ -77,7 +77,7 @@ MecanumKinematicsNode::on_configure(const rclcpp_lifecycle::State&) {
   watchdog_timer_ =
       this->create_wall_timer(100ms, std::bind(&MecanumKinematicsNode::watchdog_callback, this));
 
-  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' watchdog=%.2fs",
+  RCLCPP_INFO(get_logger(), "Configured: cmd_vel='%s' watchdog=%.2fs (EKF Mode: No TF)",
               topic_cmd_vel_.c_str(), watchdog_timeout_);
 
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
@@ -87,8 +87,6 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_activate(const rclcpp_lifecycle::State&) {
   for(auto & pub : motor_pubs_) pub->on_activate();
   publisher_odom_->on_activate();
-
-  tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
 
   last_time_ = this->now();
   last_command_time_ = this->now();
@@ -102,7 +100,6 @@ rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
 MecanumKinematicsNode::on_deactivate(const rclcpp_lifecycle::State&) {
   for(auto & pub : motor_pubs_) pub->on_deactivate();
   publisher_odom_->on_deactivate();
-  tf_broadcaster_.reset();
   RCLCPP_INFO(get_logger(), "Deactivated");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -114,7 +111,6 @@ MecanumKinematicsNode::on_cleanup(const rclcpp_lifecycle::State&) {
   subscription_command_velocity_.reset();
   subscription_joint_states_.reset();
   watchdog_timer_.reset();
-  tf_broadcaster_.reset();
   RCLCPP_INFO(get_logger(), "Cleaned up");
   return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
@@ -235,17 +231,6 @@ void MecanumKinematicsNode::joint_state_callback(const sensor_msgs::msg::JointSt
   odom.twist.twist.angular.z = omega;
 
   publisher_odom_->publish(odom);
-
-  geometry_msgs::msg::TransformStamped t;
-  t.header.stamp = now;
-  t.header.frame_id = "odom";
-  t.child_frame_id = "base_footprint";
-  t.transform.translation.x = x_;
-  t.transform.translation.y = y_;
-  t.transform.translation.z = 0.0;
-  t.transform.rotation = tf2::toMsg(q);
-
-  tf_broadcaster_->sendTransform(t);
 }
 
 }  // namespace mecanum_kinematics
