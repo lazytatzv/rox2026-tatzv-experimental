@@ -1,0 +1,9 @@
+<library path="robstride_system_hardware">
+  <class name="robstride_driver/RobstrideSystemHardware"
+         type="robstride_driver::RobstrideSystemHardware"
+         base_class_type="hardware_interface::SystemInterface">
+    <description>
+      Robstride System Hardware Interface bridging AT protocol commands over serial topics.
+    </description>
+  </class>
+</library>

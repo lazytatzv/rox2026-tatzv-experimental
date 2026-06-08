@@ -9,6 +9,8 @@ find_package(rclcpp_components REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(seeed_usb_can_analyzer_driver REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
 
 # robstride_motor_component (Shared Library)
 add_library(robstride_motor_component SHARED
@@ -28,6 +30,22 @@ ament_target_dependencies(robstride_motor_component
   seeed_usb_can_analyzer_driver
 )
 
+# Hardware Interface
+add_library(robstride_system_hardware SHARED
+  src/robstride_system_hardware.cpp
+)
+target_include_directories(robstride_system_hardware PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(robstride_system_hardware
+  rclcpp
+  std_msgs
+  hardware_interface
+  pluginlib
+)
+pluginlib_export_plugin_description_file(hardware_interface robstride_hardware.xml)
+
 # Register as Component AND auto-generate standalone executable
 rclcpp_components_register_node(robstride_motor_component
   PLUGIN "robstride_driver::RobstrideAtNode"
@@ -41,6 +59,7 @@ rclcpp_components_register_node(robstride_motor_component
 # Install targets
 install(TARGETS
   robstride_motor_component
+  robstride_system_hardware
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib

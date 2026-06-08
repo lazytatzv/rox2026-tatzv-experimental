@@ -12,6 +12,8 @@
   <depend>rclcpp_lifecycle</depend>
   <depend>lifecycle_msgs</depend>
   <depend>rclcpp_components</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
 

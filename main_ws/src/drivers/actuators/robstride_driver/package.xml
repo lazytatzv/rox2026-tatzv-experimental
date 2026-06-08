@@ -11,6 +11,8 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_lifecycle</depend>
   <depend>rclcpp_components</depend>
+  <depend>hardware_interface</depend>
+  <depend>pluginlib</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>seeed_usb_can_analyzer_driver</depend>
