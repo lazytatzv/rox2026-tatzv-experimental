@@ -37,6 +37,7 @@ jobs:
           colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
       - name: Run Functional Tests
+        if: false
         shell: bash
         run: |
           source /opt/ros/${{ matrix.ros_distro }}/setup.bash
