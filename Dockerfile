@@ -27,6 +27,9 @@ RUN apt-get update --allow-releaseinfo-change && \
     evtest \
     libboost-all-dev \
     ccache \
+    ros-${ROS_DISTRO}-ros2-control \
+    ros-${ROS_DISTRO}-ros2-controllers \
+    ros-${ROS_DISTRO}-gz-ros2-control \
     ros-${ROS_DISTRO}-teleop-twist-joy \
     ros-${ROS_DISTRO}-ament-uncrustify \
     ros-${ROS_DISTRO}-foxglove-bridge \

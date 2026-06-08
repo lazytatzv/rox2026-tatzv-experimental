@@ -1,4 +1,11 @@
+# Global System Settings
+/global:
+  ros__parameters:
+    use_ros2_control: true
+    actuator_type: "at" # "at", "virtual", or "ddsm"
+
 # Physical parameters for mecanum base
+
 
 # 実測が必要!!!!!!!
 
