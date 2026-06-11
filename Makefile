@@ -3,19 +3,15 @@
 
 SHELL := /bin/bash
 
-.PHONY: build up down shell colcon launch virtual format clean help nix
+.PHONY: build image up down shell test launch virtual sim sim-gui format clean help nix
 
 # Determine if we are running inside the Docker container
 IN_CONTAINER := $(shell [ -f /.dockerenv ] && echo "true" || echo "false")
 
 ifeq ($(IN_CONTAINER),true)
-    # Commands when inside container
     EXEC_PREFIX := 
-    BASH_PREFIX := bash -c
 else
-    # Commands when on host
     EXEC_PREFIX := docker compose exec ros2_rox2026
-    BASH_PREFIX := bash -c
 endif
 
 nix:
@@ -23,9 +19,9 @@ nix:
 
 # --- [ Docker Management ] ---
 
-build: ## Build the Docker image
+image: ## Build the Docker image
 ifeq ($(IN_CONTAINER),true)
-	@echo "🚨 Error: Cannot run 'make build' inside the container. Please run it from the host."
+	@echo "🚨 Error: Cannot build image from inside the container."
 	@exit 1
 else
 	DOCKER_BUILDKIT=1 docker compose build
@@ -53,30 +49,33 @@ else
 	docker compose exec ros2_rox2026 /bin/zsh || docker compose exec ros2_rox2026 /bin/bash
 endif
 
-# --- [ ROS 2 Operations - CONTEXT AWARE ] ---
+# --- [ ROS 2 Operations - DELEGATED TO main_ws/Makefile ] ---
 
-colcon: ## [OPTIMIZED] Build the workspace
-	$(EXEC_PREFIX) bash -c "make -C main_ws build"
+build: ## Build the ROS 2 workspace (via main_ws/Makefile)
+	$(EXEC_PREFIX) make -C main_ws build
 
-launch: ## Launch the robot in physical mode
-	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py"
+test: ## Run tests (via main_ws/Makefile)
+	$(EXEC_PREFIX) make -C main_ws test
 
-virtual: ## Launch the robot in Virtual Mode for testing
-	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual"
+launch: ## Launch physical mode (via main_ws/Makefile)
+	$(EXEC_PREFIX) make -C main_ws launch
 
-sim: ## [EXPERIMENTAL] Launch Gazebo physical simulation (Headless)
-	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true"
+virtual: ## Launch virtual mode (via main_ws/Makefile)
+	$(EXEC_PREFIX) make -C main_ws virtual
 
-sim-gui: ## [EXPERIMENTAL] Launch Gazebo physical simulation with GUI
-	$(EXEC_PREFIX) bash -c "source main_ws/install/setup.bash && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false"
+sim: ## Launch headless simulation (via main_ws/Makefile)
+	$(EXEC_PREFIX) make -C main_ws sim
+
+sim-gui: ## Launch simulation with GUI (via main_ws/Makefile)
+	$(EXEC_PREFIX) make -C main_ws sim-gui
 
 # --- [ Utility & Maintenance ] ---
 
 format: ## Run the self-healing auto-formatter
-	$(EXEC_PREFIX) bash -c "./fix_style.sh"
+	$(EXEC_PREFIX) ./fix_style.sh
 
 clean: ## Purge build artifacts
-	rm -rf main_ws/build/ main_ws/install/ main_ws/log/
+	$(EXEC_PREFIX) make -C main_ws clean
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'

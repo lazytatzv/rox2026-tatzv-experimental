@@ -40,6 +40,7 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-${ROS_DISTRO}-ros-gz \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-plotjuggler-ros \
+    ros-${ROS_DISTRO}-robot-localization \
     black \
     && rm -rf /var/lib/apt/lists/*
 
