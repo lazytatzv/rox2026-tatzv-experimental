@@ -13,7 +13,7 @@
 
     # Button Mappings
     joy_button_software_stop: 15  # Touchpad Click
-    joy_button_joy_mode_on: 8     # Create (Select)
+    joy_button_joy_mode_on: 6     # Share / Back / View
 
     # Sensitivities
     scale_linear_velocity: 1.0

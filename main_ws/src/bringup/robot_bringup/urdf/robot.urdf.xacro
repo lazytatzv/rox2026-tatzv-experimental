@@ -81,11 +81,10 @@
       <collision><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry></collision>
     </link>
     <gazebo reference="${wheel_prefix}_barrel_${num}_link">
-      <mu1>0.1</mu1>
-      <mu2>2.0</mu2>
-      <fdir1>0 0 1</fdir1>
+      <mu1>1.0</mu1>
+      <mu2>1.0</mu2>
       <kp>1e6</kp>
-      <kd>1.0</kd>
+      <kd>100.0</kd>
       <minDepth>0.001</minDepth>
       <material>Gazebo/Black</material>
     </gazebo>
