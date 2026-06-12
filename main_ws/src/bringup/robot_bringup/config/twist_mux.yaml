@@ -1,7 +1,7 @@
 # twist_mux configuration for ROX2026
 twist_mux:
   ros__parameters:
-    use_stamped: false
+    use_stamped: true
     topics:
       teleop:
         topic: "cmd_vel_joy"

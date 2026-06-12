@@ -6,6 +6,7 @@
 #include <string>
 
 #include "geometry_msgs/msg/twist.hpp"
+#include "geometry_msgs/msg/twist_stamped.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "sensor_msgs/msg/joy.hpp"
@@ -39,7 +40,7 @@ private:
   void timer_callback();
 
   // Publishers and Subscriptions
-  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::Twist>::SharedPtr publisher_command_velocity_;
+  rclcpp_lifecycle::LifecyclePublisher<geometry_msgs::msg::TwistStamped>::SharedPtr publisher_command_velocity_;
   rclcpp_lifecycle::LifecyclePublisher<std_msgs::msg::Bool>::SharedPtr publisher_stop_lock_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr subscription_joystick_;
   rclcpp::TimerBase::SharedPtr timer_;

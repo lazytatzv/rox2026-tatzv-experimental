@@ -14,7 +14,7 @@ using namespace std::chrono_literals;
 namespace base_teleop {
 
 BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
-    : rclcpp_lifecycle::LifecycleNode("base_teleop_node", options) {
+    : rclcpp_lifecycle::LifecycleNode("teleop", options) {
   declare_parameters();
 }
 
@@ -53,7 +53,7 @@ BaseTeleopNode::on_configure(const rclcpp_lifecycle::State &) {
   auto telemetry_qos = rclcpp::SystemDefaultsQoS();
   auto sensor_qos = rclcpp::SensorDataQoS();
 
-  publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::Twist>(topic_cmd_vel_, telemetry_qos);
+  publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::TwistStamped>(topic_cmd_vel_, telemetry_qos);
   publisher_stop_lock_ = this->create_publisher<std_msgs::msg::Bool>(topic_stop_lock_, telemetry_qos);
 
   subscription_joystick_ = this->create_subscription<sensor_msgs::msg::Joy>(
@@ -108,7 +108,10 @@ void BaseTeleopNode::timer_callback() {
   current_twist_.linear.y = smooth(current_twist_.linear.y, target_twist_.linear.y);
   current_twist_.angular.z = smooth(current_twist_.angular.z, target_twist_.angular.z);
 
-  auto msg = std::make_unique<geometry_msgs::msg::Twist>(current_twist_);
+  auto msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
+  msg->header.stamp = this->get_clock()->now();
+  msg->header.frame_id = "base_footprint";
+  msg->twist = current_twist_;
   publisher_command_velocity_->publish(std::move(msg));
 }
 

@@ -45,11 +45,15 @@
         }
     },
     "remoteUser": "root",
+    "runArgs": [
+        "--gpus",
+        "all"
+    ],
     "features": {
         "ghcr.io/devcontainers/features/common-utils:2": {
             "installZsh": true,
             "configureZshAsDefaultShell": true
         }
     },
-    "postCreateCommand": "mkdir -p .ccache && make colcon"
+    "postCreateCommand": "mkdir -p .ccache && make build"
 }

@@ -25,7 +25,7 @@ public:
   RCLCPP_SHARED_PTR_DEFINITIONS(RobstrideSystemHardware)
 
   hardware_interface::CallbackReturn on_init(
-    const hardware_interface::HardwareInfo & info) override;
+    const hardware_interface::HardwareComponentInterfaceParams & params) override;
 
   hardware_interface::CallbackReturn on_configure(
     const rclcpp_lifecycle::State & previous_state) override;
@@ -88,3 +88,4 @@ private:
 }  // namespace robstride_driver
 
 #endif  // ROBSTRIDE_DRIVER__ROBSTRIDE_SYSTEM_HARDWARE_HPP_
+  // ROBSTRIDE_DRIVER__ROBSTRIDE_SYSTEM_HARDWARE_HPP_

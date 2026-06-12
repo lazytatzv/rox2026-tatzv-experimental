@@ -20,6 +20,7 @@
           python3
           python3Packages.black
           ripgrep
+          pciutils # For lspci to check GPU hardware
         ];
 
         guiTools = with pkgs; [
@@ -42,6 +43,14 @@
             
             export ROS_DOMAIN_ID=0
             export DOCKER_BUILDKIT=1
+
+            # Check for NVIDIA GPU
+            if command -v nvidia-smi &> /dev/null; then
+              echo "▶ NVIDIA GPU Detected:"
+              nvidia-smi --query-gpu=name,driver_version --format=csv,noheader | sed 's/^/  - /'
+            else
+              echo "▶ WARNING: nvidia-smi not found. GPU acceleration in Docker may not work."
+            fi
 
             make help
           '';

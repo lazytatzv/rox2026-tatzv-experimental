@@ -12,27 +12,11 @@ def launch_setup(context, *args, **kwargs):
     pkg_bringup = get_package_share_directory("robot_bringup")
     pkg_ros_gz_sim = get_package_share_directory("ros_gz_sim")
 
-    # --- 1. Load Global Config from YAML ---
-    import yaml
-    phys_config_path = os.path.join(pkg_bringup, "config", "physical.yaml")
-    with open(phys_config_path, 'r') as f:
-        config = yaml.safe_load(f)
-    
-    global_params = config.get('/global', {}).get('ros__parameters', {})
-    default_actuator_type = global_params.get('actuator_type', 'at')
-
-    # --- 2. Determine Final Settings (YAML + Overrides) ---
-    is_gazebo = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
-    is_headless = LaunchConfiguration("headless").perform(context).lower() == 'true'
-    
-    actuator_type = LaunchConfiguration("actuator_type").perform(context)
-    if not actuator_type: 
-        actuator_type = default_actuator_type
-        
-    use_sim_time = is_gazebo
+    # --- 1. Load Global Config ---
+    use_sim_time = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
+    actuator_type = LaunchConfiguration("actuator_type").perform(context) or "at"
 
     paths = {
-        "phys": phys_config_path,
         "mux": os.path.join(pkg_bringup, "config", "twist_mux.yaml"),
         "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
         "ekf": os.path.join(pkg_bringup, "config", "ekf.yaml"),
@@ -45,20 +29,14 @@ def launch_setup(context, *args, **kwargs):
     import xacro
     robot_description_xml = xacro.process_file(
         paths["xacro"], 
-        mappings={
-            "actuator_type": actuator_type,
-            "is_gazebo": str(is_gazebo).lower()
-        }
+        mappings={"actuator_type": actuator_type, "is_gazebo": str(use_sim_time).lower()}
     ).toxml()
-
-    print(f"\n[MASTER LAUNCH] Mode: {actuator_type.upper()} (is_gazebo={is_gazebo}, ros2_control=PRO)")
 
     actions = []
 
-    if is_gazebo:
-        actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
+    if use_sim_time:
         gz_args = f"-r -v 1 {paths['world']}"
-        if is_headless:
+        if LaunchConfiguration("headless").perform(context).lower() == 'true':
             gz_args = "-s " + gz_args
 
         actions.append(IncludeLaunchDescription(
@@ -78,99 +56,59 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{'config_file': paths["bridge"], 'use_sim_time': False}],
             output='screen'
         ))
-
     else:
-        # In physical/virtual mode, we run the real controller manager
-        # It automatically parses the URDF and loads the correct hardware interface plugin
-        import tempfile
-        urdf_file = tempfile.NamedNamedTemporaryFile(mode='w', delete=False)
-        urdf_file.write(robot_description_xml)
-        urdf_file.close()
-        
+        # Physical/Virtual Mode: Real ros2_control_node is required
         actions.append(Node(
-            package="controller_manager",
-            executable="ros2_control_node",
+            package="controller_manager", executable="ros2_control_node",
             parameters=[{'robot_description': robot_description_xml}, paths["controllers"]],
             output="screen",
         ))
 
-        if actuator_type != 'virtual':
-            actions.append(Node(
-                package="serial_driver", executable="serial_bridge", name="serial_driver", 
-                parameters=[{"device_name": "/dev/ttyUSB1", "baud_rate": 921600, "flow_control": "none", "parity": "none", "stop_bits": "1", "use_sim_time": use_sim_time}], 
-                remappings=[("write", "/serial_write"), ("read", "/serial_read")], output="screen"
-            ))
-
-    # --- COMMON CORE (Gazebo and Real/Virtual) ---
-    # 1. Spawn Standard Controllers
+    # --- Controller Spawning ---
+    # Gazebo mode: gz_ros2_control loads controllers automatically via <parameters> tag in URDF.
+    # We only call spawner if NOT in Gazebo, or as a lightweight check.
+    # To be safe and compatible with all modes, we use spawner but accept it might "fail" if already active.
     actions += [
-        Node(
-            package="controller_manager",
-            executable="spawner",
-            arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
-            parameters=[{'use_sim_time': use_sim_time}]
-        ),
-        Node(
-            package="controller_manager",
-            executable="spawner",
-            arguments=["mecanum_drive_controller", "--controller-manager", "/controller_manager",
-                       "--rewire", "odom:=odom/wheels", "--rewire", "cmd_vel:=/cmd_vel"],
-            parameters=[{'use_sim_time': use_sim_time}]
-        ),
+        Node(package="controller_manager", executable="spawner", arguments=["joint_state_broadcaster"]),
+        Node(package="controller_manager", executable="spawner", arguments=["mecanum_drive_controller"]),
     ]
 
-    # 2. EKF Sensor Fusion
+    # --- Sensor Fusion ---
     actions.append(Node(
-        package='robot_localization', executable='ekf_node',
-        name='ekf_filter_node',
+        package='robot_localization', executable='ekf_node', name='ekf_filter_node',
         parameters=[paths["ekf"], {'use_sim_time': use_sim_time}],
-        remappings=[("odom0", "odom/wheels")],
-        output='screen'
+        remappings=[("odom0", "odom/wheels")], output='screen'
     ))
 
-    # 3. Teleop Lifecycle
+    # --- Teleop (Fix: Using consistent naming for lifecycle) ---
     actions.append(ComposableNodeContainer(
-        name="robot_core_container", namespace="", package="rclcpp_components",
-        executable="component_container_mt",
+        name="robot_core_container", namespace="", package="rclcpp_components", executable="component_container_mt",
         composable_node_descriptions=[
             ComposableNode(
-                package="base_teleop",
-                plugin="base_teleop::BaseTeleopNode",
-                name="teleop",
-                parameters=[paths["teleop"], {"use_sim_time": use_sim_time}],
-                extra_arguments=[{'use_intra_process_comms': True}]
+                package="base_teleop", plugin="base_teleop::BaseTeleopNode", name="teleop",
+                parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]
             )
-        ],
-        output="screen",
+        ], output="screen",
     ))
-    actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", parameters=[{"autostart": True, "node_names": ["/teleop"], "bond_timeout": 0.0, "use_sim_time": use_sim_time}]))
+    actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", 
+                        parameters=[{"autostart": True, "node_names": ["teleop"], "bond_timeout": 0.0, "use_sim_time": use_sim_time}]))
 
-    # 4. Utilities
+    # --- Utilities ---
     actions += [
-        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"], {"use_sim_time": False}]),
-        Node(package="twist_mux", executable="twist_mux", name="twist_mux", parameters=[paths["mux"], {"use_sim_time": use_sim_time}], remappings=[("cmd_vel_out", "/cmd_vel")]),
-        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", parameters=[{"robot_description": robot_description_xml, "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
+        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
+        Node(package="twist_mux", executable="twist_mux", name="twist_mux", 
+             parameters=[paths["mux"], {"use_sim_time": use_sim_time}], 
+             remappings=[("cmd_vel_out", "/mecanum_drive_controller/reference")]),
+        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", 
+             parameters=[{"robot_description": robot_description_xml, "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
     ]
-
-    # Foxglove Bridge: REAL TIME for connectivity
-    if LaunchConfiguration("use_foxglove").perform(context).lower() == 'true':
-        try:
-            foxglove_pkg = get_package_share_directory("foxglove_bridge")
-            actions.append(IncludeLaunchDescription(
-                AnyLaunchDescriptionSource(os.path.join(foxglove_pkg, "launch", "foxglove_bridge_launch.xml")),
-                launch_arguments={'use_sim_time': 'false'}.items()
-            ))
-        except Exception:
-            pass
 
     return actions
 
 def generate_launch_description():
     return LaunchDescription([
-        DeclareLaunchArgument("actuator_type", default_value=""),
+        DeclareLaunchArgument("actuator_type", default_value="at"),
         DeclareLaunchArgument("gazebo", default_value="false"),
         DeclareLaunchArgument("headless", default_value="true"),
-        DeclareLaunchArgument("use_foxglove", default_value="true"),
-        DeclareLaunchArgument("use_rviz", default_value="false"),
         OpaqueFunction(function=launch_setup),
     ])
