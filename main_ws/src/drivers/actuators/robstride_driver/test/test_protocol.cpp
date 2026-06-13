@@ -3,100 +3,98 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <memory>
 
-#include "robstride_driver/at_protocol.hpp"
-// Note: Normally we'd extract the logic into a separate class for pure testing,
-// but we can test the protocol constants and logic directly here.
+#include "robstride_driver/at_protocol_handler.hpp"
+#include "robstride_driver/can_protocol_handler.hpp"
 
-using namespace robstride_driver::at_protocol;
+using namespace robstride_driver;
 
-// --- Helper Functions (Mimic the Node logic) ---
-uint16_t float_to_uint(double value, double low, double high) {
-  double span = high - low;
-  if (value < low) value = low;
-  else if (value > high) value = high;
-  return static_cast<uint16_t>((value - low) * 65535.0 / span);
-}
-
-double uint_to_float(uint16_t value, double low, double high) {
-  double span = high - low;
-  return static_cast<double>(value) * span / 65535.0 + low;
-}
+class ProtocolTest : public ::testing::Test {
+protected:
+  void SetUp() override {
+    at_handler = std::make_unique<AtProtocolHandler>(50.0, 16383);
+    can_handler = std::make_unique<CanProtocolHandler>();
+  }
+  std::unique_ptr<AtProtocolHandler> at_handler;
+  std::unique_ptr<CanProtocolHandler> can_handler;
+};
 
 // --- AT Protocol Tests ---
 
-TEST(RobstrideAtProtocol, VelocityCommandGeneration) {
-  uint8_t motor_id = 0x0C;
-  double velocity_rad_s = 0.5; // Half speed forward
-  double max_vel = 50.0;
-  int max_at_delta = static_cast<int>(NEUTRAL_VELOCITY_VALUE * 0.5); // 50% limit
-  
-  // Logic inside velocity_callback
-  int delta = static_cast<int>(std::round((velocity_rad_s / max_vel) * max_at_delta));
-  uint16_t at_value = NEUTRAL_VELOCITY_VALUE + delta;
-  
-  // Manual Verification of the frame
-  EXPECT_GT(at_value, NEUTRAL_VELOCITY_VALUE);
-  
-  // Mock Frame Construction
-  std::vector<uint8_t> frame = {
-    FRAME_HEADER_A, FRAME_HEADER_T, CMD_DATA_STREAMING,
-    DEFAULT_SOURCE_ID_HI, DEFAULT_SOURCE_ID_LO, motor_id,
-    DATA_LEN_8_BYTES, SPEED_CMD_INDICATOR, REG_ADDR_VELOCITY_CTRL,
-    0x00, 0x00, CTRL_MODE_VELOCITY, DIR_ROTATING,
-    static_cast<uint8_t>((at_value >> 8) & 0xFF),
-    static_cast<uint8_t>(at_value & 0xFF),
-    FRAME_FOOTER_CR, FRAME_FOOTER_LF
-  };
-
-  EXPECT_EQ(frame[0], 'A');
-  EXPECT_EQ(frame[1], 'T');
-  EXPECT_EQ(frame[5], 0x0C); // Correct Motor ID
-  EXPECT_EQ(frame[8], 0x70); // Correct Reg Addr
-  EXPECT_EQ(frame[frame.size()-2], 0x0D); // CR
-  EXPECT_EQ(frame[frame.size()-1], 0x0A); // LF
+TEST_F(ProtocolTest, AtEnableCommand) {
+  auto frame = at_handler->create_enable_command(0x0C);
+  ASSERT_EQ(frame.size(), 16);
+  EXPECT_EQ(frame[0], 0x41); // 'A'
+  EXPECT_EQ(frame[1], 0x54); // 'T'
+  EXPECT_EQ(frame[5], 0x0C);
+  EXPECT_EQ(frame[8], 0xC4); // REG_ADDR_MOTOR_ENABLE
 }
 
-// --- CAN Protocol Tests (Official Seeed Wiki Spec) ---
-
-TEST(RobstrideCanProtocol, SeeedWikiIdGeneration) {
-  uint32_t motor_id = 0x01;
-  uint32_t expected_id = 0x400 + motor_id; // Speed Mode per Wiki
+TEST_F(ProtocolTest, AtVelocityCommand) {
+  double velocity = 10.0; // rad/s
+  auto frame = at_handler->create_velocity_command(0x0A, velocity);
+  ASSERT_EQ(frame.size(), 16);
+  EXPECT_EQ(frame[5], 0x0A);
+  EXPECT_EQ(frame[8], 0x70); // REG_ADDR_VELOCITY_CTRL
   
-  EXPECT_EQ(expected_id, 0x401);
+  // Neutral is 0x7FFF. Positive velocity should be > 0x7FFF
+  uint16_t at_val = (frame[13] << 8) | frame[14];
+  EXPECT_GT(at_val, 0x7FFF);
 }
 
-TEST(RobstrideCanProtocol, VelocityScaling) {
-  double velocity = 10.5; // rad/s
-  int32_t expected_raw = static_cast<int32_t>(velocity * 1000.0);
+TEST_F(ProtocolTest, AtDecodeFrame) {
+  // Mock response: pos=0, vel=neutral, effort=0
+  // AT Protocol Handler uses uint_to_float with 0-65535 range
+  std::vector<uint8_t> mock_rx(16, 0);
+  mock_rx[0] = 0x41; mock_rx[1] = 0x54;
+  mock_rx[5] = 0x0B;
   
-  EXPECT_EQ(expected_raw, 10500);
+  // Pos=0x7FFF (~0 rad)
+  mock_rx[7] = 0x7F; mock_rx[8] = 0xFF;
+  // Vel=0x7FFF (~0 rad/s)
+  mock_rx[9] = 0x7F; mock_rx[10] = 0xFF;
   
-  // Little Endian Packing Test
-  uint8_t data[8] = {0};
-  std::memcpy(&data[0], &expected_raw, 4);
-  
-  EXPECT_EQ(data[0], 10500 & 0xFF);
-  EXPECT_EQ(data[1], (10500 >> 8) & 0xFF);
+  auto result = at_handler->decode_frame(mock_rx);
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, 0x0B);
+  EXPECT_NEAR(result->second.position, 0.0, 0.1);
+  EXPECT_NEAR(result->second.velocity, 0.0, 0.1);
 }
 
-TEST(RobstrideCanProtocol, StatusFeedbackParsing) {
-  // Mock 0x500 + ID packet from Wiki
-  // data: pos(4), vel(2), tor(2)
-  int32_t p_in = 3142; // ~3.142 rad
-  int16_t v_in = 5000; // 5.0 rad/s
-  uint8_t mock_data[8];
-  std::memcpy(&mock_data[0], &p_in, 4);
-  std::memcpy(&mock_data[4], &v_in, 2);
+// --- CAN Protocol Tests ---
+
+TEST_F(ProtocolTest, CanVelocityCommand) {
+  double velocity = 5.0;
+  auto frame = can_handler->create_velocity_command(0x01, velocity);
+  ASSERT_EQ(frame.size(), 16);
+  EXPECT_EQ(frame[0], 0xAA);
   
-  // Parsing Logic
-  int32_t p_out;
-  int16_t v_out;
-  std::memcpy(&p_out, &mock_data[0], 4);
-  std::memcpy(&v_out, &mock_data[4], 2);
+  uint32_t id;
+  std::memcpy(&id, &frame[1], 4);
+  EXPECT_EQ(id, 0x401);
   
-  EXPECT_NEAR(static_cast<double>(p_out) / 1000.0, 3.142, 1e-3);
-  EXPECT_NEAR(static_cast<double>(v_out) / 1000.0, 5.0, 1e-3);
+  int32_t raw_vel;
+  std::memcpy(&raw_vel, &frame[8], 4);
+  EXPECT_EQ(raw_vel, 5000);
+}
+
+TEST_F(ProtocolTest, CanDecodeFrame) {
+  std::vector<uint8_t> mock_rx(16, 0);
+  mock_rx[0] = 0xAA;
+  uint32_t id = 0x502;
+  std::memcpy(&mock_rx[1], &id, 4);
+  
+  int32_t pos = 1234; // 1.234 rad
+  int16_t vel = 5678; // 5.678 rad/s
+  std::memcpy(&mock_rx[8], &pos, 4);
+  std::memcpy(&mock_rx[12], &vel, 2);
+  
+  auto result = can_handler->decode_frame(mock_rx);
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->first, 0x02);
+  EXPECT_NEAR(result->second.position, 1.234, 1e-3);
+  EXPECT_NEAR(result->second.velocity, 5.678, 1e-3);
 }
 
 int main(int argc, char ** argv) {

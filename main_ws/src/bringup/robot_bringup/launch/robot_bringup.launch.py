@@ -80,7 +80,7 @@ def launch_setup(context, *args, **kwargs):
         remappings=[("odom0", "odom/wheels")], output='screen'
     ))
 
-    # --- Teleop (Fix: Using consistent naming for lifecycle) ---
+    # --- Teleop ---
     actions.append(ComposableNodeContainer(
         name="robot_core_container", namespace="", package="rclcpp_components", executable="component_container_mt",
         composable_node_descriptions=[
@@ -90,8 +90,9 @@ def launch_setup(context, *args, **kwargs):
             )
         ], output="screen",
     ))
+    # Note: Lifecycle manager is kept for teleop but autostarted directly
     actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", 
-                        parameters=[{"autostart": True, "node_names": ["teleop"], "bond_timeout": 0.0, "use_sim_time": use_sim_time}]))
+                        parameters=[{"autostart": True, "node_names": ["teleop"], "bond_timeout": 4.0, "use_sim_time": use_sim_time}]))
 
     # --- Utilities ---
     actions += [

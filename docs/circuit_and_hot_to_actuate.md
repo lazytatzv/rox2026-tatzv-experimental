@@ -8,35 +8,29 @@ Makitaの40V. 降圧は多分しない.
 
 ### Robstrideの基盤(via AT command)を使う
 
-[Robstride05] <--CAN--> [提供された基盤] <--USB Typec--> PC(or rdk)
-
-- CAN_H ==> 細い赤
-- CAN_L ==> 細い黒
+[Robstride05] <--CAN--> [提供された基盤] <--USB Type-C--> PC(or rdk)
 
 #### 回す
 
-コンテナ中前提
+1.  **コンテナ起動**: `make up`
+2.  **ビルド**: `make build`
+3.  **起動**: 
+    ```bash
+    ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=at
+    ```
 
-```bash
-$ cd main_ws
+### Usb-to-can analyzer(Seeed Studio)を使う
 
-# In physical.yaml
-# protocolを"at"に変える
-
-$ make build
-$ source install/setup.bash
-$ ros2 launch robot_bringup robot_bringup.launch.py
-```
-
-### Usb-to-can analyzer(speedstudio)を使う
-
-配線的には純正基盤とほぼ変わらない
-
-[Robstride05] <--CAN--> [CanAnalyzer] <--Usb Typec--> PC(or rdk)
+[Robstride05] <--CAN--> [CanAnalyzer] <--USB Type-C--> PC(or rdk)
 
 #### 回す
 
-`physical.yaml`を`"can"`に変えるところ以外は同じ
+1.  **URDFの設定変更**: `robot.urdf.xacro` 内の `RobstrideSystemHardware` パラメータで `protocol` を `can` に設定する（または起動引数での対応を検討中）。
+2.  **起動**:
+    ```bash
+    ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=at
+    ```
+    ※ `actuator_type:=at` は `ros2_control` を使うためのフラグです。内部のプロトコル切り替えは現在URDFで行います。
 
 
 
