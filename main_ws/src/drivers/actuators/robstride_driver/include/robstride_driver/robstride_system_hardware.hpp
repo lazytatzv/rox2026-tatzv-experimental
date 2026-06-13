@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <thread>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -14,7 +15,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/macros.hpp"
 #include "std_msgs/msg/u_int8_multi_array.hpp"
-#include "robstride_driver/at_protocol.hpp"
+#include "robstride_driver/robstride_protocol.hpp"
 
 namespace robstride_driver
 {
@@ -50,20 +51,20 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  void serial_rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message);
-  void send_enable_command(uint8_t motor_id);
-  void send_disable_command(uint8_t motor_id);
-  double uint_to_float(uint16_t value, double low, double high);
+  void rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message);
 
-  // ROS Node for serial communication
+  // Protocol Handler
+  std::unique_ptr<RobstrideProtocol> protocol_handler_;
+
+  // ROS Node for communication
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_serial_tx_;
-  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscription_serial_rx_;
+  rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_tx_;
+  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscription_rx_;
   std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
   std::thread executor_thread_;
 
   // State and Command values
-  struct MotorState {
+  struct Motor {
     double position = 0.0;
     double velocity = 0.0;
     double effort = 0.0;
@@ -72,20 +73,13 @@ private:
     bool invert = false;
   };
 
-  std::vector<MotorState> motors_;
+  std::vector<Motor> motors_;
   std::map<uint8_t, size_t> id_to_index_;
 
   // Physics constraints
-  double pos_min_ = -12.57;
-  double pos_max_ = 12.57;
-  double vel_min_ = -50.0;
   double vel_max_ = 50.0;
-  double tor_min_ = -6.0;
-  double tor_max_ = 6.0;
-  int max_at_command_delta_ = 16383; // 50% limit default
 };
 
 }  // namespace robstride_driver
 
 #endif  // ROBSTRIDE_DRIVER__ROBSTRIDE_SYSTEM_HARDWARE_HPP_
-  // ROBSTRIDE_DRIVER__ROBSTRIDE_SYSTEM_HARDWARE_HPP_

@@ -1,74 +1,62 @@
-# Copyright 2026 Tatsukiyano
 cmake_minimum_required(VERSION 3.8)
 project(robstride_driver)
 
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(hardware_interface REQUIRED)
+find_package(pluginlib REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(seeed_usb_can_analyzer_driver REQUIRED)
-find_package(hardware_interface REQUIRED)
-find_package(pluginlib REQUIRED)
+find_package(diagnostic_updater REQUIRED)
 
-# robstride_motor_component (Shared Library)
-add_library(robstride_motor_component SHARED
-  src/robstride_at_node.cpp
-  src/robstride_can_node.cpp
-)
-target_include_directories(robstride_motor_component PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-ament_target_dependencies(robstride_motor_component
-  rclcpp
-  rclcpp_lifecycle
-  rclcpp_components
-  std_msgs
-  sensor_msgs
-  seeed_usb_can_analyzer_driver
-)
-
-# Hardware Interface
+# --- Hardware Interface Library ---
 add_library(robstride_system_hardware SHARED
   src/robstride_system_hardware.cpp
 )
-target_include_directories(robstride_system_hardware PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+target_include_directories(robstride_system_hardware PRIVATE
+  include
 )
 ament_target_dependencies(robstride_system_hardware
   rclcpp
-  std_msgs
   hardware_interface
   pluginlib
-)
-pluginlib_export_plugin_description_file(hardware_interface robstride_hardware.xml)
-
-# Register as Component AND auto-generate standalone executable
-rclcpp_components_register_node(robstride_motor_component
-  PLUGIN "robstride_driver::RobstrideAtNode"
-  EXECUTABLE robstride_at_node
-)
-rclcpp_components_register_node(robstride_motor_component
-  PLUGIN "robstride_driver::RobstrideCanNode"
-  EXECUTABLE robstride_can_node
+  std_msgs
 )
 
-# Install targets
+# --- Install ---
 install(TARGETS
-  robstride_motor_component
   robstride_system_hardware
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+  DESTINATION lib
 )
 
 install(DIRECTORY include/
   DESTINATION include
 )
 
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
+install(FILES
+  robstride_hardware.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
+pluginlib_export_plugin_description_file(hardware_interface robstride_hardware.xml)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  # the following line skips the linter which checks for copyrights
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_copyright_FOUND TRUE)
+  # the following line skips cpplint
+  # comment the line when a copyright and license is added to all source files
+  set(ament_cmake_cpplint_FOUND TRUE)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 ament_package()
