@@ -27,26 +27,48 @@ rox2026の個人的かつ試験的なプロジェクト. AI(主にgemini)を使�
 
 ### Development
 
-ホストは`nix`が入っているLinux想定です. `docker`は`nix`経由で入るのでホスト側に必須ではありません.
+ホストは`nix`が入っているLinux想定です. `docker`は`nix`経由で入るのでホスト側に必須ではありません. GUI設定も`flake.nix`と`compose.yaml`で完結しているので他にコマンドを叩く必要性はありません.
 
 ```bash
 # nix環境に入る
 $ make nix
 
+# Open VScode
 $ code .
 
 # devcontainerでビルド
-
 # or
+# docker cli経由でビルド
 $ docker compose up -d
 $ docker compose exec ros2_rox2026 bash
 ```
 
+`nix`や`docker`環境に入っているか確認したい時は、
+
+```bash
+# 出力が/nix/store/..ならnix環境です
+$ which docker
+
+# ホストにros2が入っていない場合、
+# /opt/ros/jazzy/bin/ros2と出ればdockerコンテナ内です.
+$ ros2
+
+```
+
+
 ### Visualization
 
-Foxgloveを使うこと推奨です.
+`Foxglove`を使うこと推奨です.
 
-Foxglove-studioをいれるか、ブラウザでfoxgloveを開いて、`websocket`で接続できます.
+ブラウザでfoxgloveを開いて、`websocket`で接続できます. Desktop版もあります.
+
+ブラウザ上で動作確認済ですが、`firefox`等のブラウザは公式にサポートされていないので注意です. `chrome`推奨です.
+
+`foxglove-studio`を開き、
+
+Dashboard -> Open Connection -> Websocket URL (ws://localhost:8765)
+
+[foxglove-studio](https://studio.foxglove.dev/)
 
 ### Simulation
 
