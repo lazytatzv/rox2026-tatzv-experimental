@@ -69,11 +69,6 @@ install(
   DESTINATION include
 )
 
-install(
-  DIRECTORY config launch
-  DESTINATION share/${PROJECT_NAME}
-)
-
 install(TARGETS
   usb_can_serial_protocol
   usb_can_analyzer_component
