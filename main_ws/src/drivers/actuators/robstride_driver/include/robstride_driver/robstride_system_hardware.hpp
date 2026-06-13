@@ -7,6 +7,7 @@
 #include <vector>
 #include <map>
 #include <thread>
+#include <mutex>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -14,8 +15,8 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/macros.hpp"
-#include "std_msgs/msg/u_int8_multi_array.hpp"
 #include "robstride_driver/robstride_protocol.hpp"
+#include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
 namespace robstride_driver
 {
@@ -51,17 +52,16 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  void rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message);
+  void can_rx_callback(const seeed_usb_can::CanFrame & frame);
 
   // Protocol Handler
   std::unique_ptr<RobstrideProtocol> protocol_handler_;
 
-  // ROS Node for communication
+  // Direct Communication Driver
+  std::unique_ptr<seeed_usb_can::UsbCanSerialDriver> transport_;
+
+  // ROS Node for logging and parameters only
   rclcpp::Node::SharedPtr node_;
-  rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_tx_;
-  rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr subscription_rx_;
-  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
-  std::thread executor_thread_;
 
   // State and Command values
   struct Motor {
@@ -78,6 +78,9 @@ private:
 
   // Physics constraints
   double vel_max_ = 50.0;
+
+  // Real-time safety
+  std::mutex state_mutex_;
 };
 
 }  // namespace robstride_driver

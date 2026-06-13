@@ -16,6 +16,8 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(custom_interfaces REQUIRED)
 find_package(diagnostic_updater REQUIRED)
+find_package(seeed_usb_can_analyzer_driver REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 # --- Hardware Interface Library ---
 add_library(robstride_system_hardware SHARED
@@ -30,6 +32,10 @@ ament_target_dependencies(robstride_system_hardware
   pluginlib
   std_msgs
   custom_interfaces
+  seeed_usb_can_analyzer_driver
+)
+target_link_libraries(robstride_system_hardware
+  Boost::system
 )
 
 # --- Install ---

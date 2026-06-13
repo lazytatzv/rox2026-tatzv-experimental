@@ -39,45 +39,26 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
     }
     int max_delta = static_cast<int>(at_protocol::NEUTRAL_VELOCITY_VALUE * (max_speed_percentage / 100.0));
     protocol_handler_ = std::make_unique<AtProtocolHandler>(vel_max_, max_delta);
-    RCLCPP_INFO(node_->get_logger(), "Using AT Protocol Handler");
-  } else if (protocol_type == "can") {
-    protocol_handler_ = std::make_unique<CanProtocolHandler>();
-    RCLCPP_INFO(node_->get_logger(), "Using CAN Protocol Handler");
-  } else if (protocol_type == "ddsm") {
-    protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
-    RCLCPP_INFO(node_->get_logger(), "Using DDSM Protocol Handler");
+  } else if (protocol_type == "can" || protocol_type == "ddsm") {
+    // Both use CAN frames over serial
+    if (protocol_type == "can") protocol_handler_ = std::make_unique<CanProtocolHandler>();
+    else protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
   } else {
     RCLCPP_FATAL(node_->get_logger(), "Unknown protocol type: %s", protocol_type.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  // Setup Topics
-  std::string tx_topic = protocol_handler_->get_default_tx_topic();
-  std::string rx_topic = protocol_handler_->get_default_rx_topic();
-  if (info_.hardware_parameters.count("topic_tx_queue")) tx_topic = info_.hardware_parameters.at("topic_tx_queue");
-  if (info_.hardware_parameters.count("topic_rx_queue")) rx_topic = info_.hardware_parameters.at("topic_rx_queue");
-
-  auto sensor_qos = rclcpp::SensorDataQoS();
-  publisher_tx_ = node_->create_publisher<std_msgs::msg::UInt8MultiArray>(tx_topic, sensor_qos);
-  subscription_rx_ = node_->create_subscription<std_msgs::msg::UInt8MultiArray>(
-    rx_topic, sensor_qos,
-    std::bind(&RobstrideSystemHardware::rx_callback, this, std::placeholders::_1));
+  // Initialize Transport
+  transport_ = std::make_unique<seeed_usb_can::UsbCanSerialDriver>();
+  transport_->set_receive_callback(std::bind(&RobstrideSystemHardware::can_rx_callback, this, std::placeholders::_1));
 
   // Initialize motors from URDF joints
   motors_.resize(info_.joints.size());
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto & joint = info_.joints[i];
-    
-    if (joint.command_interfaces.size() != 1 || joint.command_interfaces[0].name != hardware_interface::HW_IF_VELOCITY) {
-      RCLCPP_FATAL(node_->get_logger(), "Joint '%s' requires exactly one command interface: 'velocity'", joint.name.c_str());
-      return hardware_interface::CallbackReturn::ERROR;
-    }
-
     motors_[i].id = std::stoi(joint.parameters.at("motor_id"), nullptr, 0);
     motors_[i].invert = (joint.parameters.at("invert_direction") == "true");
-    
     id_to_index_[motors_[i].id] = i;
-    RCLCPP_INFO(node_->get_logger(), "Initialized joint '%s' (ID: 0x%02X, Invert: %d)", joint.name.c_str(), motors_[i].id, motors_[i].invert);
   }
 
   return hardware_interface::CallbackReturn::SUCCESS;
@@ -86,32 +67,40 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
+  seeed_usb_can::SerialDriverConfig config;
+  if (info_.hardware_parameters.count("usb_path")) config.usb_path = info_.hardware_parameters.at("usb_path");
+  if (info_.hardware_parameters.count("serial_baud")) config.serial_baud = std::stoi(info_.hardware_parameters.at("serial_baud"));
+  
+  try {
+    transport_->open(config);
+    RCLCPP_INFO(node_->get_logger(), "Transport opened on %s", config.usb_path.c_str());
+  } catch (const std::exception & e) {
+    RCLCPP_FATAL(node_->get_logger(), "Failed to open transport: %s", e.what());
+    return hardware_interface::CallbackReturn::ERROR;
+  }
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_cleanup(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
+  transport_->close();
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
-  executor_->add_node(node_);
-  executor_thread_ = std::thread([this]() { executor_->spin(); });
-
   for (const auto & motor : motors_) {
-    auto frame = protocol_handler_->create_enable_command(motor.id);
-    if (!frame.empty()) {
-      auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
-      msg->data = frame;
-      publisher_tx_->publish(std::move(msg));
+    auto frame_data = protocol_handler_->create_enable_command(motor.id);
+    if (!frame_data.empty()) {
+      seeed_usb_can::CanFrame frame;
+      frame.id = motor.id; // Simplified, assuming handler handles ID mapping if needed
+      frame.data = frame_data;
+      frame.dlc = static_cast<uint8_t>(frame_data.size());
+      transport_->send_frame(frame);
     }
   }
-  
-  RCLCPP_INFO(node_->get_logger(), "RobstrideSystemHardware activated!");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -119,20 +108,15 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   for (const auto & motor : motors_) {
-    auto frame = protocol_handler_->create_disable_command(motor.id);
-    if (!frame.empty()) {
-      auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
-      msg->data = frame;
-      publisher_tx_->publish(std::move(msg));
+    auto frame_data = protocol_handler_->create_disable_command(motor.id);
+    if (!frame_data.empty()) {
+      seeed_usb_can::CanFrame frame;
+      frame.id = motor.id;
+      frame.data = frame_data;
+      frame.dlc = static_cast<uint8_t>(frame_data.size());
+      transport_->send_frame(frame);
     }
   }
-
-  if (executor_) {
-    executor_->cancel();
-    if (executor_thread_.joinable()) executor_thread_.join();
-  }
-
-  RCLCPP_INFO(node_->get_logger(), "RobstrideSystemHardware deactivated!");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -163,6 +147,7 @@ std::vector<hardware_interface::CommandInterface> RobstrideSystemHardware::expor
 hardware_interface::return_type RobstrideSystemHardware::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+  // Non-blocking read is handled by can_rx_callback and mutex
   return hardware_interface::return_type::OK;
 }
 
@@ -173,23 +158,23 @@ hardware_interface::return_type RobstrideSystemHardware::write(
     double velocity = motor.command_velocity;
     if (motor.invert) velocity = -velocity;
 
-    auto frame = protocol_handler_->create_velocity_command(motor.id, velocity);
-    if (!frame.empty()) {
-      auto msg = std::make_unique<std_msgs::msg::UInt8MultiArray>();
-      msg->data = frame;
-      publisher_tx_->publish(std::move(msg));
+    auto frame_data = protocol_handler_->create_velocity_command(motor.id, velocity);
+    if (!frame_data.empty()) {
+      seeed_usb_can::CanFrame frame;
+      // Note: In real CAN, the ID might be different from motor.id depending on protocol
+      // Here we assume motor.id is the CAN ID for simplicity.
+      frame.id = motor.id;
+      frame.data = frame_data;
+      frame.dlc = static_cast<uint8_t>(frame_data.size());
+      transport_->send_frame(frame);
     }
   }
   return hardware_interface::return_type::OK;
 }
 
-void RobstrideSystemHardware::rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message) {
-  auto result = protocol_handler_->decode_frame(message->data);
-  if (!result.success) {
-    RCLCPP_DEBUG_THROTTLE(node_->get_logger(), *node_->get_clock(), 1000,
-      "Protocol decode failed: %s", result.error_msg.c_str());
-    return;
-  }
+void RobstrideSystemHardware::can_rx_callback(const seeed_usb_can::CanFrame & frame) {
+  auto result = protocol_handler_->decode_frame(frame.data);
+  if (!result.success) return;
 
   uint8_t motor_id = result.motor_id;
   if (id_to_index_.find(motor_id) == id_to_index_.end()) return;
@@ -197,6 +182,7 @@ void RobstrideSystemHardware::rx_callback(const std_msgs::msg::UInt8MultiArray::
   size_t idx = id_to_index_[motor_id];
   auto & state = result.state;
 
+  std::lock_guard<std::mutex> lock(state_mutex_);
   if (motors_[idx].invert) {
     motors_[idx].position = -state.position;
     motors_[idx].velocity = -state.velocity;

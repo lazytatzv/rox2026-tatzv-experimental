@@ -7,7 +7,7 @@ import time
 class SignalInjector(Node):
     def __init__(self):
         super().__init__('signal_injector')
-        self.publisher_ = self.create_publisher(TwistStamped, '/mecanum_drive_controller/reference', 10)
+        self.publisher_ = self.create_publisher(TwistStamped, '/cmd_vel_ext', 10)
         
         self.declare_parameter('mode', 'step')  # 'step', 'sine'
         self.declare_parameter('amplitude', 1.0)

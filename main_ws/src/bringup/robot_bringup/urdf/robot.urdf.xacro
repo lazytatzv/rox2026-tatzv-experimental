@@ -135,10 +135,15 @@
         </xacro:if>
         <xacro:if value="${'$(arg actuator_type)' == 'at'}">
           <plugin>robstride_driver/RobstrideSystemHardware</plugin>
+          <param name="protocol">at</param>
         </xacro:if>
         <xacro:if value="${'$(arg actuator_type)' == 'ddsm'}">
-          <!-- Fallback or future ddsm plugin -->
-          <plugin>virtual_actuator/VirtualSystemHardware</plugin>
+          <plugin>robstride_driver/RobstrideSystemHardware</plugin>
+          <param name="protocol">ddsm</param>
+        </xacro:if>
+        <xacro:if value="${'$(arg actuator_type)' == 'can'}">
+          <plugin>robstride_driver/RobstrideSystemHardware</plugin>
+          <param name="protocol">can</param>
         </xacro:if>
       </xacro:unless>
     </hardware>

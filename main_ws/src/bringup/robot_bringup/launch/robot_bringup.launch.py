@@ -66,26 +66,6 @@ def launch_setup(context, *args, **kwargs):
             output="screen",
         ))
 
-        # --- Communication Bridge (Physical Mode only) ---
-        if actuator_type == "at":
-            if protocol == "at":
-                # Generic Serial Bridge
-                actions.append(Node(
-                    package="serial_driver", executable="serial_driver_node",
-                    name="serial_driver",
-                    parameters=[paths["communication"]],
-                    remappings=[("tx", "/communication/tx"), ("rx", "/communication/rx")],
-                    output="screen",
-                ))
-            elif protocol == "can":
-                # Seeed USB-CAN Analyzer Bridge
-                actions.append(Node(
-                    package="seeed_usb_can_analyzer_driver", executable="usb_can_analyzer_node",
-                    name="usb_can_analyzer_node",
-                    parameters=[paths["communication"]],
-                    output="screen",
-                ))
-
     # --- Controller Spawning ---
     # Gazebo mode: gz_ros2_control loads controllers automatically via <parameters> tag in URDF.
     # We only call spawner if NOT in Gazebo, or as a lightweight check.
