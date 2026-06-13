@@ -15,7 +15,6 @@ find_package(pluginlib REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(custom_interfaces REQUIRED)
-find_package(seeed_usb_can_analyzer_driver REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
 # --- Hardware Interface Library ---

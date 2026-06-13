@@ -16,7 +16,6 @@
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>custom_interfaces</depend>
-  <depend>seeed_usb_can_analyzer_driver</depend>
   <depend>diagnostic_updater</depend>
 
   <test_depend>ament_lint_auto</test_depend>
