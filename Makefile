@@ -5,7 +5,19 @@ SHELL := /bin/bash
 # Configuration
 CONTAINER_NAME := ros2_rox2026
 
-.PHONY: help up down shell build test launch virtual sim sim-gui format clean nix image
+.PHONY: setup-env
+
+setup-env: ## [HOST] Setup direnv hooks for Bash/Fish and allow this project
+	@echo "Configuring direnv for Bash..."
+	@grep -q 'direnv hook bash' ~/.bashrc || echo 'eval "$$(direnv hook bash)"' >> ~/.bashrc
+	@if [ -d ~/.config/fish ]; then \
+		echo "Configuring direnv for Fish..."; \
+		grep -q 'direnv hook fish' ~/.config/fish/config.fish || echo 'direnv hook fish | source' >> ~/.config/fish/config.fish; \
+	fi
+	@echo "Allowing current directory in direnv..."
+	@direnv allow .
+	@echo ">>> Environment setup complete. Please restart your shell or run 'exec \$$SHELL' <<<"
+ up down shell build test launch virtual sim sim-gui format clean nix image
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'

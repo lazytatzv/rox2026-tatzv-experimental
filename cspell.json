@@ -28,7 +28,9 @@
         "rviz",
         "odom",
         "footprint",
-        "deadzone"
+        "deadzone",
+        "rclpy",
+        "apriltag"
     ],
     "ignorePaths": [
         "**/build/**",
