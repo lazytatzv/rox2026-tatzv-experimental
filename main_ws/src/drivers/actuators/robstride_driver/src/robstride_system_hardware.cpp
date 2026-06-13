@@ -10,6 +10,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "robstride_driver/at_protocol_handler.hpp"
 #include "robstride_driver/can_protocol_handler.hpp"
+#include "robstride_driver/ddsm_protocol_handler.hpp"
 
 namespace robstride_driver
 {
@@ -42,6 +43,9 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
   } else if (protocol_type == "can") {
     protocol_handler_ = std::make_unique<CanProtocolHandler>();
     RCLCPP_INFO(node_->get_logger(), "Using CAN Protocol Handler");
+  } else if (protocol_type == "ddsm") {
+    protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
+    RCLCPP_INFO(node_->get_logger(), "Using DDSM Protocol Handler");
   } else {
     RCLCPP_FATAL(node_->get_logger(), "Unknown protocol type: %s", protocol_type.c_str());
     return hardware_interface::CallbackReturn::ERROR;

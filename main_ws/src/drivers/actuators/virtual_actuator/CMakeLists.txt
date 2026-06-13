@@ -3,58 +3,37 @@ project(virtual_actuator)
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
-find_package(rclcpp_lifecycle REQUIRED)
-find_package(rclcpp_components REQUIRED)
-find_package(sensor_msgs REQUIRED)
-find_package(std_msgs REQUIRED)
 find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
-
-# Original node
-add_library(virtual_actuator_component SHARED
-  src/virtual_actuator_node.cpp
-)
-target_include_directories(virtual_actuator_component PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
-)
-ament_target_dependencies(virtual_actuator_component
-  rclcpp
-  rclcpp_lifecycle
-  rclcpp_components
-  sensor_msgs
-  std_msgs
-)
 
 # Hardware Interface
 add_library(virtual_system_hardware SHARED
   src/virtual_system_hardware.cpp
 )
-target_include_directories(virtual_system_hardware PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>
+target_include_directories(virtual_system_hardware PRIVATE
+  include
 )
 ament_target_dependencies(virtual_system_hardware
   rclcpp
   hardware_interface
   pluginlib
 )
+
+# Install
+install(TARGETS
+  virtual_system_hardware
+  DESTINATION lib
+)
+
+install(DIRECTORY include/
+  DESTINATION include
+)
+
+install(FILES
+  virtual_hardware.xml
+  DESTINATION share/${PROJECT_NAME}
+)
+
 pluginlib_export_plugin_description_file(hardware_interface virtual_hardware.xml)
 
-rclcpp_components_register_node(virtual_actuator_component
-  PLUGIN "virtual_actuator::VirtualActuatorNode"
-  EXECUTABLE virtual_actuator_node
-)
-
-install(TARGETS
-  virtual_actuator_component
-  virtual_system_hardware
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
-
-ament_export_targets(export_${PROJECT_NAME} HAS_LIBRARY_TARGET)
 ament_package()
-

@@ -16,13 +16,14 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(Boost CONFIG REQUIRED)
+find_package(rox_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(Threads REQUIRED)
 
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/CanFrame.msg"
-)
+# rosidl_generate_interfaces(${PROJECT_NAME}
+#   "msg/CanFrame.msg"
+# )
 
 # 1. Internal protocol library
 add_library(usb_can_serial_protocol SHARED
@@ -49,16 +50,13 @@ ament_target_dependencies(usb_can_analyzer_component
   rclcpp_lifecycle
   rclcpp_components
   lifecycle_msgs
+  rox_interfaces
 )
 
 target_link_libraries(usb_can_analyzer_component
   Boost::headers
   usb_can_serial_protocol
 )
-
-# Crucial for component to find its message headers
-rosidl_get_typesupport_target(cpp_typesupport_target ${PROJECT_NAME} rosidl_typesupport_cpp)
-target_link_libraries(usb_can_analyzer_component "${cpp_typesupport_target}")
 
 # 3. Register as Component AND auto-generate standalone executable
 rclcpp_components_register_node(usb_can_analyzer_component
