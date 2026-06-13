@@ -8,7 +8,7 @@
 #include <rclcpp_lifecycle/lifecycle_node.hpp>
 #include <lifecycle_msgs/msg/state.hpp>
 
-#include "rox_interfaces/msg/can_frame.hpp"
+#include "custom_interfaces/msg/can_frame.hpp"
 #include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
 namespace seeed_usb_can
@@ -52,13 +52,13 @@ public:
 
     const auto can_baud_code = to_can_baud_code(bitrate);
 
-    publisher_ = create_publisher<rox_interfaces::msg::CanFrame>(
+    publisher_ = create_publisher<custom_interfaces::msg::CanFrame>(
       "/communication/rx_queue", 100);
     
-    subscription_ = create_subscription<rox_interfaces::msg::CanFrame>(
+    subscription_ = create_subscription<custom_interfaces::msg::CanFrame>(
       "/communication/tx_queue",
       100,
-      [this](const rox_interfaces::msg::CanFrame::ConstSharedPtr msg) {
+      [this](const custom_interfaces::msg::CanFrame::ConstSharedPtr msg) {
         this->handle_transmit(*msg);
       });
 
@@ -72,7 +72,7 @@ public:
 
     serial_driver_.set_receive_callback([this](const CanFrame & frame) {
       if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-        auto msg = rox_interfaces::msg::CanFrame();
+        auto msg = custom_interfaces::msg::CanFrame();
         msg.id = frame.id;
         msg.extended = frame.extended;
         msg.remote = frame.remote;
@@ -137,7 +137,7 @@ private:
     }
   }
 
-  void handle_transmit(const rox_interfaces::msg::CanFrame & msg)
+  void handle_transmit(const custom_interfaces::msg::CanFrame & msg)
   {
     if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
 
@@ -157,8 +157,8 @@ private:
 
   UsbCanSerialDriver serial_driver_;
   SerialDriverConfig config_;
-  rclcpp_lifecycle::LifecyclePublisher<rox_interfaces::msg::CanFrame>::SharedPtr publisher_;
-  rclcpp::Subscription<rox_interfaces::msg::CanFrame>::SharedPtr subscription_;
+  rclcpp_lifecycle::LifecyclePublisher<custom_interfaces::msg::CanFrame>::SharedPtr publisher_;
+  rclcpp::Subscription<custom_interfaces::msg::CanFrame>::SharedPtr subscription_;
 };
 
 }  // namespace seeed_usb_can

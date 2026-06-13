@@ -14,7 +14,7 @@ find_package(hardware_interface REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(rox_interfaces REQUIRED)
+find_package(custom_interfaces REQUIRED)
 find_package(seeed_usb_can_analyzer_driver REQUIRED)
 find_package(diagnostic_updater REQUIRED)
 
@@ -30,7 +30,7 @@ ament_target_dependencies(robstride_system_hardware
   hardware_interface
   pluginlib
   std_msgs
-  rox_interfaces
+  custom_interfaces
 )
 
 # --- Install ---

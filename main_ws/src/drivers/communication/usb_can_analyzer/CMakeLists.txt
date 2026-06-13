@@ -16,7 +16,7 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(Boost CONFIG REQUIRED)
-find_package(rox_interfaces REQUIRED)
+find_package(custom_interfaces REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(Threads REQUIRED)
@@ -50,7 +50,7 @@ ament_target_dependencies(usb_can_analyzer_component
   rclcpp_lifecycle
   rclcpp_components
   lifecycle_msgs
-  rox_interfaces
+  custom_interfaces
 )
 
 target_link_libraries(usb_can_analyzer_component
