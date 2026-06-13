@@ -32,8 +32,11 @@ def analyze_step_response(bag_path):
     plt.savefig(output_png)
     print(f"Results saved to {output_png}")
 
-if __name__ == '__main__':
+def main():
     if len(sys.argv) < 2:
-        print("Usage: python3 control_analysis.py <bag_file>")
+        print("Usage: ros2 run control_analysis analyze <bag_file>")
     else:
         analyze_step_response(sys.argv[1])
+
+if __name__ == '__main__':
+    main()
