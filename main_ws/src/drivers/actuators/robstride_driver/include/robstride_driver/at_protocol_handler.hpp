@@ -81,8 +81,8 @@ public:
     return result;
   }
 
-  std::string get_default_tx_topic() const override { return "/serial_write"; }
-  std::string get_default_rx_topic() const override { return "/serial_read"; }
+  std::string get_default_tx_topic() const override { return "/communication/tx"; }
+  std::string get_default_rx_topic() const override { return "/communication/rx"; }
 
 private:
   double uint_to_float(uint16_t value, double low, double high) {

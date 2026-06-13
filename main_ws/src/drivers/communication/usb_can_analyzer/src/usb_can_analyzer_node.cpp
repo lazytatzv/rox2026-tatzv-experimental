@@ -53,10 +53,10 @@ public:
     const auto can_baud_code = to_can_baud_code(bitrate);
 
     publisher_ = create_publisher<custom_interfaces::msg::CanFrame>(
-      "/communication/rx_queue", 100);
+      "/communication/rx", 100);
     
     subscription_ = create_subscription<custom_interfaces::msg::CanFrame>(
-      "/communication/tx_queue",
+      "/communication/tx",
       100,
       [this](const custom_interfaces::msg::CanFrame::ConstSharedPtr msg) {
         this->handle_transmit(*msg);

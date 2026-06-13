@@ -15,12 +15,14 @@ def launch_setup(context, *args, **kwargs):
     # --- 1. Load Global Config ---
     use_sim_time = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
     actuator_type = LaunchConfiguration("actuator_type").perform(context) or "at"
+    protocol = LaunchConfiguration("protocol").perform(context) or "at"
 
     paths = {
         "mux": os.path.join(pkg_bringup, "config", "twist_mux.yaml"),
         "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
         "ekf": os.path.join(pkg_bringup, "config", "ekf.yaml"),
         "controllers": os.path.join(pkg_bringup, "config", "controllers.yaml"),
+        "communication": os.path.join(pkg_bringup, "config", "communication.yaml"),
         "xacro": os.path.join(pkg_bringup, "urdf", "robot.urdf.xacro"),
         "world": os.path.join(pkg_bringup, "world", "obstacles.sdf"),
         "bridge": os.path.join(pkg_bringup, "config", "gz_bridge.yaml"),
@@ -29,7 +31,7 @@ def launch_setup(context, *args, **kwargs):
     import xacro
     robot_description_xml = xacro.process_file(
         paths["xacro"], 
-        mappings={"actuator_type": actuator_type, "is_gazebo": str(use_sim_time).lower()}
+        mappings={"actuator_type": actuator_type, "is_gazebo": str(use_sim_time).lower(), "protocol": protocol}
     ).toxml()
 
     actions = []
@@ -63,6 +65,26 @@ def launch_setup(context, *args, **kwargs):
             parameters=[{'robot_description': robot_description_xml}, paths["controllers"]],
             output="screen",
         ))
+
+        # --- Communication Bridge (Physical Mode only) ---
+        if actuator_type == "at":
+            if protocol == "at":
+                # Generic Serial Bridge
+                actions.append(Node(
+                    package="serial_driver", executable="serial_driver_node",
+                    name="serial_driver",
+                    parameters=[paths["communication"]],
+                    remappings=[("tx", "/communication/tx"), ("rx", "/communication/rx")],
+                    output="screen",
+                ))
+            elif protocol == "can":
+                # Seeed USB-CAN Analyzer Bridge
+                actions.append(Node(
+                    package="seeed_usb_can_analyzer_driver", executable="usb_can_analyzer_node",
+                    name="usb_can_analyzer_node",
+                    parameters=[paths["communication"]],
+                    output="screen",
+                ))
 
     # --- Controller Spawning ---
     # Gazebo mode: gz_ros2_control loads controllers automatically via <parameters> tag in URDF.
@@ -109,6 +131,7 @@ def launch_setup(context, *args, **kwargs):
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("actuator_type", default_value="at"),
+        DeclareLaunchArgument("protocol", default_value="at"),
         DeclareLaunchArgument("gazebo", default_value="false"),
         DeclareLaunchArgument("headless", default_value="true"),
         OpaqueFunction(function=launch_setup),

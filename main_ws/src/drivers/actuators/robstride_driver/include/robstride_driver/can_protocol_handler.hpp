@@ -73,8 +73,8 @@ public:
     return result;
   }
 
-  std::string get_default_tx_topic() const override { return "/serial_write"; }
-  std::string get_default_rx_topic() const override { return "/serial_read"; }
+  std::string get_default_tx_topic() const override { return "/communication/tx"; }
+  std::string get_default_rx_topic() const override { return "/communication/rx"; }
 };
 
 }  // namespace robstride_driver
