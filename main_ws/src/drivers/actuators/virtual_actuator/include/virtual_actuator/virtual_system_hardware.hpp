@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <random>
 
 #include "hardware_interface/handle.hpp"
 #include "hardware_interface/hardware_info.hpp"
@@ -39,12 +40,19 @@ private:
   struct VirtualMotorState {
     double position = 0.0;
     double velocity = 0.0;
+    double filtered_velocity = 0.0;
     double effort = 0.0;
     double command_velocity = 0.0;
     double inertia = 0.1;
+    double friction = 0.01;
+    double noise_stddev = 0.001;
+    double lpf_alpha = 0.15;
   };
 
   std::vector<VirtualMotorState> motors_;
+  
+  std::random_device rd_;
+  std::mt19937 gen_;
 };
 
 }  // namespace virtual_actuator

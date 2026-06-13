@@ -27,7 +27,8 @@
         "lifecycle",
         "rviz",
         "odom",
-        "footprint"
+        "footprint",
+        "deadzone"
     ],
     "ignorePaths": [
         "**/build/**",

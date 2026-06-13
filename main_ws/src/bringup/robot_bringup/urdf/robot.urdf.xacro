@@ -1,176 +1,99 @@
 <?xml version="1.0"?>
-<robot name="nexus_10011_ultimate" xmlns:xacro="http://www.ros.org/wiki/xacro">
+<robot name="rox2026_base_kit" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- Section 1: Official Specs -->
-  <xacro:property name="base_mass"    value="4.2"/>
-  <xacro:property name="hub_mass"     value="0.15"/>
-  <xacro:property name="barrel_mass"  value="0.02"/>
-  <xacro:property name="wheel_radius" value="0.05"/>
-  <xacro:property name="wheel_width"  value="0.05"/>
-  <xacro:property name="barrel_radius" value="0.012"/>
-  <xacro:property name="barrel_length" value="0.032"/>
-  <xacro:property name="wheel_base"   value="0.25"/>
-  <xacro:property name="wheel_sep"    value="0.30"/>
+  <!-- Section 1: Official Base Kit Specs (EduLite 05 Optimized) -->
+  <xacro:property name="base_mass"    value="18.0"/> 
+  <xacro:property name="hub_mass"     value="0.5"/>
+  <xacro:property name="barrel_mass"  value="0.05"/>
+  <xacro:property name="wheel_radius" value="0.05"/> <!-- 100mm diameter -->
+  <xacro:property name="wheel_base"   value="0.40"/>
+  <xacro:property name="wheel_sep"    value="0.40"/>
 
-  <material name="nexus_yellow"><color rgba="1.0 0.8 0.0 1"/></material>
-  <material name="aluminum"><color rgba="0.8 0.8 0.8 1"/></material>
+  <xacro:macro name="box_inertia" params="m w h d">
+    <inertial><origin xyz="0 0 0.05"/><mass value="${m}"/><inertia ixx="${(m/12)*(h*h+d*d)}" ixy="0" ixz="0" iyy="${(m/12)*(w*w+d*d)}" iyz="0" izz="${(m/12)*(w*w+h*h)}"/></inertial>
+  </xacro:macro>
+  <xacro:macro name="cylinder_inertia" params="m r h">
+    <inertial><origin xyz="0 0 0"/><mass value="${m}"/><inertia ixx="${(m/12)*(3*r*r+h*h)}" ixy="0" ixz="0" iyy="${(m/12)*(3*r*r+h*h)}" iyz="0" izz="${(m/2)*r*r}"/></inertial>
+  </xacro:macro>
+
   <material name="black"><color rgba="0.1 0.1 0.1 1"/></material>
+  <material name="aluminum"><color rgba="0.8 0.8 0.8 1"/></material>
 
-  <link name="base_footprint">
-    <inertial><mass value="0.01"/><inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/></inertial>
-  </link>
-  
+  <link name="base_footprint"/>
   <link name="base_link">
-    <inertial>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <mass value="${base_mass}"/>
-      <inertia ixx="0.05" ixy="0" ixz="0" iyy="0.05" iyz="0" izz="0.1"/>
-    </inertial>
-    <visual><origin xyz="0 0 0.03"/><geometry><box size="0.36 0.249 0.06"/></geometry><material name="nexus_yellow"/></visual>
-    <collision><origin xyz="0 0 0.03"/><geometry><box size="0.36 0.249 0.06"/></geometry></collision>
+    <xacro:box_inertia m="${base_mass}" w="0.5" h="0.5" d="0.1"/>
+    <visual name="base_vis"><origin xyz="0 0 0.05"/><geometry><box size="0.45 0.45 0.1"/></geometry><material name="black"/></visual>
+    <collision name="base_col"><origin xyz="0 0 0.05"/><geometry><box size="0.45 0.45 0.1"/></geometry></collision>
   </link>
+  <joint name="base_joint" type="fixed"><parent link="base_footprint"/><child link="base_link"/><origin xyz="0 0 0.05"/></joint>
 
-  <joint name="base_joint" type="fixed">
-    <parent link="base_footprint"/><child link="base_link"/>
-    <origin xyz="0 0 0.05" rpy="0 0 0"/>
-  </joint>
+  <!-- IMU Sensor -->
+  <link name="imu_link"><inertial><mass value="0.01"/><inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/></inertial></link>
+  <joint name="imu_joint" type="fixed"><parent link="base_link"/><child link="imu_link"/><origin xyz="0 0 0.1"/></joint>
+  <gazebo reference="imu_link"><sensor name="imu_sensor" type="imu"><always_on>1</always_on><update_rate>100</update_rate><topic>imu</topic></sensor></gazebo>
 
-  <!-- Section 1.5: Sensors (IMU) -->
-  <link name="imu_link">
-    <inertial>
-      <mass value="0.01"/>
-      <inertia ixx="1e-5" ixy="0" ixz="0" iyy="1e-5" iyz="0" izz="1e-5"/>
-    </inertial>
-    <visual>
-      <geometry><box size="0.02 0.02 0.01"/></geometry>
-      <material name="black"/>
-    </visual>
-  </link>
+  <!-- Camera -->
+  <link name="camera_link"><visual name="cam_vis"><geometry><box size="0.02 0.05 0.02"/></geometry><material name="black"/></visual></link>
+  <joint name="camera_joint" type="fixed"><parent link="base_link"/><child link="camera_link"/><origin xyz="0.2 0 0.1" rpy="0 0.2 0"/></joint>
+  <gazebo reference="camera_link"><sensor name="main_camera" type="camera"><always_on>1</always_on><update_rate>20</update_rate><topic>camera/image_raw</topic><camera><horizontal_fov>1.396</horizontal_fov><image><width>640</width><height>480</height><format>R8G8B8</format></image><clip><near>0.05</near><far>10.0</far></clip></camera></sensor></gazebo>
 
-  <joint name="imu_joint" type="fixed">
-    <parent link="base_link"/>
-    <child link="imu_link"/>
-    <origin xyz="0 0 0.06" rpy="0 0 0"/>
-  </joint>
-
-  <gazebo reference="imu_link">
-    <sensor name="imu_sensor" type="imu">
-      <always_on>1</always_on>
-      <update_rate>100</update_rate>
-      <visualize>true</visualize>
-      <topic>imu</topic>
-    </sensor>
-  </gazebo>
-
-  <!-- Section 2: Barrel Macro (Free Spinning Roller) -->
   <xacro:macro name="barrel" params="wheel_prefix num angle_deg roller_type">
-    <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
-      <parent link="${wheel_prefix}_hub_link"/>
-      <child link="${wheel_prefix}_barrel_${num}_link"/>
-      <origin xyz="${0.038 * cos(radians(angle_deg))} ${0.038 * sin(radians(angle_deg))} 0" 
-              rpy="${roller_type * pi/4} 0 ${radians(angle_deg)}"/>
-      <axis xyz="0 0 1"/>
-      <dynamics damping="0.001" friction="0.001"/>
+    <xacro:property name="angle_rad" value="${radians(angle_deg)}"/>
+    <xacro:property name="pos_x" value="${0.038 * cos(angle_rad)}"/>
+    <xacro:property name="pos_y" value="${0.038 * sin(angle_rad)}"/>
+    <xacro:property name="rot_r" value="${roller_type * pi/4}"/>
+    <joint name="${wheel_prefix}_barrel_${num}_joint" type="fixed">
+      <parent link="${wheel_prefix}_link"/><child link="${wheel_prefix}_barrel_${num}_link"/>
+      <origin xyz="${pos_x} ${pos_y} 0" rpy="${rot_r} 0 ${angle_rad}"/>
     </joint>
     <link name="${wheel_prefix}_barrel_${num}_link">
-      <inertial>
-        <mass value="${barrel_mass}"/>
-        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
-      </inertial>
-      <visual><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry><material name="black"/></visual>
-      <collision><geometry><cylinder radius="${barrel_radius}" length="${barrel_length}"/></geometry></collision>
+      <visual name="${wheel_prefix}_barrel_${num}_vis"><geometry><cylinder radius="0.012" length="0.032"/></geometry><material name="black"/></visual>
     </link>
-    <gazebo reference="${wheel_prefix}_barrel_${num}_link">
-      <mu1>1.0</mu1>
-      <mu2>1.0</mu2>
-      <kp>1e6</kp>
-      <kd>100.0</kd>
-      <minDepth>0.001</minDepth>
-      <material>Gazebo/Black</material>
-    </gazebo>
   </xacro:macro>
 
-  <!-- Section 3: Ultimate Mecanum Wheel Macro -->
-  <xacro:macro name="ultimate_mecanum_wheel" params="side position x_sign y_sign roller_type">
-    <xacro:property name="w_prefix" value="${side}_${position}"/>
-    <link name="${w_prefix}_hub_link">
-      <inertial><mass value="${hub_mass}"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
-      <visual><origin rpy="0 0 0"/><geometry><cylinder radius="0.02" length="0.04"/></geometry><material name="aluminum"/></visual>
-      <visual><origin xyz="0 0 0.02"/><geometry><cylinder radius="0.04" length="0.005"/></geometry><material name="aluminum"/></visual>
-      <visual><origin xyz="0 0 -0.02"/><geometry><cylinder radius="0.04" length="0.005"/></geometry><material name="aluminum"/></visual>
+  <xacro:macro name="mecanum_wheel" params="name x y roller_type motor_id">
+    <link name="${name}_wheel_link">
+      <xacro:cylinder_inertia m="${hub_mass}" r="${wheel_radius}" h="0.04"/>
+      <visual name="${name}_hub_vis"><geometry><cylinder radius="${wheel_radius}" length="0.04"/></geometry><material name="aluminum"/></visual>
+      <collision name="${name}_hub_col"><geometry><cylinder radius="${wheel_radius}" length="0.04"/></geometry></collision>
     </link>
-    <joint name="${w_prefix}_wheel_joint" type="continuous">
-      <parent link="base_link"/><child link="${w_prefix}_hub_link"/>
-      <origin xyz="${x_sign * wheel_base/2} ${y_sign * wheel_sep/2} 0" rpy="-1.57 0 0"/>
-      <axis xyz="0 0 1"/>
-      <dynamics damping="0.05" friction="0.02"/>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/><child link="${name}_wheel_link"/>
+      <origin xyz="${x} ${y} 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
+      <limit effort="6.0" velocity="25.0"/> 
+      <dynamics damping="0.1" friction="0.1"/>
     </joint>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="0" angle_deg="0"   roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="1" angle_deg="40"  roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="2" angle_deg="80"  roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="3" angle_deg="120" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="4" angle_deg="160" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="5" angle_deg="200" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="6" angle_deg="240" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="7" angle_deg="280" roller_type="${roller_type}"/>
-    <xacro:barrel wheel_prefix="${w_prefix}" num="8" angle_deg="320" roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="0" angle_deg="0"   roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="1" angle_deg="40"  roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="2" angle_deg="80"  roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="3" angle_deg="120" roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="4" angle_deg="160" roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="5" angle_deg="200" roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="6" angle_deg="240" roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="7" angle_deg="280" roller_type="${roller_type}"/>
+    <xacro:barrel wheel_prefix="${name}_wheel" num="8" angle_deg="320" roller_type="${roller_type}"/>
   </xacro:macro>
 
-  <xacro:ultimate_mecanum_wheel side="front" position="left"  x_sign="1"  y_sign="1"  roller_type="-1"/>
-  <xacro:ultimate_mecanum_wheel side="front" position="right" x_sign="1"  y_sign="-1" roller_type="1"/>
-  <xacro:ultimate_mecanum_wheel side="rear"  position="left"  x_sign="-1" y_sign="1"  roller_type="1"/>
-  <xacro:ultimate_mecanum_wheel side="rear"  position="right" x_sign="-1" y_sign="-1" roller_type="-1"/>
+  <xacro:mecanum_wheel name="front_left"  x="0.2"  y="0.2" roller_type="-1" motor_id="1"/>
+  <xacro:mecanum_wheel name="front_right" x="0.2"  y="-0.2" roller_type="1"  motor_id="2"/>
+  <xacro:mecanum_wheel name="rear_left"   x="-0.2" y="0.2"  roller_type="1"  motor_id="3"/>
+  <xacro:mecanum_wheel name="rear_right"  x="-0.2" y="-0.2" roller_type="-1" motor_id="4"/>
 
-  <xacro:arg name="actuator_type" default="at"/>
-  <xacro:arg name="is_gazebo" default="false"/>
-
-  <ros2_control name="UltimateMecanumSystem" type="system">
-    <hardware>
-      <xacro:if value="$(arg is_gazebo)">
-        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-      </xacro:if>
-      <xacro:unless value="$(arg is_gazebo)">
-        <xacro:if value="${'$(arg actuator_type)' == 'virtual'}">
-          <plugin>virtual_actuator/VirtualSystemHardware</plugin>
-        </xacro:if>
-        <xacro:if value="${'$(arg actuator_type)' == 'at'}">
-          <plugin>robstride_driver/RobstrideSystemHardware</plugin>
-          <param name="protocol">at</param>
-        </xacro:if>
-        <xacro:if value="${'$(arg actuator_type)' == 'ddsm'}">
-          <plugin>robstride_driver/RobstrideSystemHardware</plugin>
-          <param name="protocol">ddsm</param>
-        </xacro:if>
-        <xacro:if value="${'$(arg actuator_type)' == 'can'}">
-          <plugin>robstride_driver/RobstrideSystemHardware</plugin>
-          <param name="protocol">can</param>
-        </xacro:if>
-      </xacro:unless>
-    </hardware>
-    <xacro:macro name="wheel_interface" params="name motor_id invert">
-      <joint name="${name}">
-        <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-        <state_interface name="effort"/>
-        <param name="motor_id">${motor_id}</param>
-        <param name="invert_direction">${invert}</param>
-        <!-- Virtual Actuator params -->
-        <param name="inertia">0.1</param>
+  <ros2_control name="BaseKitSystem" type="system">
+    <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+    <xacro:macro name="joint_if" params="name id">
+      <joint name="${name}_wheel_joint">
+        <command_interface name="velocity"><param name="p">40.0</param><param name="i">1.0</param><param name="d">1.0</param></command_interface>
+        <state_interface name="position"/><state_interface name="velocity"/><state_interface name="effort"/>
+        <param name="motor_id">${id}</param>
       </joint>
     </xacro:macro>
-    <!-- Assuming standard IDs and directions for Robstride -->
-    <xacro:wheel_interface name="front_left_wheel_joint" motor_id="0x0A" invert="false"/>
-    <xacro:wheel_interface name="front_right_wheel_joint" motor_id="0x0B" invert="true"/>
-    <xacro:wheel_interface name="rear_left_wheel_joint" motor_id="0x0C" invert="false"/>
-    <xacro:wheel_interface name="rear_right_wheel_joint" motor_id="0x0D" invert="true"/>
+    <xacro:joint_if name="front_left" id="1"/>
+    <xacro:joint_if name="front_right" id="2"/>
+    <xacro:joint_if name="rear_left" id="3"/>
+    <xacro:joint_if name="rear_right" id="4"/>
   </ros2_control>
-
   <gazebo>
-    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <parameters>$(find robot_bringup)/config/controllers.yaml</parameters>
-    </plugin>
-    <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin"><parameters>$(find robot_bringup)/config/controllers.yaml</parameters></plugin>
   </gazebo>
-
 </robot>

@@ -7,6 +7,7 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource, Python
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+import launch.conditions
 
 def launch_setup(context, *args, **kwargs):
     pkg_bringup = get_package_share_directory("robot_bringup")
@@ -24,7 +25,7 @@ def launch_setup(context, *args, **kwargs):
         "controllers": os.path.join(pkg_bringup, "config", "controllers.yaml"),
         "communication": os.path.join(pkg_bringup, "config", "communication.yaml"),
         "xacro": os.path.join(pkg_bringup, "urdf", "robot.urdf.xacro"),
-        "world": os.path.join(pkg_bringup, "world", "obstacles.sdf"),
+        "world": os.path.join(pkg_bringup, "world", "rox2026_field.sdf"),
         "bridge": os.path.join(pkg_bringup, "config", "gz_bridge.yaml"),
     }
 
@@ -35,6 +36,13 @@ def launch_setup(context, *args, **kwargs):
     ).toxml()
 
     actions = []
+
+    # --- Gazebo Environment Stabilization ---
+    actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
+    actions.append(SetEnvironmentVariable('GZ_PARTITION', 'lazytatzv_sim'))
+    actions.append(SetEnvironmentVariable('QT_X11_NO_MITSHM', '1'))
+    # Uncomment the following line if you suspect GPU driver issues
+    # actions.append(SetEnvironmentVariable('LIBGL_ALWAYS_SOFTWARE', '1'))
 
     if use_sim_time:
         gz_args = f"-r -v 1 {paths['world']}"
@@ -67,9 +75,6 @@ def launch_setup(context, *args, **kwargs):
         ))
 
     # --- Controller Spawning ---
-    # Gazebo mode: gz_ros2_control loads controllers automatically via <parameters> tag in URDF.
-    # We only call spawner if NOT in Gazebo, or as a lightweight check.
-    # To be safe and compatible with all modes, we use spawner but accept it might "fail" if already active.
     actions += [
         Node(package="controller_manager", executable="spawner", arguments=["joint_state_broadcaster"]),
         Node(package="controller_manager", executable="spawner", arguments=["mecanum_drive_controller"]),
@@ -79,7 +84,7 @@ def launch_setup(context, *args, **kwargs):
     actions.append(Node(
         package='robot_localization', executable='ekf_node', name='ekf_filter_node',
         parameters=[paths["ekf"], {'use_sim_time': use_sim_time}],
-        remappings=[("odom0", "odom/wheels")], output='screen'
+        remappings=[("odom0", "/mecanum_drive_controller/odometry")], output='screen'
     ))
 
     # --- Teleop ---
@@ -92,9 +97,6 @@ def launch_setup(context, *args, **kwargs):
             )
         ], output="screen",
     ))
-    # Note: Lifecycle manager is kept for teleop but autostarted directly
-    actions.append(Node(package="nav2_lifecycle_manager", executable="lifecycle_manager", name="lifecycle_manager_robot", 
-                        parameters=[{"autostart": True, "node_names": ["teleop"], "bond_timeout": 4.0, "use_sim_time": use_sim_time}]))
 
     # --- Utilities ---
     actions += [
@@ -109,10 +111,20 @@ def launch_setup(context, *args, **kwargs):
     return actions
 
 def generate_launch_description():
+    pkg_bringup = get_package_share_directory("robot_bringup")
+    
     return LaunchDescription([
         DeclareLaunchArgument("actuator_type", default_value="at"),
         DeclareLaunchArgument("protocol", default_value="at"),
         DeclareLaunchArgument("gazebo", default_value="false"),
         DeclareLaunchArgument("headless", default_value="true"),
+        DeclareLaunchArgument("rviz", default_value="false"),
         OpaqueFunction(function=launch_setup),
+        # RViz2 Node
+        Node(
+            package='rviz2',
+            executable='rviz2',
+            name='rviz2',
+            condition=launch.conditions.IfCondition(LaunchConfiguration("rviz")),
+        )
     ])

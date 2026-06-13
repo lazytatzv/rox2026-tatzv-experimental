@@ -1,23 +1,27 @@
-# direnv cached environment
-.direnv/
-
-# Nix build artifacts
-result
-result-*
-
 # ROS 2 build artifacts
 build/
 install/
 log/
-.ccache/
 
 # Python artifacts
 __pycache__/
 *.pyc
-.venv/
 
-# VS Code
-.vscode/
+# Simulation & Analysis data (DO NOT COMMIT)
+*.db3
+*.mcap
+*.png
+*_bag/
+auto_test_bag/
+step_test_bag/
 
-# Docker
-.docker/
+# Binary & Design documents (DO NOT COMMIT)
+*.pdf
+*.STEP
+*.stp
+*.webp
+*.png
+
+# Environment
+.envrc
+.direnv/

@@ -21,6 +21,7 @@ setup(
     entry_points={
         'console_scripts': [
             'signal_injector = control_analysis.signal_injector:main',
+            'auto_analyzer = control_analysis.auto_analyzer:main',
             'analyze = control_analysis.analysis_cli:main',
         ],
     },

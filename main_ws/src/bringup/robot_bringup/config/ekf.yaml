@@ -1,5 +1,5 @@
 # robot_localization EKF configuration
-# "The Statistical Master of Self-Location"
+# "The Sensor Fusion Master with Visual Localization"
 
 ekf_filter_node:
   ros__parameters:
@@ -8,31 +8,37 @@ ekf_filter_node:
     two_d_mode: true
     publish_tf: true
 
-    map_frame: map              # Defaults to "map"
-    odom_frame: odom            # Defaults to "odom"
-    base_link_frame: base_footprint # Defaults to "base_link"
-    world_frame: odom           # Defaults to "odom"
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: map # Now map is the world to fuse AprilTag global info
 
-    # Wheel Odometry (from mecanum_kinematics)
-    # [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
-    odom0: odom/wheels
-    odom0_config: [true,  true,  false,
-                   false, false, true,
+    # 1. Wheel Odometry (Velocity only)
+    odom0: /mecanum_drive_controller/odometry
+    odom0_config: [false, false, false,
+                   false, false, false,
                    true,  true,  false,
                    false, false, true,
                    false, false, false]
-    odom0_differential: false
-    odom0_relative: false
 
-    # IMU (from Gazebo/BNO055)
+    # 2. IMU (Angular and Acceleration)
     imu0: imu
     imu0_config: [false, false, false,
                   false, false, true,
                   false, false, false,
                   false, false, true,
                   true,  true,  false]
-    imu0_differential: false
-    imu0_relative: true
     imu0_remove_gravitational_acceleration: true
+
+    # 3. AprilTag (Absolute Pose)
+    # This comes from the detector node (relative to map/world)
+    pose0: /apriltag_pose
+    pose0_config: [true,  true,  false, # X, Y position from Tag
+                   false, false, true,  # Yaw orientation from Tag
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    pose0_differential: false
+    pose0_relative: false
 
     use_control: false

@@ -1,0 +1,15 @@
+/joint_states:
+  durability: volatile
+  reliability: best_effort
+  history: keep_last
+  depth: 10
+/cmd_vel_ext:
+  durability: volatile
+  reliability: reliable
+  history: keep_last
+  depth: 10
+/odom:
+  durability: volatile
+  reliability: best_effort
+  history: keep_last
+  depth: 10

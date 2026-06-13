@@ -14,8 +14,23 @@ using namespace std::chrono_literals;
 namespace base_teleop {
 
 BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions& options)
-    : rclcpp_lifecycle::LifecycleNode("teleop", options) {
+    : rclcpp::Node("teleop", options) {
   declare_parameters();
+  update_parameters();
+
+  auto telemetry_qos = rclcpp::SystemDefaultsQoS();
+  auto sensor_qos = rclcpp::SensorDataQoS();
+
+  publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::TwistStamped>(topic_cmd_vel_, telemetry_qos);
+  publisher_stop_lock_ = this->create_publisher<std_msgs::msg::Bool>(topic_stop_lock_, telemetry_qos);
+
+  subscription_joystick_ = this->create_subscription<sensor_msgs::msg::Joy>(
+      topic_joy_, sensor_qos,
+      std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
+
+  timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
+
+  RCLCPP_INFO(get_logger(), "Initialized");
 }
 
 void BaseTeleopNode::declare_parameters() {
@@ -44,57 +59,6 @@ void BaseTeleopNode::update_parameters() {
   topic_joy_ = this->get_parameter("topic_joy").as_string();
   topic_cmd_vel_ = this->get_parameter("topic_cmd_vel").as_string();
   topic_stop_lock_ = this->get_parameter("topic_stop_lock").as_string();
-}
-
-rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-BaseTeleopNode::on_configure(const rclcpp_lifecycle::State &) {
-  update_parameters();
-
-  auto telemetry_qos = rclcpp::SystemDefaultsQoS();
-  auto sensor_qos = rclcpp::SensorDataQoS();
-
-  publisher_command_velocity_ = this->create_publisher<geometry_msgs::msg::TwistStamped>(topic_cmd_vel_, telemetry_qos);
-  publisher_stop_lock_ = this->create_publisher<std_msgs::msg::Bool>(topic_stop_lock_, telemetry_qos);
-
-  subscription_joystick_ = this->create_subscription<sensor_msgs::msg::Joy>(
-      topic_joy_, sensor_qos,
-      std::bind(&BaseTeleopNode::joystick_callback, this, std::placeholders::_1));
-
-  timer_ = this->create_wall_timer(20ms, std::bind(&BaseTeleopNode::timer_callback, this));
-
-  RCLCPP_INFO(get_logger(), "Configured");
-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
-}
-
-rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-BaseTeleopNode::on_activate(const rclcpp_lifecycle::State &) {
-  publisher_command_velocity_->on_activate();
-  publisher_stop_lock_->on_activate();
-  RCLCPP_INFO(get_logger(), "Activated");
-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
-}
-
-rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-BaseTeleopNode::on_deactivate(const rclcpp_lifecycle::State &) {
-  publisher_command_velocity_->on_deactivate();
-  publisher_stop_lock_->on_deactivate();
-  RCLCPP_INFO(get_logger(), "Deactivated");
-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
-}
-
-rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-BaseTeleopNode::on_cleanup(const rclcpp_lifecycle::State &) {
-  publisher_command_velocity_.reset();
-  publisher_stop_lock_.reset();
-  subscription_joystick_.reset();
-  timer_.reset();
-  RCLCPP_INFO(get_logger(), "Cleaned up");
-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
-}
-
-rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn
-BaseTeleopNode::on_shutdown(const rclcpp_lifecycle::State &) {
-  return rclcpp_lifecycle::node_interfaces::LifecycleNodeInterface::CallbackReturn::SUCCESS;
 }
 
 void BaseTeleopNode::timer_callback() {
