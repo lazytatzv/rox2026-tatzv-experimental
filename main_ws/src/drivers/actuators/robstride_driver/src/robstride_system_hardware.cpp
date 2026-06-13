@@ -185,13 +185,17 @@ hardware_interface::return_type RobstrideSystemHardware::write(
 
 void RobstrideSystemHardware::rx_callback(const std_msgs::msg::UInt8MultiArray::SharedPtr message) {
   auto result = protocol_handler_->decode_frame(message->data);
-  if (!result) return;
+  if (!result.success) {
+    RCLCPP_DEBUG_THROTTLE(node_->get_logger(), *node_->get_clock(), 1000,
+      "Protocol decode failed: %s", result.error_msg.c_str());
+    return;
+  }
 
-  uint8_t motor_id = result->first;
+  uint8_t motor_id = result.motor_id;
   if (id_to_index_.find(motor_id) == id_to_index_.end()) return;
 
   size_t idx = id_to_index_[motor_id];
-  auto & state = result->second;
+  auto & state = result.state;
 
   if (motors_[idx].invert) {
     motors_[idx].position = -state.position;

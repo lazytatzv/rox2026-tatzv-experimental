@@ -56,21 +56,29 @@ public:
     };
   }
 
-  std::optional<std::pair<uint8_t, MotorState>> decode_frame(const std::vector<uint8_t> & data) override {
+  DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
     using namespace at_protocol;
-    if (data.size() < 16 || data[0] != FRAME_HEADER_A || data[1] != FRAME_HEADER_T) return std::nullopt;
+    DecodeResult result;
+    if (data.size() < 16) {
+      result.error_msg = "Frame too short: " + std::to_string(data.size());
+      return result;
+    }
+    if (data[0] != FRAME_HEADER_A || data[1] != FRAME_HEADER_T) {
+      result.error_msg = "Invalid AT header";
+      return result;
+    }
 
-    uint8_t motor_id = data[5];
-    MotorState state;
+    result.motor_id = data[5];
     uint16_t pos_u = (data[7] << 8) | data[8];
     uint16_t vel_u = (data[9] << 8) | data[10];
     uint16_t tor_u = (data[11] << 8) | data[12];
 
-    state.position = uint_to_float(pos_u, -12.57, 12.57);
-    state.velocity = uint_to_float(vel_u, -50.0, 50.0);
-    state.effort = uint_to_float(tor_u, -6.0, 6.0);
+    result.state.position = uint_to_float(pos_u, -12.57, 12.57);
+    result.state.velocity = uint_to_float(vel_u, -50.0, 50.0);
+    result.state.effort = uint_to_float(tor_u, -6.0, 6.0);
+    result.success = true;
 
-    return std::make_pair(motor_id, state);
+    return result;
   }
 
   std::string get_default_tx_topic() const override { return "/serial_write"; }

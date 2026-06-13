@@ -38,15 +38,25 @@ public:
     return frame;
   }
 
-  std::optional<std::pair<uint8_t, MotorState>> decode_frame(const std::vector<uint8_t> & data) override {
-    if (data.size() < 16 || data[0] != 0xAA) return std::nullopt;
+  DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
+    DecodeResult result;
+    if (data.size() < 16) {
+      result.error_msg = "CAN frame too short: " + std::to_string(data.size());
+      return result;
+    }
+    if (data[0] != 0xAA) {
+      result.error_msg = "Invalid CAN header (Expected 0xAA)";
+      return result;
+    }
 
     uint32_t id;
     std::memcpy(&id, &data[1], 4);
-    if ((id & 0xF00) != 0x500) return std::nullopt;
+    if ((id & 0xF00) != 0x500) {
+      result.error_msg = "Invalid CAN ID range (Expected 0x5XX)";
+      return result;
+    }
 
-    uint8_t motor_id = static_cast<uint8_t>(id & 0xFF);
-    MotorState state;
+    result.motor_id = static_cast<uint8_t>(id & 0xFF);
 
     int32_t pos_raw;
     int16_t vel_raw;
@@ -55,11 +65,12 @@ public:
     std::memcpy(&vel_raw, &data[12], 2);
     std::memcpy(&tor_raw, &data[14], 2);
 
-    state.position = static_cast<double>(pos_raw) / 1000.0;
-    state.velocity = static_cast<double>(vel_raw) / 1000.0;
-    state.effort = static_cast<double>(tor_raw) / 1000.0;
+    result.state.position = static_cast<double>(pos_raw) / 1000.0;
+    result.state.velocity = static_cast<double>(vel_raw) / 1000.0;
+    result.state.effort = static_cast<double>(tor_raw) / 1000.0;
+    result.success = true;
 
-    return std::make_pair(motor_id, state);
+    return result;
   }
 
   std::string get_default_tx_topic() const override { return "/serial_write"; }

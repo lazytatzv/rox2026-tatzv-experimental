@@ -45,7 +45,6 @@ TEST_F(ProtocolTest, AtVelocityCommand) {
 
 TEST_F(ProtocolTest, AtDecodeFrame) {
   // Mock response: pos=0, vel=neutral, effort=0
-  // AT Protocol Handler uses uint_to_float with 0-65535 range
   std::vector<uint8_t> mock_rx(16, 0);
   mock_rx[0] = 0x41; mock_rx[1] = 0x54;
   mock_rx[5] = 0x0B;
@@ -56,10 +55,10 @@ TEST_F(ProtocolTest, AtDecodeFrame) {
   mock_rx[9] = 0x7F; mock_rx[10] = 0xFF;
   
   auto result = at_handler->decode_frame(mock_rx);
-  ASSERT_TRUE(result.has_value());
-  EXPECT_EQ(result->first, 0x0B);
-  EXPECT_NEAR(result->second.position, 0.0, 0.1);
-  EXPECT_NEAR(result->second.velocity, 0.0, 0.1);
+  ASSERT_TRUE(result.success);
+  EXPECT_EQ(result.motor_id, 0x0B);
+  EXPECT_NEAR(result.state.position, 0.0, 0.1);
+  EXPECT_NEAR(result.state.velocity, 0.0, 0.1);
 }
 
 // --- CAN Protocol Tests ---
@@ -91,10 +90,10 @@ TEST_F(ProtocolTest, CanDecodeFrame) {
   std::memcpy(&mock_rx[12], &vel, 2);
   
   auto result = can_handler->decode_frame(mock_rx);
-  ASSERT_TRUE(result.has_value());
-  EXPECT_EQ(result->first, 0x02);
-  EXPECT_NEAR(result->second.position, 1.234, 1e-3);
-  EXPECT_NEAR(result->second.velocity, 5.678, 1e-3);
+  ASSERT_TRUE(result.success);
+  EXPECT_EQ(result.motor_id, 0x02);
+  EXPECT_NEAR(result.state.position, 1.234, 1e-3);
+  EXPECT_NEAR(result.state.velocity, 5.678, 1e-3);
 }
 
 int main(int argc, char ** argv) {

@@ -1,5 +1,5 @@
-# Copyright 2026 Tatsukiyano
-# ROS 2 Workspace Internal Makefile
+# ROS 2 Workspace Makefile - Build & Execution Logic
+# This file is intended to be run INSIDE the container.
 
 SHELL := /bin/bash
 
@@ -8,9 +8,12 @@ ROS_SETUP := /opt/ros/jazzy/setup.bash
 # Workspace setup (only if exists)
 WS_SETUP := source install/setup.bash 2>/dev/null || true
 
-.PHONY: build test clean launch virtual sim sim-gui help
+.PHONY: help build test clean launch virtual sim sim-gui
 
-build: ## [OPTIMIZED] Build all packages
+help: ## Show this help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+build: ## Build all packages
 	source $(ROS_SETUP) && \
 	colcon build \
 		--symlink-install \
@@ -32,20 +35,17 @@ virtual: ## Launch the robot in Virtual Mode
 	$(WS_SETUP) && \
 	ros2 launch robot_bringup robot_bringup.launch.py actuator_type:=virtual
 
-sim: ## [EXPERIMENTAL] Launch Gazebo physical simulation (Headless)
+sim: ## Launch Gazebo physical simulation (Headless)
 	source $(ROS_SETUP) && \
 	$(WS_SETUP) && \
 	ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true
 
-sim-gui: ## [EXPERIMENTAL] Launch Gazebo physical simulation with GUI
+sim-gui: ## Launch Gazebo physical simulation with GUI
 	source $(ROS_SETUP) && \
 	$(WS_SETUP) && \
 	ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false
 
 clean: ## Purge artifacts
 	rm -rf build/ install/ log/
-
-help: ## Show this help message
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 .DEFAULT_GOAL := help

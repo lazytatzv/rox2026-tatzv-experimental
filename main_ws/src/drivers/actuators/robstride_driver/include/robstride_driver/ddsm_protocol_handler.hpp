@@ -35,17 +35,21 @@ public:
     };
   }
 
-  std::optional<std::pair<uint8_t, MotorState>> decode_frame(const std::vector<uint8_t> & data) override {
-    if (data.size() < 10) return std::nullopt;
+  DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
+    DecodeResult result;
+    if (data.size() < 10) {
+      result.error_msg = "DDSM frame too short: " + std::to_string(data.size());
+      return result;
+    }
 
-    uint8_t motor_id = data[0];
-    MotorState state;
-    // Basic placeholder parsing - DDSM feedback parsing can be complex
-    state.position = 0.0;
-    state.velocity = 0.0;
-    state.effort = 0.0;
+    result.motor_id = data[0];
+    // Placeholder parsing
+    result.state.position = 0.0;
+    result.state.velocity = 0.0;
+    result.state.effort = 0.0;
+    result.success = true;
 
-    return std::make_pair(motor_id, state);
+    return result;
   }
 
   std::string get_default_tx_topic() const override { return "/serial_write"; }

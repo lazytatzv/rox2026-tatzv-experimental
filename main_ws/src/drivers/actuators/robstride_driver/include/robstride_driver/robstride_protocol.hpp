@@ -17,6 +17,14 @@ struct MotorState
   double effort = 0.0;
 };
 
+struct DecodeResult
+{
+  bool success = false;
+  uint8_t motor_id = 0;
+  MotorState state;
+  std::string error_msg = "";
+};
+
 class RobstrideProtocol
 {
 public:
@@ -26,7 +34,7 @@ public:
   virtual std::vector<uint8_t> create_disable_command(uint8_t motor_id) = 0;
   virtual std::vector<uint8_t> create_velocity_command(uint8_t motor_id, double velocity_rad_s) = 0;
   
-  virtual std::optional<std::pair<uint8_t, MotorState>> decode_frame(const std::vector<uint8_t> & data) = 0;
+  virtual DecodeResult decode_frame(const std::vector<uint8_t> & data) = 0;
   
   virtual std::string get_default_tx_topic() const = 0;
   virtual std::string get_default_rx_topic() const = 0;
