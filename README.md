@@ -2,13 +2,19 @@
 
 rox2026の個人的かつ試験的なプロジェクト. AI(主にgemini)を使っています.
 
-## Env
+## Features
 
-Docker(compose)を使っています.
+- ros2_controlを使用したsim/実機用ソフトウェア
+- 物理シミュレーションを利用した足回りテスト
+- step, 周波数解析&画像出力
+
+## Environment
+
+`Docker`を使うことを想定しています.
+
+`ros2 jazzy`以外では動きません. (特にros2_controlの設定の為)
 
 - Ubuntu24.04 (ROS:jazzy)
-
-- Ubuntu22.04 (ROS:humble) <== CIでチェックしてる程度
 
 
 ## description
@@ -19,30 +25,21 @@ Docker(compose)を使っています.
 
 ## Usage
 
-### Dev
+### Development
 
-基本的に`Docker`の使用を想定しています.
-
-```bash
-$ git clone <this repo>
-$ cd <REPO>
-
-# build & up
-$ docker compose up -d
-
-# enter
-$ docker compose exec lazy_container bash
-```
-
-.devcontainerを使う場合は、`git clone`して、vscodeを開いてそのまま使えます.
-
-以下推奨の方法
+ホストは`nix`が入っているLinux想定です. `docker`は`nix`経由で入るのでホスト側に必須ではありません.
 
 ```bash
-$ nix develop
+# nix環境に入る
+$ make nix
+
 $ code .
 
-# ==> devcontainer使う
+# devcontainerでビルド
+
+# or
+$ docker compose up -d
+$ docker compose exec ros2_rox2026 bash
 ```
 
 ### Visualization
@@ -63,6 +60,7 @@ $ make virtual
 物理シミュレーション
 
 ```bash
+$ cd main_ws
 $ make sim-gui
 ```
 

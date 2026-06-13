@@ -17,7 +17,7 @@
       <direction>-0.5 0.1 -0.9</direction>
     </light>
 
-    <!-- Floor with High-Fidelity Markings -->
+    <!-- 1. Floor with Markings (X: 12.85m, Y: 10.9m) -->
     <model name="field_base">
       <static>true</static>
       <link name="link">
@@ -25,70 +25,56 @@
           <surface><friction><ode><mu>0.6</mu><mu2>0.6</mu2></ode></friction></surface></collision>
         <visual name="v_floor"><geometry><plane><normal>0 0 1</normal><size>12.85 10.9</size></plane></geometry>
           <material><ambient>0.2 0.2 0.2 1</ambient><diffuse>0.25 0.25 0.25 1</diffuse></material></visual>
+        
+        <!-- Center Line (Vertical dividing Left/Right) -->
         <visual name="v_center_line"><pose>0 0 0.001 0 0 0</pose><geometry><box><size>0.05 10.9 0.001</size></box></geometry><material><ambient>1 1 1 1</ambient></material></visual>
         
-        <!-- SIDE A (Left: User) Pass Area -->
+        <!-- SIDE A (Left: X < 0) Pass Area: 0.768m(X) x 1.718m(Y) -->
         <visual name="v_pass_a"><pose>-1.5 0 0.001 0 0 0</pose><geometry><box><size>0.768 1.718 0.001</size></box></geometry><material><ambient>0 1 0 0.4</ambient><diffuse>0 1 0 0.4</diffuse></material></visual>
-        <!-- SIDE B (Right: Opponent) Pass Area -->
+        <!-- SIDE B (Right: X > 0) Pass Area -->
         <visual name="v_pass_b"><pose>1.5 0 0.001 0 0 0</pose><geometry><box><size>0.768 1.718 0.001</size></box></geometry><material><ambient>0 1 0 0.2</ambient><diffuse>0 1 0 0.2</diffuse></material></visual>
 
-        <!-- Penalty Areas (1.6m x 4.95m) -->
+        <!-- Penalty Areas -->
         <visual name="v_penalty_a"><pose>-5.625 0 0.001 0 0 0</pose><geometry><box><size>1.6 4.95 0.001</size></box></geometry><material><ambient>1 1 1 0.2</ambient></material></visual>
         <visual name="v_penalty_b"><pose>5.625 0 0.001 0 0 0</pose><geometry><box><size>1.6 4.95 0.001</size></box></geometry><material><ambient>1 1 1 0.2</ambient></material></visual>
       </link>
     </model>
 
-    <!-- Defender Gates (4 total, Vertical to X axis) -->
-    <xacro:macro name="defender_gate" params="prefix x y color">
-      <model name="gate_${prefix}">
-        <static>true</static><pose>${x} ${y} 0 0 0 0</pose>
-        <link name="l">
-          <collision name="c1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-          <visual name="v1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>${color}</ambient></material></visual>
-          <collision name="c2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-          <visual name="v2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>${color}</ambient></material></visual>
-          <collision name="c3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry></collision>
-          <visual name="v3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>${color}</ambient></material></visual>
-        </link>
-      </model>
-    </xacro:macro>
+    <!-- 2. Nutmeg Gates (4 total, Parallel to Y axis) -->
+    <!-- Position X: +/- 4.6 (1.825 from side walls) | Position Y: +/- 4.025 (1.425 from top/bottom) -->
+    
+    <!-- Side A (Left) Top Gate -->
+    <model name="gate_a_top"><static>true</static><pose>-4.6 4.025 0 0 0 0</pose><link name="l">
+      <collision name="ca1_1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
+      <visual name="va1_1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
+      <collision name="ca1_2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
+      <visual name="va1_2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
+      <visual name="va1_3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual></link></model>
 
-    <!-- [MANUAL EXPANSION TO REMOVE XACRO FROM SDF] -->
-    <!-- Gate A1 (Top Left) -->
-    <model name="gate_a1"><static>true</static><pose>-4.6 4.025 0 0 0 0</pose><link name="l">
-      <collision name="c1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
-      <collision name="c2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
-      <visual name="v3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual></link></model>
-    <!-- Gate A2 (Bottom Left) -->
-    <model name="gate_a2"><static>true</static><pose>-4.6 -4.025 0 0 0 0</pose><link name="l">
-      <collision name="c1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
-      <collision name="c2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
-      <visual name="v3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual></link></model>
-    <!-- Gate B1 (Top Right) -->
-    <model name="gate_b1"><static>true</static><pose>4.6 4.025 0 0 0 0</pose><link name="l">
-      <collision name="c1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual>
-      <collision name="c2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual>
-      <visual name="v3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual></link></model>
-    <!-- Gate B2 (Bottom Right) -->
-    <model name="gate_b2"><static>true</static><pose>4.6 -4.025 0 0 0 0</pose><link name="l">
-      <collision name="c1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual>
-      <collision name="c2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
-      <visual name="v2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual>
-      <visual name="v3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual></link></model>
+    <!-- Side A (Left) Bottom Gate -->
+    <model name="gate_a_bottom"><static>true</static><pose>-4.6 -4.025 0 0 0 0</pose><link name="l">
+      <collision name="ca2_1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
+      <visual name="va2_1"><pose>0 0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
+      <collision name="ca2_2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry></collision>
+      <visual name="va2_2"><pose>0 -0.275 0.4 0 0 0</pose><geometry><box><size>0.05 0.05 0.8</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual>
+      <visual name="va2_3"><pose>0 0 0.7 0 0 0</pose><geometry><box><size>0.05 0.55 0.2</size></box></geometry><material><ambient>0 0 1 1</ambient></material></visual></link></model>
 
-    <!-- Goals -->
-    <model name="goal_left_a"><static>true</static><pose>-6.425 0 0.715 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.05 1.6 1.43</size></box></geometry><material><ambient>1 1 0 1</ambient></material></visual><collision name="c"><geometry><box><size>0.05 1.6 1.43</size></box></geometry></collision></link></model>
-    <model name="goal_right_b"><static>true</static><pose>6.425 0 0.525 0 0 0</pose><link name="l"><visual name="v"><geometry><box><size>0.05 1.6 1.05</size></box></geometry><material><ambient>1 1 0 1</ambient></material></visual><collision name="c"><geometry><box><size>0.05 1.6 1.05</size></box></geometry></collision></link></model>
+    <!-- Side B (Right) Gates -->
+    <model name="gate_b_top"><static>true</static><pose>4.6 4.025 0 0 0 0</pose><link name="l">
+      <visual name="vb1_1"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>0.05 0.55 0.8</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual></link></model>
+    <model name="gate_b_bottom"><static>true</static><pose>4.6 -4.025 0 0 0 0</pose><link name="l">
+      <visual name="vb2_1"><pose>0 0 0.4 0 0 0</pose><geometry><box><size>0.05 0.55 0.8</size></box></geometry><material><ambient>0.8 0 0 1</ambient></material></visual></link></model>
 
-    <!-- Boundary Walls -->
-    <model name="perimeter_walls"><static>true</static><link name="l">
+    <!-- 3. Goals (Side A on the Left, Side B on the Right) -->
+    <model name="goal_left_a"><static>true</static><pose>-6.425 0 0.715 0 0 0</pose><link name="l">
+      <collision name="cga"><geometry><box><size>0.05 1.6 1.43</size></box></geometry></collision>
+      <visual name="vga"><geometry><box><size>0.05 1.6 1.43</size></box></geometry><material><ambient>1 1 0 1</ambient></material></visual></link></model>
+    <model name="goal_right_b"><static>true</static><pose>6.425 0 0.525 0 0 0</pose><link name="l">
+      <collision name="cgb"><geometry><box><size>0.05 1.6 1.05</size></box></geometry></collision>
+      <visual name="vgb"><geometry><box><size>0.05 1.6 1.05</size></box></geometry><material><ambient>1 1 0 1</ambient></material></visual></link></model>
+
+    <!-- 4. Boundary Walls -->
+    <model name="field_walls"><static>true</static><link name="l">
       <collision name="cn"><pose>0 5.45 0.25 0 0 0</pose><geometry><box><size>12.85 0.05 0.5</size></box></geometry></collision>
       <visual name="vn"><pose>0 5.45 0.25 0 0 0</pose><geometry><box><size>12.85 0.05 0.5</size></box></geometry><material><ambient>0.7 0.7 0.7 1</ambient></material></visual>
       <collision name="cs"><pose>0 -5.45 0.25 0 0 0</pose><geometry><box><size>12.85 0.05 0.5</size></box></geometry></collision>
