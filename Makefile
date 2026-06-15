@@ -55,17 +55,17 @@ update: ## Update the repository and pull the latest images
 	git pull --no-edit
 	docker compose $(COMPOSE_FILES) pull
 
-build: ## Build the development Docker image
+build: ## [DEV] Build the development Docker image (Standard development)
 	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose $(COMPOSE_FILES) build
 
-build-prod: ## Build the production Docker image (Lightweight)
+build-prod: ## [OFFLINE] Build the production Docker image locally (Emergency/Offline use only)
 	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) build
 
 up: ## Start the development container
 	xhost +local:docker > /dev/null 2>&1 || true
 	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose $(COMPOSE_FILES) up -d
 
-prod-up: ## Start the production container
+prod-up: ## [REAL] Start the production container (Uses pre-built image by default)
 	xhost +local:docker > /dev/null 2>&1 || true
 	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) up -d
 
