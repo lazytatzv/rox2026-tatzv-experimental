@@ -4,13 +4,20 @@ set -e
 # NoVNC使う用の設定
 
 # Configuration
-VNC_DISPLAY=:1
-VNC_PORT=5901
+VNC_DISPLAY=:2
+VNC_PORT=5902
 NO_VNC_PORT=6080
+
+# If DISPLAY is :0, we assume we are on Linux with host X11 access
+if [ "$DISPLAY" = ":0" ]; then
+    echo "Host X11 detected ($DISPLAY). Skipping VNC server startup."
+    exec "$@"
+fi
 
 echo "Preparing X11 environment..."
 # Remove old locks
-rm -rf /tmp/.X1-lock /tmp/.X11-unix/X*
+DISPLAY_NUM=${VNC_DISPLAY#:}
+rm -rf /tmp/.X$DISPLAY_NUM-lock /tmp/.X11-unix/X$DISPLAY_NUM
 mkdir -p /tmp/.X11-unix
 chmod 1777 /tmp/.X11-unix
 

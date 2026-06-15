@@ -24,26 +24,26 @@ services:
       # GUI Support
       # Linux: defaults to :0 (host) via Makefile if DISPLAY is set
       # macOS: defaults to :1 (VNC)
-      DISPLAY: ${DISPLAY:-:1}
+      DISPLAY: ${DISPLAY:-:2}
       QT_X11_NO_MITSHM: "1"
       # NVIDIA GPU Support (Linux Only)
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
 
     # [MAC/NON-NVIDIA USERS] Comment out the 'deploy' section below if you get GPU errors.
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: all
-    #           capabilities: [gpu]
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
     volumes:
       - .:/root/lazytatzv_ws
       - ./.ccache:/root/.ccache:rw
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority:rw
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority_host:ro
 
     devices:
       - /dev:/dev
