@@ -38,6 +38,26 @@ public:
     return frame;
   }
 
+  std::vector<uint8_t> create_id_set_command(uint8_t motor_id, uint8_t new_id) override {
+    // RobStride/CyberGear Standard CAN ID Change (Command 18 / 0x12)
+    // Structure: [AA] [ID(4)] [EXT] [REMOTE] [DLC] [DATA(8)] [55]
+    std::vector<uint8_t> frame(16, 0);
+    frame[0] = 0xAA;
+    
+    // Command 18: (0x12 << 24) | (TargetID << 16) | (HostID << 8)
+    uint32_t ext_id = (0x12 << 24) | (static_cast<uint32_t>(motor_id) << 16) | (0xFE << 8);
+    std::memcpy(&frame[1], &ext_id, 4);
+    
+    frame[5] = 0x01; // Extended ID
+    frame[6] = 0x00; // Data frame
+    frame[7] = 0x08; // DLC
+    frame[8] = new_id; // New ID in Data[0]
+    // Remaining data is 0
+    
+    frame[15] = 0x55;
+    return frame;
+  }
+
   DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
     DecodeResult result;
     if (data.size() < 16) {

@@ -23,8 +23,9 @@ find_package(Boost REQUIRED COMPONENTS system)
 add_library(robstride_system_hardware SHARED
   src/robstride_system_hardware.cpp
 )
-target_include_directories(robstride_system_hardware PRIVATE
-  include
+target_include_directories(robstride_system_hardware PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(robstride_system_hardware
   rclcpp
@@ -38,10 +39,19 @@ target_link_libraries(robstride_system_hardware
   Boost::system
 )
 
+# --- CLI Tools ---
+add_executable(set_motor_id src/set_motor_id.cpp)
+target_include_directories(set_motor_id PRIVATE include)
+ament_target_dependencies(set_motor_id
+  rclcpp
+  seeed_usb_can_analyzer_driver
+)
+
 # --- Install ---
 install(TARGETS
   robstride_system_hardware
-  DESTINATION lib
+  set_motor_id
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 install(DIRECTORY include/
@@ -57,11 +67,7 @@ pluginlib_export_plugin_description_file(hardware_interface robstride_hardware.x
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # comment the line when a copyright and license is added to all source files
   set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint
-  # comment the line when a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()

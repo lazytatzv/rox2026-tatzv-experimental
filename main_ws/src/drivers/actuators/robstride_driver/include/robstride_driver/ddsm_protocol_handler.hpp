@@ -35,6 +35,10 @@ public:
     };
   }
 
+  std::vector<uint8_t> create_id_set_command(uint8_t /*motor_id*/, uint8_t /*new_id*/) override {
+    return {}; // DDSM115 ID change not implemented via this handler yet
+  }
+
   DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
     DecodeResult result;
     if (data.size() < 10) {

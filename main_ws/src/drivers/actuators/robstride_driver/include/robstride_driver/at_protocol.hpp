@@ -25,6 +25,7 @@ static constexpr uint8_t DEFAULT_SOURCE_ID_HI = 0x07;
 static constexpr uint8_t DEFAULT_SOURCE_ID_LO = 0xE8;
 
 // --- Register Addresses ---
+static constexpr uint8_t REG_ADDR_CAN_ID = 0x03;
 static constexpr uint8_t REG_ADDR_MOTOR_ENABLE = 0xC4;
 static constexpr uint8_t REG_ADDR_VELOCITY_CTRL = 0x70;
 

@@ -39,13 +39,31 @@
   <xacro:mecanum_wheel name="rear_right"  x="-0.2" y="-0.2" roller_type="-1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
 
   <!-- 6. ros2_control & Gazebo -->
+  <xacro:arg name="gazebo" default="false"/>
+  <xacro:arg name="usb_path" default="/dev/ttyUSB0"/>
+
   <ros2_control name="BaseKitSystem" type="system">
-    <hardware><plugin>gz_ros2_control/GazeboSimSystem</plugin></hardware>
+    <hardware>
+      <xacro:if value="$(arg gazebo)">
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </xacro:if>
+      <xacro:unless value="$(arg gazebo)">
+        <plugin>robstride_driver/RobstrideSystemHardware</plugin>
+        <param name="usb_path">$(arg usb_path)</param>
+        <param name="protocol">at</param>
+        <param name="serial_baud">115200</param>
+      </xacro:unless>
+    </hardware>
     <xacro:macro name="joint_if" params="name id">
       <joint name="${name}_wheel_joint">
-        <command_interface name="velocity"><param name="p">40.0</param><param name="i">1.0</param><param name="d">1.0</param></command_interface>
+        <command_interface name="velocity">
+          <param name="p">40.0</param>
+          <param name="i">1.0</param>
+          <param name="d">1.0</param>
+        </command_interface>
         <state_interface name="position"/><state_interface name="velocity"/><state_interface name="effort"/>
         <param name="motor_id">${id}</param>
+        <param name="invert_direction">false</param>
       </joint>
     </xacro:macro>
     <xacro:joint_if name="front_left" id="1"/>
@@ -54,6 +72,8 @@
     <xacro:joint_if name="rear_right" id="4"/>
   </ros2_control>
   <gazebo>
-    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin"><parameters>$(find robot_bringup)/config/controllers.yaml</parameters></plugin>
+    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+      <parameters>$(find robot_bringup)/config/controllers.yaml</parameters>
+    </plugin>
   </gazebo>
 </robot>

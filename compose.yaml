@@ -5,13 +5,15 @@ services:
       dockerfile: Dockerfile
       network: host
     container_name: rox2026_container
+    # Ports are used on macOS/Windows (bridge mode) and ignored on Linux (host mode)
     ports:
-      - "6080:6080" # noVNC (Used on macOS/Windows, ignored on Linux host mode)
+      - "6080:6080" # noVNC
+      - "8765:8765" # Foxglove Bridge
     init: true
     stdin_open: true
     tty: true
     privileged: true # Dangerous, but necessary for convenient hardware access.
-    network_mode: host
+    network_mode: ${DOCKER_NETWORK_MODE:-host}
     ipc: host
 
     environment:
@@ -19,13 +21,11 @@ services:
       RMW_IMPLEMENTATION: rmw_fastrtps_cpp
       FASTRTPS_DEFAULT_PROFILES_FILE: /root/lazytatzv_ws/main_ws/src/bringup/robot_bringup/config/fastdds_config.xml
       DEBIAN_FRONTEND: noninteractive
-
-
       # GUI Support
-      # If host DISPLAY is set (Linux), use it. Otherwise default to :1 (noVNC).
+      # Linux: defaults to :0 (host) via Makefile if DISPLAY is set
+      # macOS: defaults to :1 (VNC)
       DISPLAY: ${DISPLAY:-:1}
       QT_X11_NO_MITSHM: "1"
-
       # NVIDIA GPU Support (Linux Only)
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all

@@ -56,6 +56,19 @@ public:
     };
   }
 
+  std::vector<uint8_t> create_id_set_command(uint8_t motor_id, uint8_t new_id) override {
+    using namespace at_protocol;
+    // Format: AT [CMD] [SRC_HI] [SRC_LO] [ID] [LEN] [SUB] [REG] [DATA...] [CR] [LF]
+    // Write register 0x03 (CAN ID)
+    return {
+      FRAME_HEADER_A, FRAME_HEADER_T, CMD_BASIC_CONFIG,
+      DEFAULT_SOURCE_ID_HI, DEFAULT_SOURCE_ID_LO, motor_id,
+      DATA_LEN_8_BYTES, 0x00, REG_ADDR_CAN_ID,
+      0x00, 0x00, 0x00, new_id, 0x00, 0x00, // Data (4 bytes) + padding (2 bytes)
+      FRAME_FOOTER_CR, FRAME_FOOTER_LF
+    };
+  }
+
   DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
     using namespace at_protocol;
     DecodeResult result;

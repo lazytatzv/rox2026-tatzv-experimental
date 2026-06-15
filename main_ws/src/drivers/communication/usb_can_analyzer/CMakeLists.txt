@@ -79,6 +79,7 @@ install(TARGETS
 )
 
 ament_export_include_directories(include)
-ament_export_dependencies(rosidl_default_runtime)
+ament_export_libraries(usb_can_serial_protocol usb_can_analyzer_component)
+ament_export_dependencies(rclcpp rclcpp_lifecycle rclcpp_components lifecycle_msgs custom_interfaces)
 
 ament_package()

@@ -5,6 +5,14 @@ SHELL := /bin/bash
 # Configuration
 CONTAINER_NAME := rox2026_container
 
+# OS Detection & Docker Network Mode
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	export DOCKER_NETWORK_MODE ?= host
+else
+	export DOCKER_NETWORK_MODE ?= bridge
+endif
+
 .PHONY: setup-env
 
 setup-env: ## [HOST] Setup direnv hooks for Bash/Fish and allow this project
@@ -31,7 +39,7 @@ image: ## Build the Docker image
 
 up: ## Start the container in background
 	xhost +local:docker > /dev/null 2>&1 || true
-	docker compose up -d
+	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) docker compose up -d
 
 down: ## Stop and remove the container
 	docker compose down

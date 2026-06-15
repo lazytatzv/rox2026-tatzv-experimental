@@ -11,6 +11,8 @@ class AutoAnalyzer(Node):
         self.declare_parameter('report_name', 'full_analysis_report')
         self.declare_parameter('chirp_duration', 15.0)
         self.declare_parameter('step_duration', 5.0)
+        self.declare_parameter('frequency_start', 0.1)
+        self.declare_parameter('frequency_end', 15.0)
 
         self.start_time = None
         self.phase = "WAIT_FOR_CLOCK"
@@ -32,7 +34,8 @@ class AutoAnalyzer(Node):
         if self.phase == "CHIRP":
             d = self.get_parameter('chirp_duration').value
             if elapsed < d:
-                f0, f1 = 0.1, 15.0
+                f0 = self.get_parameter('frequency_start').value
+                f1 = self.get_parameter('frequency_end').value
                 p = 2 * math.pi * (f0 * elapsed + 0.5 * (f1 - f0) * (elapsed**2) / d)
                 self.publish_vel(1.0 * math.sin(p))
             else:

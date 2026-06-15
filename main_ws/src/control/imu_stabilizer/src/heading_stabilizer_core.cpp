@@ -6,8 +6,8 @@ namespace imu_stabilizer
 
 HeadingStabilizerCore::HeadingStabilizerCore(const HeadingStabilizerConfig & config)
 : config_(config),
-  pid_heading_(0.0, 0.0, 0.0, 0.0, 0.0, control_toolbox::AntiWindupStrategy()),
-  pid_rate_(0.0, 0.0, 0.0, 0.0, 0.0, control_toolbox::AntiWindupStrategy())
+  pid_heading_(0.0, 0.0, 0.0, 1.0, -1.0, control_toolbox::AntiWindupStrategy()),
+  pid_rate_(0.0, 0.0, 0.0, 1.0, -1.0, control_toolbox::AntiWindupStrategy())
 {
   control_toolbox::AntiWindupStrategy aw_strat;
   aw_strat.type = control_toolbox::AntiWindupStrategy::CONDITIONAL_INTEGRATION;

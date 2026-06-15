@@ -45,28 +45,23 @@ rviz: ## Launch RViz2 for visualization
 	$(WS_SETUP) && \
 	ros2 run rviz2 rviz2
 
-injector-chirp: ## Inject Chirp signal (0.1Hz to 10Hz) for frequency response
+injector: ## Inject signal using config/analysis_settings.yaml (Edit YAML to change mode/params)
 	source $(ROS_SETUP) && \
 	$(WS_SETUP) && \
-	ros2 run control_analysis signal_injector --ros-args -p mode:=chirp -p frequency_start:=0.1 -p frequency_end:=10.0 -p duration:=10.0
-
-injector-step: ## Inject Step signal (Amplitude 1.0) for time response
-	source $(ROS_SETUP) && \
-	$(WS_SETUP) && \
-	ros2 run control_analysis signal_injector --ros-args -p mode:=step -p amplitude:=1.0 -p duration:=5.0
+	ros2 run control_analysis signal_injector --ros-args --params-file src/control_analysis/config/analysis_settings.yaml
 
 report: ## [ULTIMATE] Run full automated analysis and generate Bode/Nyquist/Step report
 	rm -rf auto_test_bag/
 	source $(ROS_SETUP) && $(WS_SETUP) && \
 	ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true & \
 	LAUNCH_PID=$$! ; \
-	sleep 15 ; \
+	sleep 60 ; \
 	source $(ROS_SETUP) && $(WS_SETUP) && \
 	ros2 bag record -o auto_test_bag --storage sqlite3 --qos-profile-overrides-path src/bringup/robot_bringup/config/qos_overrides.yaml -a & \
 	BAG_PID=$$! ; \
-	sleep 5 ; \
+	sleep 10 ; \
 	source $(ROS_SETUP) && $(WS_SETUP) && \
-	ros2 run control_analysis auto_analyzer --ros-args -p use_sim_time:=true ; \
+	ros2 run control_analysis auto_analyzer --ros-args --params-file src/control_analysis/config/analysis_settings.yaml --ros-args -p use_sim_time:=true ; \
 	echo "Test sequence finished. Cleaning up..." ; \
 	pkill -INT -f "ros2 bag record" || true ; \
 	pkill -INT -f "gz sim" || true ; \
