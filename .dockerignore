@@ -24,5 +24,4 @@ Dockerfile
 compose.yaml
 .dockerignore
 Makefile
-scripts/
 .ccache/
