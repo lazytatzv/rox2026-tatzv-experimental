@@ -2,6 +2,8 @@
 # Copyright 2026 Tatsukiyano
 # Ultimate Style Fixer for ROX2026
 
+# DEPRECATED
+
 set -e
 
 # 1. C++ Formatting (Uncrustify)

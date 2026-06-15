@@ -1,6 +1,9 @@
 #!/bin/bash
 # install_nvidia_toolkit.sh
 
+# Host側にtoolkitが入っていないとgpu使えない
+# compose.yamlのdeploy:のコメントアウトをはずして使う
+
 if [ -f /etc/arch-release ]; then
     echo "▶ Arch Linux detected."
     # 1. Sync database and install using pacman

@@ -1,5 +1,5 @@
 {
-  description = "ROX2026 Development Environment";
+  description = "Development Environment";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -12,13 +12,17 @@
         pkgs = import nixpkgs { inherit system; };
         
         commonTools = with pkgs; [
+          # Override docker cli
           docker
           docker-compose
+
+          # Development tools
           gnumake
           gh
           git
           python3
           python3Packages.black
+
           ripgrep
           pciutils # For lspci to check GPU hardware
         ];
@@ -34,13 +38,11 @@
           buildInputs = commonTools ++ guiTools;
 
           shellHook = ''
-            echo "▶ ROX2026 Environment Active"
+            echo "Environment Active"
 
             # Allow Docker containers to connect to the X server
             xhost +local:docker > /dev/null 2>&1
 
-            alias dc='docker compose'
-            
             export ROS_DOMAIN_ID=0
             export DOCKER_BUILDKIT=1
 
@@ -52,7 +54,7 @@
               echo "▶ WARNING: nvidia-smi not found. GPU acceleration in Docker may not work."
             fi
 
-            make help
+            # make help
           '';
         };
       }

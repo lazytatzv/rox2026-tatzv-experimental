@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+# NoVNC使う用の設定
+
 # Configuration
 VNC_DISPLAY=:1
 VNC_PORT=5901
