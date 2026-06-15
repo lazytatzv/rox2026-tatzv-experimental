@@ -1,85 +1,119 @@
-# ROX2026 Experimental
+# ROX2026 Experimental - Professional Usage Guide
 
-rox2026の個人的かつ試験的なプロジェクト. AI(主にgemini)を使っています.
+このプロジェクトを最強のパフォーマンスで使いこなすための詳細ガイドです。
 
-## Features
+---
 
-- ros2_controlを使用したsim/実機用ソフトウェア
-- 物理シミュレーションを利用した足回りテスト
-- step, 周波数解析&画像出力
+## 1. 開発環境のセットアップ
 
-## Environment
+### マルチOS対応 (Linux / macOS)
+このプロジェクトは Linux (NVIDIA) と macOS (Apple Silicon / Colima) の両方で動作するように最適化されています。`Makefile` が OS を自動検知し、最適なネットワークモードを選択します。
 
-`Docker`を使うことを想定しています.
+- **Linux**: `network_mode: host` により ROS 2 の通信パフォーマンスが最大化されます。
+- **macOS**: `bridge` モードとポート転送により、ブラウザからの接続性を確保します。
 
-`ros2 jazzy`以外では動きません. (特にros2_controlの設定の為)
-
-- Ubuntu24.04 (ROS:jazzy)
-
-
-## description
-
-- nodeは基本C++固定
-- joystickはDualSense想定
-- 対応は基本jazzy
-
-## Usage
-
-### Development
-
-ホストは`nix`が入っているLinux想定です. `docker`は`nix`経由で入るのでホスト側に必須ではありません. GUI設定も`flake.nix`と`compose.yaml`で完結しているので他にコマンドを叩く必要性はありません.
-
+### 起動手順
 ```bash
-# nix環境に入る
-$ make nix
+# 1. Nix環境へ入る
+make nix
 
-# Open VScode
-$ code .
+# 2. コンテナを起動 (OS自動判定)
+make up
 
-# devcontainerでビルド
-# or
-# docker cli経由でビルド
-$ docker compose up -d
-$ docker compose exec ros2_rox2026 bash
+# 3. コンテナ内シェルに入る
+make shell
 ```
 
-`nix`や`docker`環境に入っているか確認したい時は、
+---
+
+## 2. GUI 環境 (noVNC) の使い方
+
+macOS やリモート環境からでも、ブラウザ一つで Gazebo や RViz2 を操作できます。
+
+1. **アクセス**: [http://localhost:6080/vnc.html](http://localhost:6080/vnc.html)
+2. **パスワード**: `password`
+3. **ヒント**:
+   - 画面の右側メニューから `Scaling Mode` を `Remote Resizing` に設定すると、ブラウザのサイズに合わせてデスクトップが自動調整されます。
+   - 新しいウィンドウは常に中央に配置されるように設定済みです。
+
+---
+
+## 3. 実機モーター ID の設定ツール
+
+RobStride モーター（EduLite / CyberGear 等）の ID を書き換えるための専用 CLI ツールです。工場出荷時（ID 127）のモーターをキッティングする際に使用します。
+
+### 実行方法
+コンテナ内の `main_ws` にて実行します。
 
 ```bash
-# 出力が/nix/store/..ならnix環境です
-$ which docker
+# ID 127 を 1 に変更する場合
+ros2 run robstride_driver set_motor_id --ros-args -p old:=127 -p new:=1 -p port:=/dev/ttyUSB0 -p protocol:=at
 
-# ホストにros2が入っていない場合、
-# /opt/ros/jazzy/bin/ros2と出ればdockerコンテナ内です.
-$ ros2
+# 引数詳細:
+#  old: 現在のID (デフォルト127)
+#  new: 新しいID
+#  port: シリアルポートパス (デフォルト /dev/ttyUSB0)
+#  protocol: 'at' (推奨) または 'can'
+```
+**注意**: コマンド送信後、設定を恒久化するためにモーターの**電源を再投入（パワーサイクル）**してください。
 
+---
+
+## 4. 制御解析ワークフロー (Bode / Step 応答)
+
+制御解析のパラメータは YAML ファイルで一元管理されています。
+
+### 設定の変更
+`main_ws/src/control_analysis/config/analysis_settings.yaml` をエディタで編集します。
+
+```yaml
+/signal_injector:
+  ros__parameters:
+    mode: "chirp"        # 'step', 'sine', 'chirp'
+    amplitude: 1.0       # 振幅
+    duration: 10.0       # 実験時間
+    frequency_end: 15.0  # スイープ終了周波数
 ```
 
-
-### Visualization
-
-- **Foxglove**: 推奨。ブラウザで [studio.foxglove.dev](https://studio.foxglove.dev/) を開き、`ws://localhost:8765` に接続。
-- **noVNC (Browser GUI)**: macOS や Linux ホストで X11 設定なしに Gazebo/RViz を使いたい場合。
-  - ブラウザで `http://localhost:6080/vnc.html` にアクセス。
-  - Password: `password`
-  - コンテナ内の X11 デスクトップが表示されます。
-
-### Simulation
-
-Foxgloveで足回りのkinematicsを確認したい場合(物理simなし)
-
+### 解析の実行
 ```bash
-$ cd main_ws
-$ make virtual
+# A. 全自動レポート生成 (Gazebo Headless)
+# 起動 -> 記録 -> 注入 -> 解析 -> 画像出力まで一気に行います
+cd main_ws
+make report
+
+# B. 手動注入 (動作を見ながら確認したい場合)
+make injector
 ```
 
-物理シミュレーション
+---
 
+## 5. シミュレーションと実機の切り替え
+
+リファクタリングにより、デフォルトで**実機動作**を優先する構成になっています。
+
+### シミュレーション (Gazebo)
 ```bash
-$ cd main_ws
-$ make sim-gui
+cd main_ws
+# 画面あり
+make sim-gui
+# 画面なし
+ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true
 ```
 
+### 実機 (Real Hardware)
+```bash
+cd main_ws
+# デフォルト引数が gazebo:=false なので叩くだけでOK
+ros2 launch robot_bringup robot_bringup.launch.py
+```
 
+---
 
-## Caution
+## 6. プロフェッショナル・アーキテクチャ
+
+開発者がコードを変更する際の重要ポイントです。
+
+- **`imu_stabilizer`**: 制御ロジックは `HeadingStabilizerCore` ライブラリとして独立しています。変更を加えたら必ず `colcon test` で単体テストを回してください。
+- **Launch分割**: 起動設定は `launch/include/` 配下に機能別（`sim`, `description`, `localization`）でモジュール化されています。
+- **URDF分割**: 物理モデルは `urdf/include/` 配下でパーツ（`wheel`, `common`）ごとに管理されています。
