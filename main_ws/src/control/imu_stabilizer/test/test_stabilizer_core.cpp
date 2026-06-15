@@ -31,7 +31,7 @@ TEST(HeadingStabilizerCoreTest, TestNormalization)
 
 TEST(HeadingStabilizerCoreTest, TestLPF)
 {
-  HeadingStabilizerCore::Config config;
+  HeadingStabilizerConfig config;
   config.gyro_alpha = 0.5;
   HeadingStabilizerCore core(config);
   

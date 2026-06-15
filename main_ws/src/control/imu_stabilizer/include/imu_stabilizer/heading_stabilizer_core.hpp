@@ -9,6 +9,19 @@
 namespace imu_stabilizer
 {
 
+struct HeadingStabilizerConfig
+{
+  double heading_p = 3.0;
+  double heading_i = 0.5;
+  double heading_d = 0.0;
+  double rate_p = 0.5;
+  double rate_i = 0.0;
+  double rate_d = 0.05;
+  double heading_limit = 1.0;
+  double rate_limit = 0.5;
+  double gyro_alpha = 0.3;
+};
+
 /**
  * @brief Pure logic class for heading stabilization.
  * Separated from ROS 2 to allow unit testing and reuse.
@@ -16,20 +29,7 @@ namespace imu_stabilizer
 class HeadingStabilizerCore
 {
 public:
-  struct Config
-  {
-    double heading_p = 3.0;
-    double heading_i = 0.5;
-    double heading_d = 0.0;
-    double rate_p = 0.5;
-    double rate_i = 0.0;
-    double rate_d = 0.05;
-    double heading_limit = 1.0;
-    double rate_limit = 0.5;
-    double gyro_alpha = 0.3;
-  };
-
-  explicit HeadingStabilizerCore(const Config & config = Config());
+  explicit HeadingStabilizerCore(const HeadingStabilizerConfig & config = HeadingStabilizerConfig());
 
   /**
    * @brief Update target yaw and lock state.
@@ -55,7 +55,7 @@ public:
 private:
   static double normalizeAngle(double angle);
 
-  Config config_;
+  HeadingStabilizerConfig config_;
   control_toolbox::Pid pid_heading_;
   control_toolbox::Pid pid_rate_;
 

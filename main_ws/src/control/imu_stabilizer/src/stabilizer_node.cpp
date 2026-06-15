@@ -21,7 +21,7 @@ public:
   {
     declare_parameters();
     
-    HeadingStabilizerCore::Config config;
+    HeadingStabilizerConfig config;
     config.gyro_alpha = this->get_parameter("gyro_alpha").as_double();
     // In a real pro setup, we would read PID gains from parameters here
     
