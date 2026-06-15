@@ -86,9 +86,6 @@ test: ## Run tests
 launch: ## Launch physical mode
 	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws launch
 
-virtual: ## Launch virtual mode
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws virtual
-
 sim: ## Launch headless simulation
 	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws sim
 

@@ -1,9 +1,0 @@
-<library path="virtual_system_hardware">
-  <class name="virtual_actuator/VirtualSystemHardware"
-         type="virtual_actuator::VirtualSystemHardware"
-         base_class_type="hardware_interface::SystemInterface">
-    <description>
-      Virtual System Hardware Interface simulating motor inertia.
-    </description>
-  </class>
-</library>

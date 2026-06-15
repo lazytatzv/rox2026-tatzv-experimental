@@ -17,13 +17,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(Boost CONFIG REQUIRED)
 find_package(custom_interfaces REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
-find_package(rosidl_typesupport_cpp REQUIRED)
 find_package(Threads REQUIRED)
-
-# rosidl_generate_interfaces(${PROJECT_NAME}
-#   "msg/CanFrame.msg"
-# )
 
 # 1. Internal protocol library
 add_library(usb_can_serial_protocol SHARED
