@@ -56,18 +56,18 @@ update: ## Update the repository and pull the latest images
 	docker compose $(COMPOSE_FILES) pull
 
 image: ## Build the development Docker image
-	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev docker compose $(COMPOSE_FILES) build
+	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose $(COMPOSE_FILES) build
 
 prod-image: ## Build the production Docker image (Lightweight)
-	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=prod docker compose $(COMPOSE_FILES) build
+	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) build
 
 up: ## Start the development container
 	xhost +local:docker > /dev/null 2>&1 || true
-	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=dev docker compose $(COMPOSE_FILES) up -d
+	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose $(COMPOSE_FILES) up -d
 
 prod-up: ## Start the production container
 	xhost +local:docker > /dev/null 2>&1 || true
-	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=prod docker compose $(COMPOSE_FILES) up -d
+	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) up -d
 
 down: ## Stop and remove the container
 	docker compose $(COMPOSE_FILES) down

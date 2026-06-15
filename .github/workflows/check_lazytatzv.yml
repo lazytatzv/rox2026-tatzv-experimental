@@ -61,7 +61,18 @@ jobs:
         run: |
           docker run --rm rox2026:builder /bin/bash -c "source /opt/ros/jazzy/setup.bash && cd main_ws && colcon test && colcon test-result --verbose"
 
-      # 2. Build and Push Production Image
+      # 2. Build and Push Dev Image
+      - name: Build and Push Dev Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: dev
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 3. Build and Push Production Image
       - name: Build and Push Prod Image
         uses: docker/build-push-action@v5
         with:
