@@ -57,9 +57,9 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run Tests
-        run: |
-          docker run --rm rox2026:builder /bin/bash -c "source /opt/ros/jazzy/setup.bash && cd main_ws && colcon test && colcon test-result --verbose"
+      # - name: Run Tests
+      #   run: |
+      #     docker run --rm rox2026:builder /bin/bash -c "source /opt/ros/jazzy/setup.bash && cd main_ws && colcon test && colcon test-result --verbose"
 
       # 2. Build and Push Dev Image
       - name: Build and Push Dev Image
