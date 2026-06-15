@@ -3,6 +3,7 @@ include:
 
 services:
   ros2_rox2026:
+    image: ghcr.io/lazytatzv/rox2026-tatzv-experimental:latest
     build:
       context: .
       dockerfile: Dockerfile

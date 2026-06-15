@@ -48,6 +48,13 @@ help: ## Show this help message
 nix: ## Enter Nix development shell
 	nix develop --extra-experimental-features "nix-command flakes"
 
+pull: ## Pull the latest images from the registry
+	docker compose $(COMPOSE_FILES) pull
+
+update: ## Update the repository and pull the latest images
+	git pull --no-edit
+	docker compose $(COMPOSE_FILES) pull
+
 image: ## Build the development Docker image
 	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev docker compose $(COMPOSE_FILES) build
 
