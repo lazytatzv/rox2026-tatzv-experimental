@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #pragma once
 
 #include <array>

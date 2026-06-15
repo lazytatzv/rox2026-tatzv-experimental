@@ -67,7 +67,7 @@ int main(int argc, char ** argv)
 
   // 3. Create and Send ID Set Command
   auto frame_data = handler->create_id_set_command(
-    static_cast<uint8_t>(old_id), 
+    static_cast<uint8_t>(old_id),
     static_cast<uint8_t>(new_id)
   );
 
@@ -83,14 +83,15 @@ int main(int argc, char ** argv)
 
   std::cout << "Sending ID change command..." << std::endl;
   transport->send_frame(frame);
-  
+
   // Wait a bit for motor processing
   std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
   std::cout << "---------------------------------------" << std::endl;
   std::cout << "Command sent. Please RESTART (Power Cycle) the motor" << std::endl;
   std::cout << "to apply the new ID permanently." << std::endl;
-  std::cout << "Verify the change using: ros2 topic echo " << handler->get_default_rx_topic() << std::endl;
+  std::cout << "Verify the change using: ros2 topic echo " << handler->get_default_rx_topic() <<
+    std::endl;
 
   transport->close();
   rclcpp::shutdown();

@@ -38,7 +38,8 @@ private:
 
   UsbCanSerialDriver serial_driver_;
   SerialDriverConfig config_;
-  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr publisher_;
+  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr
+    publisher_;
   rclcpp::Subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr subscription_;
 };
 

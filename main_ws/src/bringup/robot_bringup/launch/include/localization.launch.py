@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -9,7 +10,7 @@ def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory('robot_bringup')
     ekf_config = os.path.join(pkg_robot_bringup, 'config', 'ekf.yaml')
     sensors_config = os.path.join(pkg_robot_bringup, 'config', 'sensors.yaml')
-    
+
     use_sim_time = LaunchConfiguration('use_sim_time')
     gazebo = LaunchConfiguration('gazebo')
 

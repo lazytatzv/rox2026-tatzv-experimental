@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 from setuptools import find_packages, setup
 
 package_name = 'vision_localization'

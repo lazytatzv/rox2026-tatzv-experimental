@@ -64,7 +64,8 @@ private:
   rclcpp::Node::SharedPtr node_;
 
   // State and Command values
-  struct Motor {
+  struct Motor
+  {
     double position = 0.0;
     double velocity = 0.0;
     double effort = 0.0;

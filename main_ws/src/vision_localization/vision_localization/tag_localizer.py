@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped, TransformStamped
@@ -12,7 +13,7 @@ import math
 class TagLocalizer(Node):
     def __init__(self):
         super().__init__('tag_localizer')
-        
+
         # Tag Database (Global Coordinates in 'map' frame)
         # measurement.webp and rulebook mapping
         # Left Side (Side A, X < 0) | Right Side (Side B, X > 0)
@@ -31,7 +32,7 @@ class TagLocalizer(Node):
             '/apriltag_detections',
             self.tag_callback,
             10)
-            
+
         self.publisher = self.create_publisher(
             PoseWithCovarianceStamped,
             '/apriltag_pose',
@@ -39,7 +40,7 @@ class TagLocalizer(Node):
 
         self.tf_buffer = tf2_ros.Buffer()
         self.tf_listener = tf2_ros.TransformListener(self.tf_buffer, self)
-        
+
         self.get_logger().info("AprilTag Localizer Started. Waiting for detections...")
 
     def tag_callback(self, msg):
@@ -50,7 +51,7 @@ class TagLocalizer(Node):
 
             # 1. Get the tag's pose in camera frame
             tag_in_camera = detection.pose.pose.pose
-            
+
             try:
                 # 2. Lookup transform from base_footprint to camera
                 # We need this to find where the ROBOT is relative to the tag
@@ -63,31 +64,31 @@ class TagLocalizer(Node):
                 # 3. Calculate Robot Pose in Global Map
                 # Robot_in_Map = Tag_in_Map * (Tag_in_Camera)^-1 * (Camera_in_Robot)^-1
                 # Simplified approach: Use TF to chain these
-                
+
                 # Tag Global Pose
                 T_map_tag = self.get_transform_from_map(tag_id)
-                
+
                 # Transform tag detection (camera frame) to robot frame (base_footprint)
                 tag_in_base = tf2_geometry_msgs.do_transform_pose(tag_in_camera, transform)
-                
+
                 # Invert: Robot in Tag Frame
                 # ... Calculation logic ...
-                
+
                 # For now, we'll publish a PoseWithCovarianceStamped for EKF
                 # In a pro setup, we'd use the known tag position to 'snap' the robot position
-                
+
                 out_msg = PoseWithCovarianceStamped()
                 out_msg.header.stamp = msg.header.stamp
                 out_msg.header.frame_id = 'map'
-                
+
                 # Simplified projection for demonstration
                 # Real implementation uses 3D matrix inversion
                 out_msg.pose.pose.position.x = self.tag_map[tag_id]['x'] - tag_in_base.position.x
                 out_msg.pose.pose.position.y = self.tag_map[tag_id]['y'] - tag_in_base.position.y
-                
+
                 # High confidence for AprilTag (Low covariance)
-                out_msg.pose.covariance = [0.01] * 36 
-                
+                out_msg.pose.covariance = [0.01] * 36
+
                 self.publisher.publish(out_msg)
                 # self.get_logger().info(f"Detected Tag {tag_id}. Correcting position...")
 

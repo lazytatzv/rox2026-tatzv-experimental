@@ -19,7 +19,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
   const hardware_interface::HardwareComponentInterfaceParams & params)
 {
   if (hardware_interface::SystemInterface::on_init(params) !=
-      hardware_interface::CallbackReturn::SUCCESS)
+    hardware_interface::CallbackReturn::SUCCESS)
   {
     return hardware_interface::CallbackReturn::ERROR;
   }
@@ -37,12 +37,14 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
     if (info_.hardware_parameters.count("max_speed_limit_percentage")) {
       max_speed_percentage = std::stod(info_.hardware_parameters.at("max_speed_limit_percentage"));
     }
-    int max_delta = static_cast<int>(at_protocol::NEUTRAL_VELOCITY_VALUE * (max_speed_percentage / 100.0));
+    int max_delta = static_cast<int>(at_protocol::NEUTRAL_VELOCITY_VALUE *
+      (max_speed_percentage / 100.0));
     protocol_handler_ = std::make_unique<AtProtocolHandler>(vel_max_, max_delta);
   } else if (protocol_type == "can" || protocol_type == "ddsm") {
     // Both use CAN frames over serial
-    if (protocol_type == "can") protocol_handler_ = std::make_unique<CanProtocolHandler>();
-    else protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
+    if (protocol_type == "can") {protocol_handler_ = std::make_unique<CanProtocolHandler>();} else {
+      protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
+    }
   } else {
     RCLCPP_FATAL(node_->get_logger(), "Unknown protocol type: %s", protocol_type.c_str());
     return hardware_interface::CallbackReturn::ERROR;
@@ -50,7 +52,8 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
 
   // Initialize Transport
   transport_ = std::make_unique<seeed_usb_can::UsbCanSerialDriver>();
-  transport_->set_receive_callback(std::bind(&RobstrideSystemHardware::can_rx_callback, this, std::placeholders::_1));
+  transport_->set_receive_callback(std::bind(&RobstrideSystemHardware::can_rx_callback, this,
+      std::placeholders::_1));
 
   // Initialize motors from URDF joints
   motors_.resize(info_.joints.size());
@@ -68,9 +71,13 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   seeed_usb_can::SerialDriverConfig config;
-  if (info_.hardware_parameters.count("usb_path")) config.usb_path = info_.hardware_parameters.at("usb_path");
-  if (info_.hardware_parameters.count("serial_baud")) config.serial_baud = std::stoi(info_.hardware_parameters.at("serial_baud"));
-  
+  if (info_.hardware_parameters.count("usb_path")) {
+    config.usb_path = info_.hardware_parameters.at("usb_path");
+  }
+  if (info_.hardware_parameters.count("serial_baud")) {
+    config.serial_baud = std::stoi(info_.hardware_parameters.at("serial_baud"));
+  }
+
   try {
     transport_->open(config);
     RCLCPP_INFO(node_->get_logger(), "Transport opened on %s", config.usb_path.c_str());
@@ -156,7 +163,7 @@ hardware_interface::return_type RobstrideSystemHardware::write(
 {
   for (const auto & motor : motors_) {
     double velocity = motor.command_velocity;
-    if (motor.invert) velocity = -velocity;
+    if (motor.invert) {velocity = -velocity;}
 
     auto frame_data = protocol_handler_->create_velocity_command(motor.id, velocity);
     if (!frame_data.empty()) {
@@ -172,12 +179,13 @@ hardware_interface::return_type RobstrideSystemHardware::write(
   return hardware_interface::return_type::OK;
 }
 
-void RobstrideSystemHardware::can_rx_callback(const seeed_usb_can::CanFrame & frame) {
+void RobstrideSystemHardware::can_rx_callback(const seeed_usb_can::CanFrame & frame)
+{
   auto result = protocol_handler_->decode_frame(frame.data);
-  if (!result.success) return;
+  if (!result.success) {return;}
 
   uint8_t motor_id = result.motor_id;
-  if (id_to_index_.find(motor_id) == id_to_index_.end()) return;
+  if (id_to_index_.find(motor_id) == id_to_index_.end()) {return;}
 
   size_t idx = id_to_index_[motor_id];
   auto & state = result.state;

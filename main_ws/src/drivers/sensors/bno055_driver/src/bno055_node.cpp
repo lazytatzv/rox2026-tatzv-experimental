@@ -15,8 +15,10 @@
 using namespace std::chrono_literals;
 
 class BNO055Node : public rclcpp::Node {
- public:
-  BNO055Node() : Node("bno055_node") {
+public:
+  BNO055Node()
+  : Node("bno055_node")
+  {
     declare_parameters();
     setup_i2c();
     init_bno055();
@@ -27,8 +29,9 @@ class BNO055Node : public rclcpp::Node {
     RCLCPP_INFO(get_logger(), "BNO055 Pro Driver Ready (Warning-Free)");
   }
 
- private:
-  void declare_parameters() {
+private:
+  void declare_parameters()
+  {
     this->declare_parameter("i2c_bus", "/dev/i2c-1");
     this->declare_parameter("i2c_addr", 0x28);
     this->declare_parameter("frame_id", "imu_link");
@@ -37,7 +40,8 @@ class BNO055Node : public rclcpp::Node {
     this->declare_parameter("variance_linear_acceleration", 0.1);
   }
 
-  void setup_i2c() {
+  void setup_i2c()
+  {
     std::string bus = this->get_parameter("i2c_bus").as_string();
     int addr = this->get_parameter("i2c_addr").as_int();
     i2c_fd_ = open(bus.c_str(), O_RDWR);
@@ -46,31 +50,34 @@ class BNO055Node : public rclcpp::Node {
     }
   }
 
-  bool write_reg(uint8_t reg, uint8_t val) {
+  bool write_reg(uint8_t reg, uint8_t val)
+  {
     uint8_t buf[2] = {reg, val};
     if (write(i2c_fd_, buf, 2) != 2) {
-        RCLCPP_ERROR(get_logger(), "I2C Write Failed to reg 0x%02x", reg);
-        return false;
+      RCLCPP_ERROR(get_logger(), "I2C Write Failed to reg 0x%02x", reg);
+      return false;
     }
     usleep(2000);
     return true;
   }
 
-  void init_bno055() {
+  void init_bno055()
+  {
     write_reg(0x3D, 0x00); // Config
     write_reg(0x3E, 0x00); // Power
     write_reg(0x3D, 0x0C); // NDOF Mode
     usleep(20000);
   }
 
-  void read_and_publish() {
+  void read_and_publish()
+  {
     uint8_t start_reg = 0x14;
-    uint8_t data[26]; 
-    
+    uint8_t data[26];
+
     // Set address and check result to suppress warnings
-    if (write(i2c_fd_, &start_reg, 1) != 1) return;
-    
-    if (read(i2c_fd_, data, 26) != 26) return;
+    if (write(i2c_fd_, &start_reg, 1) != 1) {return;}
+
+    if (read(i2c_fd_, data, 26) != 26) {return;}
 
     auto msg = sensor_msgs::msg::Imu();
     msg.header.stamp = this->get_clock()->now();
@@ -94,12 +101,12 @@ class BNO055Node : public rclcpp::Node {
     double var_a = this->get_parameter("variance_angular_velocity").as_double();
     double var_l = this->get_parameter("variance_linear_acceleration").as_double();
 
-    for(int i=0; i<9; i+=4) {
+    for(int i = 0; i < 9; i += 4) {
       msg.orientation_covariance[i] = var_o;
       msg.angular_velocity_covariance[i] = var_a;
       msg.linear_acceleration_covariance[i] = var_l;
     }
-    
+
     publisher_->publish(msg);
   }
 
@@ -108,7 +115,8 @@ class BNO055Node : public rclcpp::Node {
   rclcpp::TimerBase::SharedPtr timer_;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char ** argv)
+{
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<BNO055Node>());
   rclcpp::shutdown();

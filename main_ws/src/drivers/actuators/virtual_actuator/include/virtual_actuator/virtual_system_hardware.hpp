@@ -37,7 +37,8 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  struct VirtualMotorState {
+  struct VirtualMotorState
+  {
     double position = 0.0;
     double velocity = 0.0;
     double filtered_velocity = 0.0;
@@ -50,7 +51,7 @@ private:
   };
 
   std::vector<VirtualMotorState> motors_;
-  
+
   std::random_device rd_;
   std::mt19937 gen_;
 };

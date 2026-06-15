@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include <algorithm>
 #include <cstdint>
 #include <stdexcept>
@@ -54,7 +55,7 @@ public:
 
     publisher_ = create_publisher<custom_interfaces::msg::CanFrame>(
       "/communication/rx", 100);
-    
+
     subscription_ = create_subscription<custom_interfaces::msg::CanFrame>(
       "/communication/tx",
       100,
@@ -71,15 +72,15 @@ public:
     config_.operation_mode = static_cast<uint8_t>(operation_mode);
 
     serial_driver_.set_receive_callback([this](const CanFrame & frame) {
-      if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
-        auto msg = custom_interfaces::msg::CanFrame();
-        msg.id = frame.id;
-        msg.extended = frame.extended;
-        msg.remote = frame.remote;
-        msg.dlc = frame.dlc;
-        msg.data = frame.data;
-        publisher_->publish(msg);
-      }
+        if (this->get_current_state().id() == lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+          auto msg = custom_interfaces::msg::CanFrame();
+          msg.id = frame.id;
+          msg.extended = frame.extended;
+          msg.remote = frame.remote;
+          msg.dlc = frame.dlc;
+          msg.data = frame.data;
+          publisher_->publish(msg);
+        }
     });
 
     RCLCPP_INFO(get_logger(), "Configured on %s", usb_path.c_str());
@@ -139,7 +140,9 @@ private:
 
   void handle_transmit(const custom_interfaces::msg::CanFrame & msg)
   {
-    if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) return;
+    if (this->get_current_state().id() != lifecycle_msgs::msg::State::PRIMARY_STATE_ACTIVE) {
+      return;
+    }
 
     CanFrame frame;
     frame.id = msg.id;
@@ -151,7 +154,8 @@ private:
     try {
       serial_driver_.send_frame(frame);
     } catch (const std::exception & e) {
-      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, "Failed to transmit CAN frame: %s", e.what());
+      RCLCPP_ERROR_THROTTLE(get_logger(), *get_clock(), 1000, "Failed to transmit CAN frame: %s",
+          e.what());
     }
   }
 

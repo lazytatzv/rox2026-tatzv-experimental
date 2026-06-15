@@ -1,3 +1,4 @@
+// Copyright 2026 Tatsukiyano
 #include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
 #include <algorithm>
@@ -164,7 +165,7 @@ void UsbCanSerialDriver::open(const SerialDriverConfig & config)
 
     running_.store(true);
     start_async_read();
-    io_thread_ = std::thread([this]() { io_context_.run(); });
+    io_thread_ = std::thread([this]() {io_context_.run();});
   } catch (...) {
     boost::system::error_code ec;
     serial_port_.cancel(ec);
@@ -273,7 +274,7 @@ std::vector<uint8_t> UsbCanSerialDriver::encode_can_frame(const CanFrame & frame
   }
 
   out.insert(out.end(), frame.data.begin(), frame.data.begin() + dlc);
-  
+
   out.push_back(0x55U);
 
   return out;
@@ -313,37 +314,37 @@ std::optional<CanFrame> UsbCanSerialDriver::try_extract_frame(std::vector<uint8_
   const size_t with_padding = without_padding + 1U;
 
   auto parse_with_length = [&](size_t total_len) -> std::optional<CanFrame> {
-    if (buffer.size() < total_len) {
-      return std::nullopt;
-    }
-    if (buffer[total_len - 1U] != 0x55U) {
-      return std::nullopt;
-    }
+      if (buffer.size() < total_len) {
+        return std::nullopt;
+      }
+      if (buffer[total_len - 1U] != 0x55U) {
+        return std::nullopt;
+      }
 
-    CanFrame frame;
-    frame.extended = extended;
-    frame.remote = remote;
-    frame.dlc = dlc;
+      CanFrame frame;
+      frame.extended = extended;
+      frame.remote = remote;
+      frame.dlc = dlc;
 
-    if (extended) {
-      frame.id =
-        static_cast<uint32_t>(buffer[2]) |
-        (static_cast<uint32_t>(buffer[3]) << 8U) |
-        (static_cast<uint32_t>(buffer[4]) << 16U) |
-        (static_cast<uint32_t>(buffer[5]) << 24U);
-    } else {
-      frame.id = static_cast<uint32_t>(buffer[2]) |
-        (static_cast<uint32_t>(buffer[3]) << 8U);
-    }
+      if (extended) {
+        frame.id =
+          static_cast<uint32_t>(buffer[2]) |
+          (static_cast<uint32_t>(buffer[3]) << 8U) |
+          (static_cast<uint32_t>(buffer[4]) << 16U) |
+          (static_cast<uint32_t>(buffer[5]) << 24U);
+      } else {
+        frame.id = static_cast<uint32_t>(buffer[2]) |
+          (static_cast<uint32_t>(buffer[3]) << 8U);
+      }
 
-    const size_t data_offset = 2U + id_len;
-    frame.data.assign(
+      const size_t data_offset = 2U + id_len;
+      frame.data.assign(
       buffer.begin() + static_cast<std::ptrdiff_t>(data_offset),
       buffer.begin() + static_cast<std::ptrdiff_t>(data_offset + dlc));
 
-    buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_len));
-    return frame;
-  };
+      buffer.erase(buffer.begin(), buffer.begin() + static_cast<std::ptrdiff_t>(total_len));
+      return frame;
+    };
 
   if (auto frame = parse_with_length(with_padding)) {
     return frame;

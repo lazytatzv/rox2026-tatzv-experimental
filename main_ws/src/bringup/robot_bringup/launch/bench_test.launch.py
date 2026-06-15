@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -7,11 +8,11 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory('robot_bringup')
-    
+
     # Arguments
     motor_id = LaunchConfiguration('motor_id', default='1')
     usb_path = LaunchConfiguration('usb_path', default='/dev/ttyUSB0')
-    
+
     urdf_path = os.path.join(pkg_robot_bringup, 'urdf', 'robot.urdf.xacro')
     controllers_config = os.path.join(pkg_robot_bringup, 'config', 'bench_controllers.yaml')
 
@@ -21,7 +22,7 @@ def generate_launch_description():
         executable='robot_state_publisher',
         parameters=[{
             'robot_description': Command([
-                'xacro ', urdf_path, 
+                'xacro ', urdf_path,
                 ' bench_mode:=true',
                 ' bench_motor_id:=', motor_id,
                 ' usb_path:=', usb_path
@@ -36,7 +37,7 @@ def generate_launch_description():
         executable='ros2_control_node',
         parameters=[
             {'robot_description': Command([
-                'xacro ', urdf_path, 
+                'xacro ', urdf_path,
                 ' bench_mode:=true',
                 ' bench_motor_id:=', motor_id,
                 ' usb_path:=', usb_path

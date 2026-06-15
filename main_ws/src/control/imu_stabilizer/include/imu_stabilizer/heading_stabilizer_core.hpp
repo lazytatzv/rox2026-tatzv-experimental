@@ -29,7 +29,8 @@ struct HeadingStabilizerConfig
 class HeadingStabilizerCore
 {
 public:
-  explicit HeadingStabilizerCore(const HeadingStabilizerConfig & config = HeadingStabilizerConfig());
+  explicit HeadingStabilizerCore(
+    const HeadingStabilizerConfig & config = HeadingStabilizerConfig());
 
   /**
    * @brief Update target yaw and lock state.
@@ -53,8 +54,8 @@ public:
   void setGains(const HeadingStabilizerConfig & config);
 
   // Accessors
-  double getTargetYaw() const { return target_yaw_lock_; }
-  bool isLockActive() const { return lock_active_; }
+  double getTargetYaw() const {return target_yaw_lock_;}
+  bool isLockActive() const {return lock_active_;}
   void reset();
 
 private:

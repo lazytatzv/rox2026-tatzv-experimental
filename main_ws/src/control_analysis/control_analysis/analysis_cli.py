@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 import sys
 import os
 import glob
@@ -41,7 +42,7 @@ def extract_bag_data(bag_path):
             msg = deserialize_message(data, JointState)
             if msg.effort:
                 results['effort'].append((t / 1e9, sum(msg.effort)/len(msg.effort)))
-    
+
     return {k: np.array(v) for k, v in results.items() if len(v) > 0}
 
 def run_pro_analysis(bag_path):
@@ -59,7 +60,7 @@ def run_pro_analysis(bag_path):
     t_step = data['cmd'][step_idx[0], 0] if len(step_idx) > 0 else 0
 
     plt.figure(figsize=(15, 10))
-    
+
     # 1. Step Response
     plt.subplot(2, 2, 1)
     plt.step(data['cmd'][:,0], data['cmd'][:,1], 'r--', label='Command', where='post', alpha=0.5)
@@ -85,7 +86,7 @@ def run_pro_analysis(bag_path):
             f, Pxx = signal.welch(u, fs, nperseg=256)
             H = Pxy / Pxx
             valid = (f > 0.1) & (f < 15.0)
-            
+
             plt.subplot(2, 2, 3)
             plt.semilogx(f[valid], 20*np.log10(np.abs(H[valid])), 'b-')
             plt.title('Bode Magnitude [dB]'); plt.grid(True, which='both')

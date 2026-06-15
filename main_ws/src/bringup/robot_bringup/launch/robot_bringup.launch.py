@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -8,7 +9,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory('robot_bringup')
-    
+
     # 1. Config Paths
     tuning_config = os.path.join(pkg_robot_bringup, 'config', 'params', 'tuning.yaml')
 
@@ -48,11 +49,11 @@ def generate_launch_description():
     )
 
     spawn_broadcaster = Node(
-        package='controller_manager', executable='spawner', 
+        package='controller_manager', executable='spawner',
         arguments=['joint_state_broadcaster', '--controller-manager-timeout', '120']
     )
     spawn_controller = Node(
-        package='controller_manager', executable='spawner', 
+        package='controller_manager', executable='spawner',
         arguments=['mecanum_drive_controller', '--controller-manager-timeout', '120'],
         remappings=[('/mecanum_drive_controller/cmd_vel', '/cmd_vel_stabilized')]
     )

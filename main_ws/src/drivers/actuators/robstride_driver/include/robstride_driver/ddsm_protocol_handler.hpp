@@ -14,15 +14,18 @@ class DdsmProtocolHandler : public RobstrideProtocol
 public:
   DdsmProtocolHandler() = default;
 
-  std::vector<uint8_t> create_enable_command(uint8_t /*motor_id*/) override {
+  std::vector<uint8_t> create_enable_command(uint8_t /*motor_id*/) override
+  {
     return {}; // DDSM115 typically doesn't need explicit enable via velocity command
   }
 
-  std::vector<uint8_t> create_disable_command(uint8_t /*motor_id*/) override {
+  std::vector<uint8_t> create_disable_command(uint8_t /*motor_id*/) override
+  {
     return {};
   }
 
-  std::vector<uint8_t> create_velocity_command(uint8_t motor_id, double velocity_rad_s) override {
+  std::vector<uint8_t> create_velocity_command(uint8_t motor_id, double velocity_rad_s) override
+  {
     double rpm = (velocity_rad_s * 60.0) / (2.0 * M_PI);
     int16_t rpm_i16 = static_cast<int16_t>(rpm);
 
@@ -35,11 +38,13 @@ public:
     };
   }
 
-  std::vector<uint8_t> create_id_set_command(uint8_t /*motor_id*/, uint8_t /*new_id*/) override {
+  std::vector<uint8_t> create_id_set_command(uint8_t /*motor_id*/, uint8_t /*new_id*/) override
+  {
     return {}; // DDSM115 ID change not implemented via this handler yet
   }
 
-  DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
+  DecodeResult decode_frame(const std::vector<uint8_t> & data) override
+  {
     DecodeResult result;
     if (data.size() < 10) {
       result.error_msg = "DDSM frame too short: " + std::to_string(data.size());
@@ -56,8 +61,8 @@ public:
     return result;
   }
 
-  std::string get_default_tx_topic() const override { return "/communication/tx"; }
-  std::string get_default_rx_topic() const override { return "/communication/rx"; }
+  std::string get_default_tx_topic() const override {return "/communication/tx";}
+  std::string get_default_rx_topic() const override {return "/communication/rx";}
 };
 
 }  // namespace robstride_driver

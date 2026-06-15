@@ -16,7 +16,8 @@ public:
   AtProtocolHandler(double vel_max, int max_delta)
   : vel_max_(vel_max), max_at_command_delta_(max_delta) {}
 
-  std::vector<uint8_t> create_enable_command(uint8_t motor_id) override {
+  std::vector<uint8_t> create_enable_command(uint8_t motor_id) override
+  {
     using namespace at_protocol;
     return {
       FRAME_HEADER_A, FRAME_HEADER_T, CMD_BASIC_CONFIG,
@@ -27,7 +28,8 @@ public:
     };
   }
 
-  std::vector<uint8_t> create_disable_command(uint8_t motor_id) override {
+  std::vector<uint8_t> create_disable_command(uint8_t motor_id) override
+  {
     using namespace at_protocol;
     return {
       FRAME_HEADER_A, FRAME_HEADER_T, CMD_BASIC_CONFIG,
@@ -38,7 +40,8 @@ public:
     };
   }
 
-  std::vector<uint8_t> create_velocity_command(uint8_t motor_id, double velocity_rad_s) override {
+  std::vector<uint8_t> create_velocity_command(uint8_t motor_id, double velocity_rad_s) override
+  {
     using namespace at_protocol;
     double clamped_vel = std::clamp(velocity_rad_s, -vel_max_, vel_max_);
     int delta = static_cast<int>(std::round((clamped_vel / vel_max_) * max_at_command_delta_));
@@ -56,7 +59,8 @@ public:
     };
   }
 
-  std::vector<uint8_t> create_id_set_command(uint8_t motor_id, uint8_t new_id) override {
+  std::vector<uint8_t> create_id_set_command(uint8_t motor_id, uint8_t new_id) override
+  {
     using namespace at_protocol;
     // Format: AT [CMD] [SRC_HI] [SRC_LO] [ID] [LEN] [SUB] [REG] [DATA...] [CR] [LF]
     // Write register 0x03 (CAN ID)
@@ -69,7 +73,8 @@ public:
     };
   }
 
-  DecodeResult decode_frame(const std::vector<uint8_t> & data) override {
+  DecodeResult decode_frame(const std::vector<uint8_t> & data) override
+  {
     using namespace at_protocol;
     DecodeResult result;
     if (data.size() < 16) {
@@ -94,11 +99,12 @@ public:
     return result;
   }
 
-  std::string get_default_tx_topic() const override { return "/communication/tx"; }
-  std::string get_default_rx_topic() const override { return "/communication/rx"; }
+  std::string get_default_tx_topic() const override {return "/communication/tx";}
+  std::string get_default_rx_topic() const override {return "/communication/rx";}
 
 private:
-  double uint_to_float(uint16_t value, double low, double high) {
+  double uint_to_float(uint16_t value, double low, double high)
+  {
     double span = high - low;
     return static_cast<double>(value) * span / 65535.0 + low;
   }

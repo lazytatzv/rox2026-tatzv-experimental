@@ -10,13 +10,14 @@
 #include "sensor_msgs/msg/joy.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-namespace base_teleop {
+namespace base_teleop
+{
 
 class BaseTeleopNode : public rclcpp::Node {
- public:
-  explicit BaseTeleopNode(const rclcpp::NodeOptions& options);
+public:
+  explicit BaseTeleopNode(const rclcpp::NodeOptions & options);
 
- private:
+private:
   void declare_parameters();
   void update_parameters();
   void joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg);

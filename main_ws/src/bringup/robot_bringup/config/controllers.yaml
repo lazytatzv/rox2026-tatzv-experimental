@@ -3,7 +3,7 @@
 
 controller_manager:
   ros__parameters:
-    update_rate: 100 
+    update_rate: 100
 
     mecanum_drive_controller:
       type: mecanum_drive_controller/MecanumDriveController
@@ -37,5 +37,5 @@ mecanum_drive_controller:
         max_velocity: 2.0
         has_acceleration_limits: true
         max_acceleration: 10.0
-    
+
     enforce_joint_model_limits: true

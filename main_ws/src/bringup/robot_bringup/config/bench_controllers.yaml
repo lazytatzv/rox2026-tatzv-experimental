@@ -1,7 +1,7 @@
 # Bench test configuration for single joint analysis
 controller_manager:
   ros__parameters:
-    update_rate: 100 
+    update_rate: 100
 
     bench_joint_controller:
       type: velocity_controllers/JointGroupVelocityController

@@ -1,3 +1,4 @@
+# Copyright 2026 Tatsukiyano
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
@@ -7,7 +8,7 @@ class AutoAnalyzer(Node):
     def __init__(self):
         super().__init__('auto_analyzer')
         self.publisher_ = self.create_publisher(TwistStamped, '/cmd_vel_ext', 10)
-        
+
         self.declare_parameter('report_name', 'full_analysis_report')
         self.declare_parameter('chirp_duration', 15.0)
         self.declare_parameter('step_duration', 5.0)

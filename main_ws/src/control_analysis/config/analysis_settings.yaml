@@ -2,14 +2,14 @@
   ros__parameters:
     # Mode selection: 'step', 'sine', or 'chirp'
     mode: "chirp"
-    
+
     # Common parameters
     amplitude: 1.0
     duration: 10.0
-    
+
     # Sine / Single frequency mode
     frequency: 1.0
-    
+
     # Chirp / Sweep mode
     frequency_start: 0.1
     frequency_end: 10.0

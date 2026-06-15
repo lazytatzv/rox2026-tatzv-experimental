@@ -17,23 +17,27 @@ namespace imu_stabilizer
 class HeadingStabilizerNode : public rclcpp::Node
 {
 public:
-  HeadingStabilizerNode() : Node("heading_stabilizer")
+  HeadingStabilizerNode()
+  : Node("heading_stabilizer")
   {
     declare_parameters();
-    
+
     // Initial config from parameters
     update_config_from_params();
     core_ = std::make_unique<HeadingStabilizerCore>(config_);
 
     sub_cmd_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
-      "/cmd_vel_in", 10, std::bind(&HeadingStabilizerNode::cmd_callback, this, std::placeholders::_1));
+      "/cmd_vel_in", 10,
+        std::bind(&HeadingStabilizerNode::cmd_callback, this, std::placeholders::_1));
     sub_odom_ = this->create_subscription<nav_msgs::msg::Odometry>(
-      "/odometry/filtered", 10, std::bind(&HeadingStabilizerNode::odom_callback, this, std::placeholders::_1));
+      "/odometry/filtered", 10,
+        std::bind(&HeadingStabilizerNode::odom_callback, this, std::placeholders::_1));
     sub_imu_ = this->create_subscription<sensor_msgs::msg::Imu>(
-      "/imu", rclcpp::SensorDataQoS(), std::bind(&HeadingStabilizerNode::imu_callback, this, std::placeholders::_1));
+      "/imu", rclcpp::SensorDataQoS(),
+        std::bind(&HeadingStabilizerNode::imu_callback, this, std::placeholders::_1));
 
     pub_cmd_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel_out", 10);
-    
+
     // Parameter callback for dynamic tuning
     param_callback_handle_ = this->add_on_set_parameters_callback(
       std::bind(&HeadingStabilizerNode::on_parameter_change, this, std::placeholders::_1));
@@ -71,15 +75,16 @@ private:
     config_.rate_limit = this->get_parameter("rate_pid.i_clamp").as_double();
   }
 
-  rcl_interfaces::msg::SetParametersResult on_parameter_change(const std::vector<rclcpp::Parameter> & params)
+  rcl_interfaces::msg::SetParametersResult on_parameter_change(
+    const std::vector<rclcpp::Parameter> & params)
   {
     rcl_interfaces::msg::SetParametersResult result;
     result.successful = true;
-    
+
     // We update everything if any param changes for simplicity in this professional setup
     update_config_from_params();
-    if (core_) core_->setGains(config_);
-    
+    if (core_) {core_->setGains(config_);}
+
     RCLCPP_INFO(get_logger(), "Parameters updated and applied to core.");
     return result;
   }
@@ -123,13 +128,13 @@ private:
     auto out_msg = last_cmd_;
     out_msg.header.stamp = now;
     out_msg.twist.angular.z = (core_->isLockActive()) ? out_rate : last_cmd_.twist.angular.z;
-    
+
     pub_cmd_->publish(out_msg);
   }
 
   std::unique_ptr<HeadingStabilizerCore> core_;
   HeadingStabilizerConfig config_;
-  
+
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_cmd_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
