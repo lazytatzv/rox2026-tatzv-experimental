@@ -14,10 +14,14 @@ black main_ws/src --line-length 100 --quiet || true
 
 # 3. Add Copyright Headers if missing
 echo "[STYLE] Ensuring Copyright headers..."
-find main_ws/src -name "*.cpp" -o -name "*.hpp" -o -name "*.py" | while read -r file; do
+find main_ws/src -name "*.cpp" -o -name "*.hpp" | while read -r file; do
     if ! grep -q "Copyright" "$file"; then
-        # C++/Python common comment style for copyright
         sed -i '1i // Copyright 2026 Tatsukiyano' "$file"
+    fi
+done
+find main_ws/src -name "*.py" | while read -r file; do
+    if ! grep -q "Copyright" "$file"; then
+        sed -i '1i # Copyright 2026 Tatsukiyano' "$file"
     fi
 done
 

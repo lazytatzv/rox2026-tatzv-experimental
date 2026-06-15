@@ -4,7 +4,9 @@ services:
       context: .
       dockerfile: Dockerfile
       network: host
-    container_name: lazy_container
+    container_name: rox2026_container
+    ports:
+      - "6080:6080" # noVNC (Used on macOS/Windows, ignored on Linux host mode)
     init: true
     stdin_open: true
     tty: true
@@ -18,19 +20,21 @@ services:
       FASTRTPS_DEFAULT_PROFILES_FILE: /root/lazytatzv_ws/main_ws/src/bringup/robot_bringup/config/fastdds_config.xml
       DEBIAN_FRONTEND: noninteractive
       # GUI Support
-      DISPLAY: ${DISPLAY:-:0}
+      # If host DISPLAY is set (Linux), use it. Otherwise default to :1 (noVNC).
+      DISPLAY: ${DISPLAY:-:1}
       QT_X11_NO_MITSHM: "1"
-      # NVIDIA GPU Support
+      # NVIDIA GPU Support (Linux Only)
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # [MAC/NON-NVIDIA USERS] Comment out the 'deploy' section below if you get GPU errors.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
     volumes:
       - .:/root/lazytatzv_ws

@@ -42,15 +42,26 @@ RUN apt-get update --allow-releaseinfo-change && \
     ros-${ROS_DISTRO}-plotjuggler-ros \
     ros-${ROS_DISTRO}-robot-localization \
     black \
+    tigervnc-standalone-server \
+    tigervnc-common \
+    tigervnc-tools \
+    fluxbox \
+    novnc \
+    websockify \
     && rm -rf /var/lib/apt/lists/*
 
-# --- 2. Environment Configuration ---
+# --- 2. VNC Configuration ---
+RUN mkdir -p /root/.vnc && \
+    (echo "password" | vncpasswd -f > /root/.vnc/passwd) && \
+    chmod 600 /root/.vnc/passwd
+
+# --- 3. Environment Configuration ---
 ENV DEBIAN_FRONTEND=noninteractive
 ENV WORKSPACE=/root/lazytatzv_ws/main_ws
 ENV CCACHE_DIR=/root/.ccache
 WORKDIR /root/lazytatzv_ws
 
-# --- 3. Dependency Layer (rosdep) ---
+# --- 4. Dependency Layer (rosdep) ---
 COPY ./main_ws/src /tmp/src
 RUN apt-get update && \
     rosdep update --include-eol-distros && \
@@ -58,13 +69,13 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/src || true
 
-# --- 4. Development Tools Setup ---
+# --- 5. Development Tools Setup ---
 RUN ln -sf /usr/bin/ccache /usr/local/bin/gcc && \
     ln -sf /usr/bin/ccache /usr/local/bin/g++ && \
     ln -sf /usr/bin/ccache /usr/local/bin/cc && \
     ln -sf /usr/bin/ccache /usr/local/bin/c++
 
-# --- 5. Source Code Layer ---
+# --- 6. Source Code Layer ---
 COPY . .
 
 # Final env setup
@@ -74,4 +85,5 @@ RUN printf "%s\n" \
     "export PATH=/usr/lib/ccache:\$PATH" \
     >> /root/.bashrc
 
+ENTRYPOINT ["./scripts/entrypoint.sh"]
 CMD ["bash"]

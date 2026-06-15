@@ -58,17 +58,11 @@ $ ros2
 
 ### Visualization
 
-`Foxglove`を使うこと推奨です.
-
-ブラウザでfoxgloveを開いて、`websocket`で接続できます. Desktop版もあります.
-
-ブラウザ上で動作確認済ですが、`firefox`等のブラウザは公式にサポートされていないので注意です. `chrome`推奨です.
-
-`foxglove-studio`を開き、
-
-Dashboard -> Open Connection -> Websocket URL (ws://localhost:8765)
-
-[foxglove-studio](https://studio.foxglove.dev/)
+- **Foxglove**: 推奨。ブラウザで [studio.foxglove.dev](https://studio.foxglove.dev/) を開き、`ws://localhost:8765` に接続。
+- **noVNC (Browser GUI)**: macOS や Linux ホストで X11 設定なしに Gazebo/RViz を使いたい場合。
+  - ブラウザで `http://localhost:6080/vnc.html` にアクセス。
+  - Password: `password`
+  - コンテナ内の X11 デスクトップが表示されます。
 
 ### Simulation
 

@@ -24,4 +24,5 @@ Dockerfile
 compose.yaml
 .dockerignore
 Makefile
-fix_style.sh
+scripts/
+.ccache/

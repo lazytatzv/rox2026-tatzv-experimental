@@ -62,7 +62,7 @@ report: ## [ULTIMATE] Run full automated analysis and generate Bode/Nyquist/Step
 	LAUNCH_PID=$$! ; \
 	sleep 15 ; \
 	source $(ROS_SETUP) && $(WS_SETUP) && \
-	ros2 bag record -o auto_test_bag --storage sqlite3 --qos-profile-overrides-path qos_overrides.yaml -a & \
+	ros2 bag record -o auto_test_bag --storage sqlite3 --qos-profile-overrides-path src/bringup/robot_bringup/config/qos_overrides.yaml -a & \
 	BAG_PID=$$! ; \
 	sleep 5 ; \
 	source $(ROS_SETUP) && $(WS_SETUP) && \

@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration, Command
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node, PushRosNamespace
@@ -35,7 +36,7 @@ def generate_launch_description():
     imu_driver = Node(
         package='bno055_driver',
         executable='bno055_node',
-        condition=LaunchConfiguration('gazebo') == 'false',
+        condition=UnlessCondition(gazebo),
         parameters=[sensors_config, {'use_sim_time': use_sim_time}]
     )
 
@@ -69,7 +70,7 @@ def generate_launch_description():
         package='controller_manager',
         executable='ros2_control_node',
         parameters=[{'robot_description': Command(['xacro ', urdf_path])}, controllers_config],
-        condition=LaunchConfiguration('gazebo') == 'false'
+        condition=UnlessCondition(gazebo)
     )
 
     spawn_broadcaster = Node(
@@ -86,13 +87,13 @@ def generate_launch_description():
         PythonLaunchDescriptionSource([os.path.join(
             get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')]),
         launch_arguments={'gz_args': '-r ' + os.path.join(pkg_robot_bringup, 'world', 'rox2026_field.sdf')}.items(),
-        condition=LaunchConfiguration('gazebo') == 'true'
+        condition=IfCondition(gazebo)
     )
 
     spawn_robot = Node(
         package='ros_gz_sim', executable='create',
         arguments=['-name', 'rox2026', '-topic', 'robot_description'],
-        condition=LaunchConfiguration('gazebo') == 'true'
+        condition=IfCondition(gazebo)
     )
 
     return LaunchDescription([

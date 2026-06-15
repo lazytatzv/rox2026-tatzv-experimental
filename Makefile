@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 
 # Configuration
-CONTAINER_NAME := ros2_rox2026
+CONTAINER_NAME := rox2026_container
 
 .PHONY: setup-env
 
@@ -17,7 +17,6 @@ setup-env: ## [HOST] Setup direnv hooks for Bash/Fish and allow this project
 	@echo "Allowing current directory in direnv..."
 	@direnv allow .
 	@echo ">>> Environment setup complete. Please restart your shell or run 'exec \$$SHELL' <<<"
- up down shell build test launch virtual sim sim-gui format clean nix image
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -61,7 +60,7 @@ sim-gui: ## Launch simulation with GUI
 	docker compose exec $(CONTAINER_NAME) make -C main_ws sim-gui
 
 format: ## Run the auto-formatter
-	docker compose exec $(CONTAINER_NAME) ./fix_style.sh
+	docker compose exec $(CONTAINER_NAME) ./scripts/fix_style.sh
 
 clean: ## Purge build artifacts
 	docker compose exec $(CONTAINER_NAME) make -C main_ws clean
