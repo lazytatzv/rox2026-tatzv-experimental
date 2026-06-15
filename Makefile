@@ -4,6 +4,7 @@ SHELL := /bin/bash
 
 # Configuration
 CONTAINER_NAME := rox2026_container
+export DOCKER_BUILD_TARGET ?= dev
 
 # OS Detection & Docker Network Mode
 UNAME_S := $(shell uname -s)
@@ -47,12 +48,19 @@ help: ## Show this help message
 nix: ## Enter Nix development shell
 	nix develop --extra-experimental-features "nix-command flakes"
 
-image: ## Build the Docker image
-	DOCKER_BUILDKIT=1 docker compose $(COMPOSE_FILES) build
+image: ## Build the development Docker image
+	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev docker compose $(COMPOSE_FILES) build
 
-up: ## Start the container in background
+prod-image: ## Build the production Docker image (Lightweight)
+	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=prod docker compose $(COMPOSE_FILES) build
+
+up: ## Start the development container
 	xhost +local:docker > /dev/null 2>&1 || true
-	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) docker compose $(COMPOSE_FILES) up -d
+	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=dev docker compose $(COMPOSE_FILES) up -d
+
+prod-up: ## Start the production container
+	xhost +local:docker > /dev/null 2>&1 || true
+	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=prod docker compose $(COMPOSE_FILES) up -d
 
 down: ## Stop and remove the container
 	docker compose $(COMPOSE_FILES) down

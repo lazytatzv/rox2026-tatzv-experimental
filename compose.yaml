@@ -6,6 +6,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: ${DOCKER_BUILD_TARGET:-dev} # Switch between 'dev' and 'prod'
       network: host
     container_name: rox2026_container
     # Ports are used on macOS/Windows (bridge mode) and ignored on Linux (host mode)
@@ -27,7 +28,7 @@ services:
       # GUI Support
       # Linux: defaults to :0 (host) via Makefile if DISPLAY is set
       # macOS: defaults to :1 (VNC)
-      DISPLAY: ${DISPLAY:-:2}
+      DISPLAY: ${DISPLAY:-:1}
       QT_X11_NO_MITSHM: "1"
       # NVIDIA GPU Support (Linux Only)
       NVIDIA_VISIBLE_DEVICES: all
@@ -41,7 +42,7 @@ services:
       - .:/root/lazytatzv_ws
       - ./.ccache:/root/.ccache:rw
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
-      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority_host:ro
+      - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority:rw
 
     devices:
       - /dev:/dev
