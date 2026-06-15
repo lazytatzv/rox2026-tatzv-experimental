@@ -19,7 +19,11 @@ endif
 # Compose Files
 COMPOSE_FILES := -f compose.yaml
 ifeq ($(HAS_NVIDIA),yes)
-	COMPOSE_FILES += -f compose.gpu.yaml
+	# Update .env for Docker Compose and Dev Containers
+	_DUMMY := $(shell echo "COMPOSE_GPU_FILE=compose.gpu.yaml" > .env)
+else
+	# Update .env for Docker Compose and Dev Containers
+	_DUMMY := $(shell echo "COMPOSE_GPU_FILE=compose.null.yaml" > .env)
 endif
 
 .PHONY: setup-env

@@ -1,3 +1,6 @@
+include:
+  - path: ${COMPOSE_GPU_FILE:-compose.null.yaml}
+
 services:
   ros2_rox2026:
     build:
@@ -31,8 +34,8 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: all
 
     # NVIDIA GPU support is now optional.
-    # To use it, use 'docker compose -f compose.yaml -f compose.gpu.yaml up'
-    # or use the Makefile which handles this automatically.
+    # It is automatically included via the 'include' directive if COMPOSE_GPU_FILE
+    # is set to compose.gpu.yaml (handled by Makefile/Dev Containers).
 
     volumes:
       - .:/root/lazytatzv_ws
