@@ -1,130 +1,109 @@
-# Copyright 2026 Tatsukiyano
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, OpaqueFunction, SetEnvironmentVariable
-from launch.launch_description_sources import AnyLaunchDescriptionSource, PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node, ComposableNodeContainer
-from launch_ros.descriptions import ComposableNode
-import launch.conditions
-
-def launch_setup(context, *args, **kwargs):
-    pkg_bringup = get_package_share_directory("robot_bringup")
-    pkg_ros_gz_sim = get_package_share_directory("ros_gz_sim")
-
-    # --- 1. Load Global Config ---
-    use_sim_time = LaunchConfiguration("gazebo").perform(context).lower() == 'true'
-    actuator_type = LaunchConfiguration("actuator_type").perform(context) or "at"
-    protocol = LaunchConfiguration("protocol").perform(context) or "at"
-
-    paths = {
-        "mux": os.path.join(pkg_bringup, "config", "twist_mux.yaml"),
-        "teleop": os.path.join(pkg_bringup, "config", "teleop.yaml"),
-        "ekf": os.path.join(pkg_bringup, "config", "ekf.yaml"),
-        "controllers": os.path.join(pkg_bringup, "config", "controllers.yaml"),
-        "communication": os.path.join(pkg_bringup, "config", "communication.yaml"),
-        "xacro": os.path.join(pkg_bringup, "urdf", "robot.urdf.xacro"),
-        "world": os.path.join(pkg_bringup, "world", "rox2026_field.sdf"),
-        "bridge": os.path.join(pkg_bringup, "config", "gz_bridge.yaml"),
-    }
-
-    import xacro
-    robot_description_xml = xacro.process_file(
-        paths["xacro"], 
-        mappings={"actuator_type": actuator_type, "is_gazebo": str(use_sim_time).lower(), "protocol": protocol}
-    ).toxml()
-
-    actions = []
-
-    # --- Gazebo Environment Stabilization ---
-    actions.append(SetEnvironmentVariable('GZ_IP', '127.0.0.1'))
-    actions.append(SetEnvironmentVariable('GZ_PARTITION', 'lazytatzv_sim'))
-    actions.append(SetEnvironmentVariable('QT_X11_NO_MITSHM', '1'))
-    # Uncomment the following line if you suspect GPU driver issues
-    # actions.append(SetEnvironmentVariable('LIBGL_ALWAYS_SOFTWARE', '1'))
-
-    if use_sim_time:
-        gz_args = f"-r -v 1 {paths['world']}"
-        if LaunchConfiguration("headless").perform(context).lower() == 'true':
-            gz_args = "-s " + gz_args
-
-        actions.append(IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(pkg_ros_gz_sim, "launch", "gz_sim.launch.py")),
-            launch_arguments={'gz_args': gz_args}.items(),
-        ))
-
-        actions.append(Node(
-            package='ros_gz_sim', executable='create',
-            arguments=['-name', 'lazytatzv_robot', '-string', robot_description_xml],
-            parameters=[{'use_sim_time': True}], output='screen'
-        ))
-
-        actions.append(Node(
-            package='ros_gz_bridge', executable='parameter_bridge',
-            name='parameter_bridge',
-            parameters=[{'config_file': paths["bridge"], 'use_sim_time': False}],
-            output='screen'
-        ))
-    else:
-        # Physical/Virtual Mode: Real ros2_control_node is required
-        actions.append(Node(
-            package="controller_manager", executable="ros2_control_node",
-            parameters=[{'robot_description': robot_description_xml}, paths["controllers"]],
-            output="screen",
-        ))
-
-    # --- Controller Spawning ---
-    actions += [
-        Node(package="controller_manager", executable="spawner", arguments=["joint_state_broadcaster"]),
-        Node(package="controller_manager", executable="spawner", arguments=["mecanum_drive_controller"]),
-    ]
-
-    # --- Sensor Fusion ---
-    actions.append(Node(
-        package='robot_localization', executable='ekf_node', name='ekf_filter_node',
-        parameters=[paths["ekf"], {'use_sim_time': use_sim_time}],
-        remappings=[("odom0", "/mecanum_drive_controller/odometry")], output='screen'
-    ))
-
-    # --- Teleop ---
-    actions.append(ComposableNodeContainer(
-        name="robot_core_container", namespace="", package="rclcpp_components", executable="component_container_mt",
-        composable_node_descriptions=[
-            ComposableNode(
-                package="base_teleop", plugin="base_teleop::BaseTeleopNode", name="teleop",
-                parameters=[paths["teleop"], {"use_sim_time": use_sim_time}]
-            )
-        ], output="screen",
-    ))
-
-    # --- Utilities ---
-    actions += [
-        Node(package="joy", executable="joy_node", name="joy_node", parameters=[paths["teleop"]]),
-        Node(package="twist_mux", executable="twist_mux", name="twist_mux", 
-             parameters=[paths["mux"], {"use_sim_time": use_sim_time}], 
-             remappings=[("cmd_vel_out", "/mecanum_drive_controller/reference")]),
-        Node(package="robot_state_publisher", executable="robot_state_publisher", name="robot_state_publisher", 
-             parameters=[{"robot_description": robot_description_xml, "publish_frequency": 20.0, "use_sim_time": use_sim_time}]),
-    ]
-
-    return actions
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, GroupAction
+from launch.substitutions import LaunchConfiguration, Command
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch_ros.actions import Node, PushRosNamespace
 
 def generate_launch_description():
-    pkg_bringup = get_package_share_directory("robot_bringup")
+    # Paths
+    pkg_robot_bringup = get_package_share_directory('robot_bringup')
+    pkg_bno055 = get_package_share_directory('bno055_driver')
+    pkg_stabilizer = get_package_share_directory('imu_stabilizer')
     
+    urdf_path = os.path.join(pkg_robot_bringup, 'urdf', 'robot.urdf.xacro')
+    controllers_config = os.path.join(pkg_robot_bringup, 'config', 'controllers.yaml')
+    ekf_config = os.path.join(pkg_robot_bringup, 'config', 'ekf.yaml')
+    sensors_config = os.path.join(pkg_robot_bringup, 'config', 'sensors.yaml')
+
+    # Launch Arguments
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    gazebo = LaunchConfiguration('gazebo', default='true')
+
+    # 1. Robot State Publisher
+    robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        parameters=[{
+            'robot_description': Command(['xacro ', urdf_path]),
+            'use_sim_time': use_sim_time
+        }]
+    )
+
+    # 2. IMU Driver (Real only)
+    imu_driver = Node(
+        package='bno055_driver',
+        executable='bno055_node',
+        condition=LaunchConfiguration('gazebo') == 'false',
+        parameters=[sensors_config, {'use_sim_time': use_sim_time}]
+    )
+
+    # 3. EKF (Fuses Odometry + IMU + AprilTag)
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[ekf_config, {'use_sim_time': use_sim_time}],
+        remappings=[('/odometry/filtered', '/odometry/filtered')]
+    )
+
+    # 4. Heading Stabilizer (The "Balancing" layer)
+    heading_stabilizer = Node(
+        package='imu_stabilizer',
+        executable='stabilizer_node',
+        name='imu_stabilizer',
+        parameters=[{'use_sim_time': use_sim_time}],
+        remappings=[
+            ('/cmd_vel_in', '/cmd_vel_teleop'),      # From Joystick
+            ('/cmd_vel_out', '/cmd_vel_stabilized') # To Controller
+        ]
+    )
+
+    # 5. Controllers (Gazebo or Real)
+    # [Logic for Gazebo vs Physical hardware manager]
+    # For now, focus on the wiring for simulation
+    
+    controller_manager = Node(
+        package='controller_manager',
+        executable='ros2_control_node',
+        parameters=[{'robot_description': Command(['xacro ', urdf_path])}, controllers_config],
+        condition=LaunchConfiguration('gazebo') == 'false'
+    )
+
+    spawn_broadcaster = Node(
+        package='controller_manager', executable='spawner', arguments=['joint_state_broadcaster']
+    )
+    spawn_controller = Node(
+        package='controller_manager', executable='spawner', 
+        arguments=['mecanum_drive_controller', '--param-file', controllers_config],
+        remappings=[('/mecanum_drive_controller/cmd_vel', '/cmd_vel_stabilized')]
+    )
+
+    # Gazebo Sim
+    gazebo_sim = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            get_package_share_directory('ros_gz_sim'), 'launch', 'gz_sim.launch.py')]),
+        launch_arguments={'gz_args': '-r ' + os.path.join(pkg_robot_bringup, 'world', 'rox2026_field.sdf')}.items(),
+        condition=LaunchConfiguration('gazebo') == 'true'
+    )
+
+    spawn_robot = Node(
+        package='ros_gz_sim', executable='create',
+        arguments=['-name', 'rox2026', '-topic', 'robot_description'],
+        condition=LaunchConfiguration('gazebo') == 'true'
+    )
+
     return LaunchDescription([
-        DeclareLaunchArgument("actuator_type", default_value="at"),
-        DeclareLaunchArgument("protocol", default_value="at"),
-        DeclareLaunchArgument("gazebo", default_value="false"),
-        DeclareLaunchArgument("headless", default_value="true"),
-        DeclareLaunchArgument("rviz", default_value="false"),
-        OpaqueFunction(function=launch_setup),
-        # RViz2 Node
-        Node(
-            package='rviz2',
-            executable='rviz2',
-            name='rviz2',
-            condition=launch.conditions.IfCondition(LaunchConfiguration("rviz")),
-        )
+        DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('gazebo', default_value='true'),
+        robot_state_publisher,
+        imu_driver,
+        ekf_node,
+        heading_stabilizer,
+        gazebo_sim,
+        spawn_robot,
+        spawn_broadcaster,
+        spawn_controller
     ])
