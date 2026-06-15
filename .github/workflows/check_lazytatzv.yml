@@ -1,4 +1,4 @@
-name: ROS 2 CI
+name: ROX2026 CI (Docker-Native)
 
 on:
   push:
@@ -7,42 +7,40 @@ on:
     branches: [ main ]
 
 jobs:
-  ros_build_test:
-    name: Build & Functional Test
+  docker_build_and_test:
+    name: Build & Verify (Multi-stage)
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        ros_distro: [jazzy]
-    container:
-      image: ros:${{ matrix.ros_distro }}-ros-base
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        shell: bash
-        run: |
-          apt-get update && apt-get install -y python3-pip
-          rosdep update
-          rosdep install --from-paths main_ws/src --ignore-src -y -r --rosdistro ${{ matrix.ros_distro }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Build Workspace
-        shell: bash
+      # 1. Build the Builder/Dev stage and Run Tests
+      # This ensures all source code compiles and logic tests pass in the exact dev environment
+      - name: Build Dev Stage and Test
         run: |
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          cd main_ws
-          # Fast build for CI
-          colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
+          docker build \
+            --target builder \
+            --tag rox2026:builder \
+            --build-arg ROS_DISTRO=jazzy \
+            .
+          
+          # Run tests inside the built image
+          docker run --rm rox2026:builder /bin/bash -c "source /opt/ros/jazzy/setup.bash && cd main_ws && colcon test && colcon test-result --verbose"
 
-      - name: Run Functional Tests
-        if: false
-        shell: bash
+      # 2. Build the Prod stage
+      # This ensures the final lightweight image can be correctly assembled for the robot
+      - name: Verify Prod Stage Build
         run: |
-          source /opt/ros/${{ matrix.ros_distro }}/setup.bash
-          source main_ws/install/setup.bash
-          cd main_ws
-          # Run tests but skip all linting tests to reduce noise
-          colcon test --event-handlers console_direct+
-          colcon test-result --verbose
+          docker build \
+            --target prod \
+            --tag rox2026:prod \
+            --build-arg ROS_DISTRO=jazzy \
+            .
+
+      - name: Build Success Summary
+        if: success()
+        run: echo ">>> All stages (Builder, Dev, Prod) verified successfully. CI Passed."
