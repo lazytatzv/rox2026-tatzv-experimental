@@ -30,14 +30,9 @@ services:
       NVIDIA_VISIBLE_DEVICES: all
       NVIDIA_DRIVER_CAPABILITIES: all
 
-    # [MAC/NON-NVIDIA USERS] Comment out the 'deploy' section below if you get GPU errors.
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # NVIDIA GPU support is now optional.
+    # To use it, use 'docker compose -f compose.yaml -f compose.gpu.yaml up'
+    # or use the Makefile which handles this automatically.
 
     volumes:
       - .:/root/lazytatzv_ws

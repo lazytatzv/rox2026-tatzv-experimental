@@ -9,8 +9,17 @@ CONTAINER_NAME := rox2026_container
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)
 	export DOCKER_NETWORK_MODE ?= host
+	# Detect NVIDIA GPU
+	HAS_NVIDIA := $(shell command -v nvidia-smi > /dev/null 2>&1 && echo yes || echo no)
 else
 	export DOCKER_NETWORK_MODE ?= bridge
+	HAS_NVIDIA := no
+endif
+
+# Compose Files
+COMPOSE_FILES := -f compose.yaml
+ifeq ($(HAS_NVIDIA),yes)
+	COMPOSE_FILES += -f compose.gpu.yaml
 endif
 
 .PHONY: setup-env
@@ -35,42 +44,42 @@ nix: ## Enter Nix development shell
 	nix develop --extra-experimental-features "nix-command flakes"
 
 image: ## Build the Docker image
-	DOCKER_BUILDKIT=1 docker compose build
+	DOCKER_BUILDKIT=1 docker compose $(COMPOSE_FILES) build
 
 up: ## Start the container in background
 	xhost +local:docker > /dev/null 2>&1 || true
-	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) docker compose up -d
+	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) docker compose $(COMPOSE_FILES) up -d
 
 down: ## Stop and remove the container
-	docker compose down
+	docker compose $(COMPOSE_FILES) down
 
 shell: ## Enter the running container
-	docker compose exec $(CONTAINER_NAME) /bin/zsh || docker compose exec $(CONTAINER_NAME) /bin/bash
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) /bin/zsh || docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) /bin/bash
 
 # --- [ ROS 2 Commands (Forwarded to main_ws/Makefile) ] ---
 
 build: ## Build the ROS 2 workspace
-	docker compose exec $(CONTAINER_NAME) make -C main_ws build
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws build
 
 test: ## Run tests
-	docker compose exec $(CONTAINER_NAME) make -C main_ws test
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws test
 
 launch: ## Launch physical mode
-	docker compose exec $(CONTAINER_NAME) make -C main_ws launch
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws launch
 
 virtual: ## Launch virtual mode
-	docker compose exec $(CONTAINER_NAME) make -C main_ws virtual
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws virtual
 
 sim: ## Launch headless simulation
-	docker compose exec $(CONTAINER_NAME) make -C main_ws sim
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws sim
 
 sim-gui: ## Launch simulation with GUI
-	docker compose exec $(CONTAINER_NAME) make -C main_ws sim-gui
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws sim-gui
 
 format: ## Run the auto-formatter
-	docker compose exec $(CONTAINER_NAME) ./scripts/fix_style.sh
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) ./scripts/fix_style.sh
 
 clean: ## Purge build artifacts
-	docker compose exec $(CONTAINER_NAME) make -C main_ws clean
+	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws clean
 
 .DEFAULT_GOAL := help
