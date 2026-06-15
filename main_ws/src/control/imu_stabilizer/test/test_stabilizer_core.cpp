@@ -37,6 +37,10 @@ TEST(HeadingStabilizerCoreTest, TestLPF)
   
   // First update
   double out1 = core.compute(1.0, 0.0, 0.01); // filtered = 0.5 * 1.0 + 0.5 * 0 = 0.5
+  // rate_error = target(0) - filtered(0.5) = -0.5
+  // correction = P(0.5) * -0.5 = -0.25
+  EXPECT_NEAR(out1, -0.25, 1e-6);
+
   // Second update
   double out2 = core.compute(1.0, 0.0, 0.01); // filtered = 0.5 * 1.0 + 0.5 * 0.5 = 0.75
   
