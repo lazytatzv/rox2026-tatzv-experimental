@@ -48,7 +48,12 @@ rviz: ## Launch RViz2 for visualization
 injector: ## Inject signal using config/analysis_settings.yaml (Edit YAML to change mode/params)
 	source $(ROS_SETUP) && \
 	$(WS_SETUP) && \
-	ros2 run control_analysis signal_injector --ros-args --params-file src/control_analysis/config/analysis_settings.yaml
+	ros2 run control_analysis signal_injector --ros-args --params-file src/control_analysis/config/analysis_settings.yaml --ros-args -r /cmd_vel_ext:=/bench_joint_controller/commands
+
+bench: ## [REAL] Specialized Bench Test for a single motor (Use: make bench ID=1 PORT=/dev/ttyUSB0)
+	source $(ROS_SETUP) && \
+	$(WS_SETUP) && \
+	ros2 launch robot_bringup bench_test.launch.py motor_id:=$(or $(ID),1) usb_path:=$(or $(PORT),/dev/ttyUSB0)
 
 report: ## [ULTIMATE] Run full automated analysis and generate Bode/Nyquist/Step report
 	rm -rf auto_test_bag/

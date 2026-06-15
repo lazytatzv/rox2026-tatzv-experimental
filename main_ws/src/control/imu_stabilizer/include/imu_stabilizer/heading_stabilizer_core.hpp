@@ -47,6 +47,11 @@ public:
    */
   double compute(double current_raw_rate, double current_yaw, double dt);
 
+  /**
+   * @brief Update PID gains at runtime.
+   */
+  void setGains(const HeadingStabilizerConfig & config);
+
   // Accessors
   double getTargetYaw() const { return target_yaw_lock_; }
   bool isLockActive() const { return lock_active_; }

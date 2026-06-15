@@ -21,11 +21,9 @@ public:
   {
     declare_parameters();
     
-    HeadingStabilizerConfig config;
-    config.gyro_alpha = this->get_parameter("gyro_alpha").as_double();
-    // In a real pro setup, we would read PID gains from parameters here
-    
-    core_ = std::make_unique<HeadingStabilizerCore>(config);
+    // Initial config from parameters
+    update_config_from_params();
+    core_ = std::make_unique<HeadingStabilizerCore>(config_);
 
     sub_cmd_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
       "/cmd_vel_in", 10, std::bind(&HeadingStabilizerNode::cmd_callback, this, std::placeholders::_1));
@@ -35,9 +33,14 @@ public:
       "/imu", rclcpp::SensorDataQoS(), std::bind(&HeadingStabilizerNode::imu_callback, this, std::placeholders::_1));
 
     pub_cmd_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel_out", 10);
+    
+    // Parameter callback for dynamic tuning
+    param_callback_handle_ = this->add_on_set_parameters_callback(
+      std::bind(&HeadingStabilizerNode::on_parameter_change, this, std::placeholders::_1));
+
     timer_ = this->create_wall_timer(10ms, std::bind(&HeadingStabilizerNode::control_loop, this));
 
-    RCLCPP_INFO(get_logger(), "Heading Stabilizer Online (Modular & Unit-Tested Architecture)");
+    RCLCPP_INFO(get_logger(), "Heading Stabilizer Online (Full YAML-Driven Architecture)");
   }
 
 private:
@@ -45,6 +48,40 @@ private:
   {
     this->declare_parameter("enable_lock", true);
     this->declare_parameter("gyro_alpha", 0.3);
+    this->declare_parameter("heading_pid.p", 3.0);
+    this->declare_parameter("heading_pid.i", 0.5);
+    this->declare_parameter("heading_pid.d", 0.0);
+    this->declare_parameter("heading_pid.i_clamp", 1.0);
+    this->declare_parameter("rate_pid.p", 0.5);
+    this->declare_parameter("rate_pid.i", 0.0);
+    this->declare_parameter("rate_pid.d", 0.05);
+    this->declare_parameter("rate_pid.i_clamp", 0.5);
+  }
+
+  void update_config_from_params()
+  {
+    config_.gyro_alpha = this->get_parameter("gyro_alpha").as_double();
+    config_.heading_p = this->get_parameter("heading_pid.p").as_double();
+    config_.heading_i = this->get_parameter("heading_pid.i").as_double();
+    config_.heading_d = this->get_parameter("heading_pid.d").as_double();
+    config_.heading_limit = this->get_parameter("heading_pid.i_clamp").as_double();
+    config_.rate_p = this->get_parameter("rate_pid.p").as_double();
+    config_.rate_i = this->get_parameter("rate_pid.i").as_double();
+    config_.rate_d = this->get_parameter("rate_pid.d").as_double();
+    config_.rate_limit = this->get_parameter("rate_pid.i_clamp").as_double();
+  }
+
+  rcl_interfaces::msg::SetParametersResult on_parameter_change(const std::vector<rclcpp::Parameter> & params)
+  {
+    rcl_interfaces::msg::SetParametersResult result;
+    result.successful = true;
+    
+    // We update everything if any param changes for simplicity in this professional setup
+    update_config_from_params();
+    if (core_) core_->setGains(config_);
+    
+    RCLCPP_INFO(get_logger(), "Parameters updated and applied to core.");
+    return result;
   }
 
   void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
@@ -91,11 +128,14 @@ private:
   }
 
   std::unique_ptr<HeadingStabilizerCore> core_;
+  HeadingStabilizerConfig config_;
+  
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_cmd_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr pub_cmd_;
   rclcpp::TimerBase::SharedPtr timer_;
+  OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 
   geometry_msgs::msg::TwistStamped last_cmd_;
   rclcpp::Time last_cmd_time_;

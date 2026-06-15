@@ -9,12 +9,15 @@ from launch_ros.actions import Node
 def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory('robot_bringup')
     
-    # 1. Declare Arguments (Defaults to Real Hardware)
+    # 1. Config Paths
+    tuning_config = os.path.join(pkg_robot_bringup, 'config', 'params', 'tuning.yaml')
+
+    # 2. Declare Arguments (Defaults to Real Hardware)
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     gazebo = LaunchConfiguration('gazebo', default='false')
     headless = LaunchConfiguration('headless', default='false')
 
-    # 2. Modular Launch Includes
+    # 3. Modular Launch Includes
     include_description = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             pkg_robot_bringup, 'launch', 'include', 'description.launch.py')]),
@@ -33,11 +36,11 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': use_sim_time, 'gazebo': gazebo, 'headless': headless}.items()
     )
 
-    # 3. Dedicated Nodes (Control & Spawners)
+    # 4. Dedicated Nodes (Control & Spawners)
     heading_stabilizer = Node(
         package='imu_stabilizer',
         executable='stabilizer_node',
-        parameters=[{'use_sim_time': use_sim_time}],
+        parameters=[tuning_config, {'use_sim_time': use_sim_time}],
         remappings=[
             ('/cmd_vel_in', '/cmd_vel_teleop'),
             ('/cmd_vel_out', '/cmd_vel_stabilized')

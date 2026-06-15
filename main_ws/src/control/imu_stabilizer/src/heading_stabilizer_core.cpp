@@ -9,6 +9,12 @@ HeadingStabilizerCore::HeadingStabilizerCore(const HeadingStabilizerConfig & con
   pid_heading_(0.0, 0.0, 0.0, 1.0, -1.0, control_toolbox::AntiWindupStrategy()),
   pid_rate_(0.0, 0.0, 0.0, 1.0, -1.0, control_toolbox::AntiWindupStrategy())
 {
+  setGains(config_);
+}
+
+void HeadingStabilizerCore::setGains(const HeadingStabilizerConfig & config)
+{
+  config_ = config;
   control_toolbox::AntiWindupStrategy aw_strat;
   aw_strat.type = control_toolbox::AntiWindupStrategy::CONDITIONAL_INTEGRATION;
   
