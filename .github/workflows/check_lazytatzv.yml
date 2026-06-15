@@ -3,13 +3,21 @@ name: ROX2026 CI (Docker-Native)
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ main ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   docker_build_and_test:
-    name: Build & Verify (Multi-stage)
+    name: Build, Test & Publish
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     
     steps:
       - name: Checkout repository
@@ -18,29 +26,50 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 1. Build the Builder/Dev stage and Run Tests
-      # This ensures all source code compiles and logic tests pass in the exact dev environment
-      - name: Build Dev Stage and Test
+      - name: Log in to the Container registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha,format=long
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      # 1. Build and Test (using Builder stage)
+      - name: Build and Test
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: builder
+          load: true
+          tags: rox2026:builder
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run Tests
         run: |
-          docker build \
-            --target builder \
-            --tag rox2026:builder \
-            --build-arg ROS_DISTRO=jazzy \
-            .
-          
-          # Run tests inside the built image
           docker run --rm rox2026:builder /bin/bash -c "source /opt/ros/jazzy/setup.bash && cd main_ws && colcon test && colcon test-result --verbose"
 
-      # 2. Build the Prod stage
-      # This ensures the final lightweight image can be correctly assembled for the robot
-      - name: Verify Prod Stage Build
-        run: |
-          docker build \
-            --target prod \
-            --tag rox2026:prod \
-            --build-arg ROS_DISTRO=jazzy \
-            .
+      # 2. Build and Push Production Image
+      - name: Build and Push Prod Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: prod
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build Success Summary
-        if: success()
-        run: echo ">>> All stages (Builder, Dev, Prod) verified successfully. CI Passed."
