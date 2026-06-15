@@ -10,12 +10,13 @@ def generate_launch_description():
     urdf_path = os.path.join(pkg_robot_bringup, 'urdf', 'robot.urdf.xacro')
     use_sim_time = LaunchConfiguration('use_sim_time')
     gazebo = LaunchConfiguration('gazebo')
+    use_mock_hardware = LaunchConfiguration('use_mock_hardware', default='false')
 
     robot_state_publisher = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         parameters=[{
-            'robot_description': Command(['xacro ', urdf_path, ' gazebo:=', gazebo]),
+            'robot_description': Command(['xacro ', urdf_path, ' gazebo:=', gazebo, ' use_mock_hardware:=', use_mock_hardware]),
             'use_sim_time': use_sim_time
         }]
     )

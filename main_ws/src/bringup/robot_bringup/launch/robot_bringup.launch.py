@@ -16,12 +16,13 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
     gazebo = LaunchConfiguration('gazebo', default='false')
     headless = LaunchConfiguration('headless', default='false')
+    use_mock_hardware = LaunchConfiguration('use_mock_hardware', default='false')
 
     # 3. Modular Launch Includes
     include_description = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([os.path.join(
             pkg_robot_bringup, 'launch', 'include', 'description.launch.py')]),
-        launch_arguments={'use_sim_time': use_sim_time, 'gazebo': gazebo}.items()
+        launch_arguments={'use_sim_time': use_sim_time, 'gazebo': gazebo, 'use_mock_hardware': use_mock_hardware}.items()
     )
 
     include_localization = IncludeLaunchDescription(
@@ -57,6 +58,7 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         DeclareLaunchArgument('gazebo', default_value='false'),
         DeclareLaunchArgument('headless', default_value='false'),
+        DeclareLaunchArgument('use_mock_hardware', default_value='false'),
         include_description,
         include_localization,
         include_sim,

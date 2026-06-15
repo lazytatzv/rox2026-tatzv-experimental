@@ -8,7 +8,7 @@ ROS_SETUP := /opt/ros/jazzy/setup.bash
 # Workspace setup (only if exists)
 WS_SETUP := source install/setup.bash 2>/dev/null || true
 
-.PHONY: help build test clean launch sim sim-gui injector rviz
+.PHONY: help build test clean launch virtual sim sim-gui injector rviz
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -30,7 +30,12 @@ launch: ## Launch the robot in physical mode
 	$(WS_SETUP) && \
 	ros2 launch robot_bringup robot_bringup.launch.py
 
-rviz: ## Launch RViz2 for visualization
+virtual: ## Launch the robot in Virtual Mode (Mock Hardware for Kinematics)
+	source $(ROS_SETUP) && \
+	$(WS_SETUP) && \
+	ros2 launch robot_bringup robot_bringup.launch.py use_mock_hardware:=true
+
+sim: ## Launch headless simulation
 	source $(ROS_SETUP) && \
 	$(WS_SETUP) && \
 	ros2 run rviz2 rviz2

@@ -51,17 +51,24 @@
   <xacro:arg name="gazebo" default="false"/>
   <xacro:arg name="usb_path" default="${hw['hardware']['usb_port']}"/>
   <xacro:arg name="bench_mode" default="false"/>
+  <xacro:arg name="use_mock_hardware" default="false"/>
 
   <ros2_control name="BaseKitSystem" type="system">
     <hardware>
-      <xacro:if value="$(arg gazebo)">
-        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      <xacro:if value="$(arg use_mock_hardware)">
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="calculate_dynamics">false</param>
       </xacro:if>
-      <xacro:unless value="$(arg gazebo)">
-        <plugin>robstride_driver/RobstrideSystemHardware</plugin>
-        <param name="usb_path">$(arg usb_path)</param>
-        <param name="protocol">${hw['hardware']['protocol']}</param>
-        <param name="serial_baud">${hw['hardware']['baud_rate']}</param>
+      <xacro:unless value="$(arg use_mock_hardware)">
+        <xacro:if value="$(arg gazebo)">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="$(arg gazebo)">
+          <plugin>robstride_driver/RobstrideSystemHardware</plugin>
+          <param name="usb_path">$(arg usb_path)</param>
+          <param name="protocol">${hw['hardware']['protocol']}</param>
+          <param name="serial_baud">${hw['hardware']['baud_rate']}</param>
+        </xacro:unless>
       </xacro:unless>
     </hardware>
 
