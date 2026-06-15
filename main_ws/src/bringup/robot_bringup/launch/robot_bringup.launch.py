@@ -1,4 +1,3 @@
-# Copyright 2026 Tatsukiyano
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -9,7 +8,7 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory('robot_bringup')
-
+    
     # 1. Config Paths
     tuning_config = os.path.join(pkg_robot_bringup, 'config', 'params', 'tuning.yaml')
 
@@ -37,23 +36,19 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': use_sim_time, 'gazebo': gazebo, 'headless': headless}.items()
     )
 
-    # 4. Dedicated Nodes (Control & Spawners)
-    heading_stabilizer = Node(
-        package='imu_stabilizer',
-        executable='stabilizer_node',
-        parameters=[tuning_config, {'use_sim_time': use_sim_time}],
-        remappings=[
-            ('/cmd_vel_in', '/cmd_vel_teleop'),
-            ('/cmd_vel_out', '/cmd_vel_stabilized')
-        ]
+    include_control = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            pkg_robot_bringup, 'launch', 'include', 'control.launch.py')]),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
     )
 
+    # 4. Spawners & High-level Logic
     spawn_broadcaster = Node(
-        package='controller_manager', executable='spawner',
+        package='controller_manager', executable='spawner', 
         arguments=['joint_state_broadcaster', '--controller-manager-timeout', '120']
     )
     spawn_controller = Node(
-        package='controller_manager', executable='spawner',
+        package='controller_manager', executable='spawner', 
         arguments=['mecanum_drive_controller', '--controller-manager-timeout', '120'],
         remappings=[('/mecanum_drive_controller/cmd_vel', '/cmd_vel_stabilized')]
     )
@@ -65,7 +60,7 @@ def generate_launch_description():
         include_description,
         include_localization,
         include_sim,
-        heading_stabilizer,
+        include_control,
         spawn_broadcaster,
         spawn_controller
     ])
