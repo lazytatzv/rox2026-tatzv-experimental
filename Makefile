@@ -55,10 +55,10 @@ update: ## Update the repository and pull the latest images
 	git pull --no-edit
 	docker compose $(COMPOSE_FILES) pull
 
-image: ## Build the development Docker image
+build: ## Build the development Docker image
 	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose $(COMPOSE_FILES) build
 
-prod-image: ## Build the production Docker image (Lightweight)
+build-prod: ## Build the production Docker image (Lightweight)
 	DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) build
 
 up: ## Start the development container
@@ -77,7 +77,7 @@ shell: ## Enter the running container
 
 # --- [ ROS 2 Commands (Forwarded to main_ws/Makefile) ] ---
 
-build: ## Build the ROS 2 workspace
+build-ws: ## Build the ROS 2 workspace
 	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws build
 
 test: ## Run tests
