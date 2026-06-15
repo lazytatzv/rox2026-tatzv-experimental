@@ -68,34 +68,34 @@ up: ## Start the development container
 prod-up: ## [REAL] Start the production container (Uses pre-built image by default)
 	xhost +local:docker > /dev/null 2>&1 || true
 	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) up -d
+# Configuration
+SERVICE_NAME := ros2_rox2026
+export DOCKER_BUILD_TARGET ?= dev
 
-down: ## Stop and remove the container
-	docker compose $(COMPOSE_FILES) down
-
+# OS Detection & Docker Network Mode
+...
 shell: ## Enter the running container
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) /bin/zsh || docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) /bin/bash
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) /bin/zsh || docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) /bin/bash
 
 # --- [ ROS 2 Commands (Forwarded to main_ws/Makefile) ] ---
 
 build-ws: ## Build the ROS 2 workspace
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws build
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws build
 
 test: ## Run tests
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws test
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws test
 
 launch: ## Launch physical mode
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws launch
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws launch
 
 sim: ## Launch headless simulation
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws sim
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws sim
 
 sim-gui: ## Launch simulation with GUI
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws sim-gui
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws sim-gui
 
 format: ## Run the auto-formatter
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) ./scripts/fix_style.sh
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) ./scripts/fix_style.sh
 
 clean: ## Purge build artifacts
-	docker compose $(COMPOSE_FILES) exec $(CONTAINER_NAME) make -C main_ws clean
-
-.DEFAULT_GOAL := help
+	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws clean
