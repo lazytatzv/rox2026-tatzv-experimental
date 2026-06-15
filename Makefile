@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 
 # Configuration
-CONTAINER_NAME := rox2026_container
+SERVICE_NAME := ros2_rox2026
 export DOCKER_BUILD_TARGET ?= dev
 
 # OS Detection & Docker Network Mode
@@ -68,12 +68,10 @@ up: ## Start the development container
 prod-up: ## [REAL] Start the production container (Uses pre-built image by default)
 	xhost +local:docker > /dev/null 2>&1 || true
 	DOCKER_NETWORK_MODE=$(DOCKER_NETWORK_MODE) DOCKER_BUILD_TARGET=prod IMAGE_TAG=latest docker compose $(COMPOSE_FILES) up -d
-# Configuration
-SERVICE_NAME := ros2_rox2026
-export DOCKER_BUILD_TARGET ?= dev
 
-# OS Detection & Docker Network Mode
-...
+down: ## Stop and remove the container
+	docker compose $(COMPOSE_FILES) down
+
 shell: ## Enter the running container
 	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) /bin/zsh || docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) /bin/bash
 
@@ -99,3 +97,5 @@ format: ## Run the auto-formatter
 
 clean: ## Purge build artifacts
 	docker compose $(COMPOSE_FILES) exec $(SERVICE_NAME) make -C main_ws clean
+
+.DEFAULT_GOAL := help
