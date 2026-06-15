@@ -1,18 +1,17 @@
 # ROX2026 Ultimate Docker Architecture
-# Multi-stage build for Dev/Prod separation
+# Optimized Multi-stage build (Fast Dev / Lean Prod)
 
 ARG ROS_DISTRO=jazzy
 
 # ==============================================================================
-# 1. Base Stage: Common ROS 2 dependencies and runtime libraries
+# 1. Base Stage: Common ROS 2 runtime libraries
 # ==============================================================================
 FROM ros:${ROS_DISTRO}-ros-base AS base
 SHELL ["/bin/bash", "-c"]
-
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /root/lazytatzv_ws
 
-# Runtime Dependencies (No compilers here)
+# Common Runtime Dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-ros2-control \
     ros-${ROS_DISTRO}-ros2-controllers \
@@ -41,10 +40,11 @@ RUN mkdir -p /root/.vnc && \
     chmod 600 /root/.vnc/passwd
 
 # ==============================================================================
-# 2. Builder Stage: Build tools and compilation
+# 2. Deps Stage: Source dependencies (rosdep)
 # ==============================================================================
-FROM base AS builder
+FROM base AS deps
 
+# Install Build Tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     cmake \
@@ -55,50 +55,27 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ccache \
     && rm -rf /var/lib/apt/lists/*
 
-# Use ccache
-RUN ln -sf /usr/bin/ccache /usr/local/bin/gcc && \
-    ln -sf /usr/bin/ccache /usr/local/bin/g++
-
-# Install build-time rosdep dependencies
+# Install source dependencies using rosdep
 COPY ./main_ws/src ./main_ws/src
 RUN rosdep update && \
-    rosdep install --from-paths main_ws/src --ignore-src -y -r || true
-
-# Build the workspace
-COPY ./main_ws ./main_ws
-RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
-    cd main_ws && \
-    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+    rosdep install --from-paths main_ws/src --ignore-src -y -r || true && \
+    rm -rf main_ws/src
 
 # ==============================================================================
-# 3. Prod Stage: Final lightweight image for the robot
+# 3. Dev Stage: Specialized for coding (Inherits Deps, No local build)
 # ==============================================================================
-FROM base AS prod
+FROM deps AS dev
 
-# Copy only the built artifacts
-COPY --from=builder /root/lazytatzv_ws/main_ws/install ./main_ws/install
-COPY ./scripts ./scripts
-
-# Setup entrypoint
-RUN printf "%s\n" \
-    "source /opt/ros/${ROS_DISTRO}/setup.bash" \
-    "source /root/lazytatzv_ws/main_ws/install/setup.bash" \
-    >> /root/.bashrc
-
-ENTRYPOINT ["./scripts/entrypoint.sh"]
-CMD ["ros2", "launch", "robot_bringup", "robot_bringup.launch.py"]
-
-# ==============================================================================
-# 4. Dev Stage: Full environment for coding and debugging
-# ==============================================================================
-FROM builder AS dev
-
-# Add extra dev tools
+# Extra dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     fish neovim nano less curl gh evtest black ros-${ROS_DISTRO}-plotjuggler-ros \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy whole repo for dev (though usually mounted via volume)
+# Use ccache
+RUN ln -sf /usr/bin/ccache /usr/local/bin/gcc && \
+    ln -sf /usr/bin/ccache /usr/local/bin/g++
+
+# Copy whole repo (though usually shadowed by volume)
 COPY . .
 
 # Setup dev bashrc
@@ -110,3 +87,30 @@ RUN printf "%s\n" \
 
 ENTRYPOINT ["./scripts/entrypoint.sh"]
 CMD ["bash"]
+
+# ==============================================================================
+# 4. Builder Stage: Production-only build
+# ==============================================================================
+FROM deps AS builder
+
+COPY ./main_ws ./main_ws
+RUN source /opt/ros/${ROS_DISTRO}/setup.bash && \
+    cd main_ws && \
+    colcon build --cmake-args -DCMAKE_BUILD_TYPE=Release
+
+# ==============================================================================
+# 5. Prod Stage: Final lightweight image
+# ==============================================================================
+FROM base AS prod
+
+COPY --from=builder /root/lazytatzv_ws/main_ws/install ./main_ws/install
+COPY ./scripts ./scripts
+
+# Setup prod bashrc
+RUN printf "%s\n" \
+    "source /opt/ros/${ROS_DISTRO}/setup.bash" \
+    "source /root/lazytatzv_ws/main_ws/install/setup.bash" \
+    >> /root/.bashrc
+
+ENTRYPOINT ["./scripts/entrypoint.sh"]
+CMD ["ros2", "launch", "robot_bringup", "robot_bringup.launch.py"]
