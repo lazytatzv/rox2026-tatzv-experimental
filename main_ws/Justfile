@@ -1,0 +1,32 @@
+# ROS 2 Workspace Justfile
+
+export ROS_SETUP := "/opt/ros/jazzy/setup.bash"
+
+@default:
+    just --list
+
+# Build all packages
+build:
+    bash -c 'source {{ROS_SETUP}} && colcon build --symlink-install --parallel-workers $(nproc || echo 2) --cmake-args -DCMAKE_BUILD_TYPE=Release'
+
+# Run all tests
+test:
+    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && colcon test --event-handlers console_direct+'
+
+# Launch headless simulation
+sim:
+    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true'
+
+# Launch Gazebo simulation with GUI
+sim-gui:
+    -pkill -9 -f "gz sim" || true
+    -pkill -9 -f "ruby" || true
+    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false'
+
+# Launch physical robot
+launch:
+    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py'
+
+# Purge artifacts
+clean:
+    rm -rf build/ install/ log/

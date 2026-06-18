@@ -46,5 +46,15 @@ echo "---------------------------------------------------------"
 cat /tmp/vnc_startup.log
 echo "---------------------------------------------------------"
 
+# RMW Implementation Routing
+if [ "$RMW_IMPLEMENTATION" = "rmw_zenoh_cpp" ]; then
+    echo "▶ ROS 2 Middleware: Zenoh"
+    # export ZENOH_ROUTER_CONFIG_URI=... if needed
+else
+    echo "▶ ROS 2 Middleware: FastDDS"
+    export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+    export FASTRTPS_DEFAULT_PROFILES_FILE=/root/lazytatzv_ws/main_ws/src/bringup/robot_bringup/config/fastdds_config.xml
+fi
+
 # Execute CMD
 exec "$@"

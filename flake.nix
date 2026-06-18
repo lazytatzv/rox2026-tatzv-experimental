@@ -17,6 +17,7 @@
           docker-compose
 
           # Development tools
+          just
           gnumake
           gh
           git

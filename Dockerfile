@@ -26,7 +26,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-robot-localization \
     ros-${ROS_DISTRO}-rmw-zenoh-cpp \
-    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
     tigervnc-standalone-server \
     tigervnc-common \
     tigervnc-tools \
@@ -70,7 +69,7 @@ FROM deps AS dev
 
 # Extra dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    fish neovim nano less curl gh evtest black ros-${ROS_DISTRO}-plotjuggler-ros \
+    fish neovim nano less curl gh evtest black ros-${ROS_DISTRO}-plotjuggler-ros just \
     && rm -rf /var/lib/apt/lists/*
 
 # Use ccache
