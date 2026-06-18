@@ -43,6 +43,12 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': use_sim_time}.items()
     )
 
+    include_input = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            pkg_robot_bringup, 'launch', 'include', 'input.launch.py')]),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
+    )
+
     # 4. Spawners & High-level Logic
     spawn_broadcaster = Node(
         package='controller_manager', executable='spawner', 
@@ -63,6 +69,7 @@ def generate_launch_description():
         include_localization,
         include_sim,
         include_control,
+        include_input,
         spawn_broadcaster,
         spawn_controller
     ])

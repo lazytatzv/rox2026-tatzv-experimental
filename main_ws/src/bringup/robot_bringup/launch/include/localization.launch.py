@@ -9,7 +9,7 @@ from launch.conditions import UnlessCondition
 def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory('robot_bringup')
     ekf_config = os.path.join(pkg_robot_bringup, 'config', 'ekf.yaml')
-    sensors_config = os.path.join(pkg_robot_bringup, 'config', 'sensors.yaml')
+    hardware_nodes_config = os.path.join(pkg_robot_bringup, 'config', 'hardware_nodes.yaml')
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     gazebo = LaunchConfiguration('gazebo')
@@ -18,7 +18,7 @@ def generate_launch_description():
         package='bno055_driver',
         executable='bno055_node',
         condition=UnlessCondition(gazebo),
-        parameters=[sensors_config, {'use_sim_time': use_sim_time}]
+        parameters=[hardware_nodes_config, {'use_sim_time': use_sim_time}]
     )
 
     ekf_node = Node(

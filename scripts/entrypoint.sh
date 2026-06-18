@@ -49,7 +49,7 @@ echo "---------------------------------------------------------"
 # RMW Implementation Routing
 if [ "$RMW_IMPLEMENTATION" = "rmw_zenoh_cpp" ]; then
     echo "▶ ROS 2 Middleware: Zenoh"
-    # export ZENOH_ROUTER_CONFIG_URI=... if needed
+    export ZENOH_ROUTER_CONFIG_URI=/root/lazytatzv_ws/main_ws/src/bringup/robot_bringup/config/zenoh.json
 else
     echo "▶ ROS 2 Middleware: FastDDS"
     export RMW_IMPLEMENTATION=rmw_fastrtps_cpp

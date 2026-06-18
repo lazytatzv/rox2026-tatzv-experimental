@@ -17,3 +17,12 @@
     filter_id: 0
     mask_id: 0
     operation_mode: 0
+# Centralized Sensor Configuration for ROX2026
+bno055_node:
+  ros__parameters:
+    i2c_bus: "/dev/i2c-1"
+    i2c_addr: 0x28
+    frame_id: "imu_link"
+    variance_orientation: 0.001
+    variance_angular_velocity: 0.01
+    variance_linear_acceleration: 0.1
