@@ -71,9 +71,9 @@ services:
 
     volumes:
       - ./scripts:/root/scripts
-    
-    devices:
-      - /dev:/dev # Maps /dev/video* and I2C buses
+      # [Critical for Hardware] Pass all devices (MIPI, I2C, BPU, ION) and kernel modules
+      - /dev:/dev:rw
+      - /lib/modules:/lib/modules:ro
 
     shm_size: '2gb'
     working_dir: /root/vision_ws

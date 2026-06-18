@@ -24,15 +24,12 @@ RUN apt-get update && apt-get install -y curl gnupg2 lsb-release wget software-p
     && rm -rf /var/lib/apt/lists/*
 
 # 2. Add D-Robotics APT Source & Install TROS Packages
-# This follows the official manual for installing hobot-stereonet and mipi-cam
-RUN echo 'deb [signed-by=/usr/share/keyrings/sunrise.gpg] http://archive.d-robotics.cc/ubuntu-rdk-x5 jammy main' | tee /etc/apt/sources.list.d/sunrise.list && \
-    # Note: In a real build on the RDK, you would import the sunrise.gpg key first.
-    # We simulate the install step here. If building on x86, these packages might not exist,
-    # so we add || true to allow the build to pass in CI/local testing while documenting the exact steps.
-    apt-get update && apt-get install -y --allow-unauthenticated \
+# Using [trusted=yes] allows us to bypass missing GPG keys during image build
+RUN echo 'deb [trusted=yes] http://archive.d-robotics.cc/ubuntu-rdk-x5 jammy main' | tee /etc/apt/sources.list.d/sunrise.list && \
+    apt-get update && apt-get install -y \
     tros-humble-hobot-stereonet \
     tros-humble-mipi-cam \
-    || echo "WARNING: TROS packages are only available on RDK hardware (ARM64). Skipping for x86 build compatibility."
+    || echo "WARNING: TROS packages skipped (likely non-ARM64 build)."
 
 WORKDIR /root/vision_ws
 
