@@ -38,8 +38,7 @@ sim:
 # Launch Gazebo simulation with GUI
 sim-gui:
     @if [ "{{is_container}}" = "yes" ]; then \
-        pkill -9 -f "gz sim" || true; \
-        pkill -9 -f "ruby" || true; \
+        echo "Skipping pkill cleanup..."; \
         bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false'; \
     else \
         echo "Not in container. Forwarding..."; \

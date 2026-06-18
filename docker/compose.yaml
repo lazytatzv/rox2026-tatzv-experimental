@@ -39,8 +39,8 @@ services:
     # is set to compose.gpu.yaml (handled by Makefile/Dev Containers).
 
     volumes:
-      - .:/root/lazytatzv_ws
-      - ./.ccache:/root/.ccache:rw
+      - ..:/root/lazytatzv_ws
+      - ../.ccache:/root/.ccache:rw
       - /tmp/.X11-unix:/tmp/.X11-unix:rw
       - ${XAUTHORITY:-$HOME/.Xauthority}:/root/.Xauthority_host:ro
 
@@ -70,7 +70,7 @@ services:
       RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
 
     volumes:
-      - ./scripts:/root/scripts
+      - ../scripts:/root/scripts
       # [Critical for Hardware] Pass all devices (MIPI, I2C, BPU, ION) and kernel modules
       - /dev:/dev:rw
       - /lib/modules:/lib/modules:ro
