@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tigervnc-common \
     tigervnc-tools \
     fluxbox \
-    novnc \ # macosで画面見る用
+    novnc \
     websockify \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
