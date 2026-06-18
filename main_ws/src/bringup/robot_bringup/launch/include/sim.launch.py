@@ -2,10 +2,10 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import IncludeLaunchDescription
+from launch.actions import IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration, PythonExpression
+from launch.substitutions import LaunchConfiguration, PythonExpression, EnvironmentVariable
 from launch.conditions import IfCondition
 
 def generate_launch_description():
@@ -14,7 +14,19 @@ def generate_launch_description():
     gazebo = LaunchConfiguration('gazebo')
     headless = LaunchConfiguration('headless', default='false')
 
-    world_path = os.path.join(pkg_robot_bringup, 'world', 'rox2026_field.sdf')
+    models_path = os.path.join(pkg_robot_bringup, 'models')
+    
+    # Set GZ_SIM_RESOURCE_PATH to include our models
+    set_gz_resource_path = SetEnvironmentVariable(
+        name='GZ_SIM_RESOURCE_PATH',
+        value=[
+            EnvironmentVariable('GZ_SIM_RESOURCE_PATH', default_value=''),
+            ':',
+            models_path
+        ]
+    )
+
+    world_path = os.path.join(pkg_robot_bringup, 'world', 'rox2026_field_cad.sdf')
 
     # Construct gz_args: -r (run), -v 4 (debug), and optionally -s (server/headless)
     gz_args = PythonExpression([
@@ -37,6 +49,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        set_gz_resource_path,
         gazebo_sim,
         spawn_robot
     ])

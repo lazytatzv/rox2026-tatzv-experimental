@@ -8,12 +8,13 @@ namespace imu_stabilizer
 {
 
 HeadingStabilizerNode::HeadingStabilizerNode(const rclcpp::NodeOptions & options)
-: Node("heading_stabilizer", options)
+: Node("heading_stabilizer", options),
+  last_cmd_time_(0, 0, rcl_clock_type_t::RCL_ROS_TIME)
 {
   declare_parameters();
   
-  // Initial config from parameters
-  update_config_from_params();
+  // last_cmd_time_ will be properly set on first cmd_callback or in constructor body
+  last_cmd_time_ = this->get_clock()->now();
   core_ = std::make_unique<HeadingStabilizerCore>(config_);
 
   sub_cmd_ = this->create_subscription<geometry_msgs::msg::TwistStamped>(
@@ -29,7 +30,8 @@ HeadingStabilizerNode::HeadingStabilizerNode(const rclcpp::NodeOptions & options
   param_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&HeadingStabilizerNode::on_parameter_change, this, std::placeholders::_1));
 
-  timer_ = this->create_wall_timer(10ms, std::bind(&HeadingStabilizerNode::control_loop, this));
+  // Use Node Clock instead of Wall Timer to avoid TimeSource mismatch in simulation
+  timer_ = this->create_timer(10ms, std::bind(&HeadingStabilizerNode::control_loop, this));
 
   RCLCPP_INFO(get_logger(), "Heading Stabilizer Component Ready (Config-Driven)");
 }

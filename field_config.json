@@ -1,0 +1,11 @@
+{
+  "documentId": "d3fb9dd3b0054d89c351c05b",
+  "assemblyName": "field_layout_20260602",
+  "outputFormat": "sdf",
+  "robotName": "rox2026_field",
+  "drawCollisions": false,
+  "useFixedLinks": true,
+  "simplifyComplexMeshes": true,
+  "jointMaxEffort": 0,
+  "static": true
+}

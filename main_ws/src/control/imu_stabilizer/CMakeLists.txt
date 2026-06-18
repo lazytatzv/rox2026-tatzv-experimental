@@ -56,11 +56,13 @@ endif()
 
 # 5. Install
 install(TARGETS 
-  stabilizer_node 
   stabilizer_executable
   imu_stabilizer_core 
   heading_stabilizer_component
-  DESTINATION lib/${PROJECT_NAME}
+  EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 install(DIRECTORY include/
   DESTINATION include
