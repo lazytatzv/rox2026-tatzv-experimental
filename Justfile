@@ -55,6 +55,14 @@ down:
 shell:
     docker compose {{compose_files}} exec ros2_rox2026 /bin/bash
 
+# Enter vision container
+vision-shell:
+    docker compose {{compose_files}} exec ros2_vision /bin/bash
+
+# Start stereo vision algorithm in vision container
+vision-run:
+    docker compose {{compose_files}} exec ros2_vision bash -c 'source /opt/tros/humble/setup.bash && ros2 launch hobot_stereonet stereonet_model_web_visual_v2.4_int16.launch.py use_mipi_cam:=True mipi_rotation:=0.0'
+
 # --- [ ROS 2 (Forwarded to main_ws) ] ---
 
 # Build workspace

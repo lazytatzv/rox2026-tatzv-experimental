@@ -51,3 +51,30 @@ services:
     shm_size: '2gb' # Increase shared memory for Foxglove/RViz
     working_dir: /root/lazytatzv_ws
     command: bash
+
+  ros2_vision:
+    image: ghcr.io/lazytatzv/rox2026-vision:${IMAGE_TAG:-dev}
+    build:
+      context: .
+      dockerfile: Dockerfile.vision
+    container_name: rox2026_vision
+    init: true
+    stdin_open: true
+    tty: true
+    privileged: true # Required for MIPI / BPU access
+    network_mode: ${DOCKER_NETWORK_MODE:-host}
+    ipc: host # Critical for ROS 2 Zero-Copy between containers
+
+    environment:
+      ROS_DOMAIN_ID: "0"
+      RMW_IMPLEMENTATION: ${RMW_IMPLEMENTATION:-rmw_fastrtps_cpp}
+
+    volumes:
+      - ./scripts:/root/scripts
+    
+    devices:
+      - /dev:/dev # Maps /dev/video* and I2C buses
+
+    shm_size: '2gb'
+    working_dir: /root/vision_ws
+    command: bash
