@@ -84,3 +84,14 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # 4. Build and Push Vision Image
+      - name: Build and Push Vision Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile.vision
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-vision:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
