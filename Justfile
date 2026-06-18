@@ -47,6 +47,10 @@ up:
     @xhost +local:docker > /dev/null 2>&1 || true
     DOCKER_NETWORK_MODE={{docker_network_mode}} docker compose {{compose_files}} up -d
 
+# Build Docker images (dev)
+build:
+    DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose {{compose_files}} build
+
 # Stop container
 down:
     docker compose {{compose_files}} down
@@ -72,8 +76,8 @@ _ensure-up:
 
 # --- [ ROS 2 (Forwarded to main_ws) ] ---
 
-# Build workspace
-build: _ensure-up
+# Build workspace (ROS 2 packages)
+build-ws: _ensure-up
     docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile build
 
 # Launch headless simulation
