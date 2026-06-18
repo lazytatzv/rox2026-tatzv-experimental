@@ -51,7 +51,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: .docker/Dockerfile
+          file: docker/Dockerfile
           target: builder
           load: true
           tags: rox2026:builder
@@ -67,7 +67,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: .docker/Dockerfile
+          file: docker/Dockerfile
           target: dev
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:dev
@@ -79,7 +79,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: .docker/Dockerfile
+          file: docker/Dockerfile
           target: prod
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -92,7 +92,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: .docker/Dockerfile.vision
+          file: docker/Dockerfile.vision
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-vision:latest
           cache-from: type=gha

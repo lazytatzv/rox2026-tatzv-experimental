@@ -9,7 +9,7 @@ has_nvidia := `command -v nvidia-smi > /dev/null 2>&1 && echo yes || echo no`
 docker_network_mode := if os == "Linux" { "host" } else { "bridge" }
 
 # Compose Files
-compose_files := if has_nvidia == "yes" { "-f .docker/compose.yaml -f .docker/compose.gpu.yaml" } else { "-f .docker/compose.yaml -f .docker/compose.null.yaml" }
+compose_files := if has_nvidia == "yes" { "-f docker/compose.yaml -f docker/compose.gpu.yaml" } else { "-f docker/compose.yaml -f docker/compose.null.yaml" }
 
 @default:
     just --list
