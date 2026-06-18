@@ -5,8 +5,8 @@ services:
   ros2_rox2026:
     image: ghcr.io/lazytatzv/rox2026-tatzv-experimental:${IMAGE_TAG:-dev}
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .docker/Dockerfile
       target: ${DOCKER_BUILD_TARGET:-dev} # Switch between 'dev' and 'prod'
       network: host
     container_name: rox2026_container
@@ -55,8 +55,8 @@ services:
   ros2_vision:
     image: ghcr.io/lazytatzv/rox2026-vision:${IMAGE_TAG:-dev}
     build:
-      context: .
-      dockerfile: Dockerfile.vision
+      context: ..
+      dockerfile: .docker/Dockerfile.vision
     container_name: rox2026_vision
     init: true
     stdin_open: true

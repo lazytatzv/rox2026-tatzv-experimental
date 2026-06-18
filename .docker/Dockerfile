@@ -1,6 +1,3 @@
-# ROX2026 Ultimate Docker Architecture
-# Optimized Multi-stage build (Fast Dev / Lean Prod)
-
 ARG ROS_DISTRO=jazzy
 
 # ==============================================================================
@@ -30,7 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tigervnc-common \
     tigervnc-tools \
     fluxbox \
-    novnc \
+    novnc \ # macosで画面見る用
     websockify \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
