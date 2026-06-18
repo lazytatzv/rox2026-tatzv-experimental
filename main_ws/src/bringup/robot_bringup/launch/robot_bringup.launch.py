@@ -49,6 +49,12 @@ def generate_launch_description():
         launch_arguments={'use_sim_time': use_sim_time}.items()
     )
 
+    include_foxglove = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([os.path.join(
+            pkg_robot_bringup, 'launch', 'include', 'foxglove.launch.py')]),
+        launch_arguments={'use_sim_time': use_sim_time}.items()
+    )
+
     # 4. Spawners & High-level Logic
     spawn_broadcaster = Node(
         package='controller_manager', executable='spawner', 
@@ -70,6 +76,7 @@ def generate_launch_description():
         include_sim,
         include_control,
         include_input,
+        include_foxglove,
         spawn_broadcaster,
         spawn_controller
     ])
