@@ -2,31 +2,64 @@
 
 export ROS_SETUP := "/opt/ros/jazzy/setup.bash"
 
+# Detect if we are inside the container
+is_container := `if [ -f /opt/ros/jazzy/setup.bash ]; then echo "yes"; else echo "no"; fi`
+
 @default:
     just --list
 
 # Build all packages
 build:
-    bash -c 'source {{ROS_SETUP}} && colcon build --symlink-install --parallel-workers $(nproc || echo 2) --cmake-args -DCMAKE_BUILD_TYPE=Release'
+    @if [ "{{is_container}}" = "yes" ]; then \
+        bash -c 'source {{ROS_SETUP}} && colcon build --symlink-install --parallel-workers $(nproc || echo 2) --cmake-args -DCMAKE_BUILD_TYPE=Release'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && just build; \
+    fi
 
 # Run all tests
 test:
-    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && colcon test --event-handlers console_direct+'
+    @if [ "{{is_container}}" = "yes" ]; then \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && colcon test --event-handlers console_direct+'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile test; \
+    fi
 
 # Launch headless simulation
 sim:
-    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true'
+    @if [ "{{is_container}}" = "yes" ]; then \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && just sim; \
+    fi
 
 # Launch Gazebo simulation with GUI
 sim-gui:
-    -pkill -9 -f "gz sim" || true
-    -pkill -9 -f "ruby" || true
-    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false'
+    @if [ "{{is_container}}" = "yes" ]; then \
+        pkill -9 -f "gz sim" || true; \
+        pkill -9 -f "ruby" || true; \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && just sim-gui; \
+    fi
 
 # Launch physical robot
 launch:
-    bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py'
+    @if [ "{{is_container}}" = "yes" ]; then \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile launch; \
+    fi
 
 # Purge artifacts
 clean:
-    rm -rf build/ install/ log/
+    @if [ "{{is_container}}" = "yes" ]; then \
+        rm -rf build/ install/ log/; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile clean; \
+    fi
