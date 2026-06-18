@@ -63,16 +63,23 @@ vision-shell:
 vision-run:
     docker compose {{compose_files}} exec ros2_vision bash -c 'source /opt/tros/humble/setup.bash && ros2 launch hobot_stereonet stereonet_model_web_visual_v2.4_int16.launch.py use_mipi_cam:=True mipi_rotation:=0.0'
 
+# --- [ Helpers ] ---
+_ensure-up:
+    @if ! docker compose {{compose_files}} ps | grep -q "ros2_rox2026"; then \
+        echo "Container is not running. Starting it now..."; \
+        just up; \
+    fi
+
 # --- [ ROS 2 (Forwarded to main_ws) ] ---
 
 # Build workspace
-build:
+build: _ensure-up
     docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile build
 
 # Launch headless simulation
-sim:
+sim: _ensure-up
     docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile sim
 
 # Launch simulation with GUI
-sim-gui:
+sim-gui: _ensure-up
     docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile sim-gui
