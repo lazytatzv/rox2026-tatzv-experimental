@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-ros-gz \
     ros-${ROS_DISTRO}-xacro \
     ros-${ROS_DISTRO}-robot-localization \
+    ros-${ROS_DISTRO}-rmw-zenoh-cpp \
+    ros-${ROS_DISTRO}-rmw-cyclonedds-cpp \
     tigervnc-standalone-server \
     tigervnc-common \
     tigervnc-tools \
