@@ -11,6 +11,11 @@ docker_network_mode := if os == "Linux" { "host" } else { "bridge" }
 # Compose Files
 compose_files := if has_nvidia == "yes" { "-f docker/compose.yaml -f docker/compose.gpu.yaml" } else { "-f docker/compose.yaml -f docker/compose.null.yaml" }
 
+# Compose Profiles
+# main, rdk
+profile := "--profile main"
+
+
 @default:
     just --list
 
@@ -45,45 +50,17 @@ use-zenoh:
 # Start development container
 up:
     @xhost +local:docker > /dev/null 2>&1 || true
-    DOCKER_NETWORK_MODE={{docker_network_mode}} docker compose {{compose_files}} up -d
+    DOCKER_NETWORK_MODE={{docker_network_mode}} docker compose {{profile}} {{compose_files}} up -d
 
 # Build Docker images (dev)
 build:
-    DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose {{compose_files}} build
+    DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose {{profile}} {{compose_files}} build
 
 # Stop container
 down:
-    docker compose {{compose_files}} down
+    docker compose {{profile}} {{compose_files}} down
 
 # Enter running container
 shell:
-    docker compose {{compose_files}} exec ros2_rox2026 /bin/bash
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 /bin/bash
 
-# Enter vision container
-vision-shell:
-    docker compose {{compose_files}} exec ros2_vision /bin/bash
-
-# Start stereo vision algorithm in vision container
-vision-run:
-    docker compose {{compose_files}} exec ros2_vision bash -c 'source /opt/tros/humble/setup.bash && ros2 launch hobot_stereonet stereonet_model_web_visual_v2.4_int16.launch.py use_mipi_cam:=True mipi_rotation:=0.0'
-
-# --- [ Helpers ] ---
-_ensure-up:
-    @if ! docker compose {{compose_files}} ps | grep -q "ros2_rox2026"; then \
-        echo "Container is not running. Starting it now..."; \
-        just up; \
-    fi
-
-# --- [ ROS 2 (Forwarded to main_ws) ] ---
-
-# Build workspace (ROS 2 packages)
-build-ws: _ensure-up
-    docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile build
-
-# Launch headless simulation
-sim: _ensure-up
-    docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile sim
-
-# Launch simulation with GUI
-sim-gui: _ensure-up
-    docker compose {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile sim-gui
