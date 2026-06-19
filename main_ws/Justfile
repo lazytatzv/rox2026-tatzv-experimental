@@ -54,6 +54,20 @@ launch:
         cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile launch; \
     fi
 
+# Run automated control engineering analysis (mode can be step, sine, chirp, auto)
+analyze-control mode="auto" bag="control_analysis_bag":
+    @if [ "{{is_container}}" = "yes" ]; then \
+        rm -rf {{bag}} && \
+        echo "Starting control analysis launch (recording & injecting, mode: {{mode}})..." && \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch control_analysis control_analysis.launch.py mode:={{mode}} bag_name:={{bag}}' || true; \
+        echo "Launch finished. Waiting for bag file to flush..." && sleep 2 && \
+        echo "Running professional control engineering analysis on {{bag}}..." && \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 run control_analysis analyze {{bag}}'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}}; \
+    fi
+
 # Purge artifacts
 clean:
     @if [ "{{is_container}}" = "yes" ]; then \
@@ -62,3 +76,4 @@ clean:
         echo "Not in container. Forwarding..."; \
         cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile clean; \
     fi
+

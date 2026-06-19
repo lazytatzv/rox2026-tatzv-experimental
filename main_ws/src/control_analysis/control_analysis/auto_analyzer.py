@@ -4,16 +4,17 @@ from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped
 import math
 
+
 class AutoAnalyzer(Node):
     def __init__(self):
-        super().__init__('auto_analyzer')
-        self.publisher_ = self.create_publisher(TwistStamped, '/cmd_vel_ext', 10)
+        super().__init__("auto_analyzer")
+        self.publisher_ = self.create_publisher(TwistStamped, "/cmd_vel_ext", 10)
 
-        self.declare_parameter('report_name', 'full_analysis_report')
-        self.declare_parameter('chirp_duration', 15.0)
-        self.declare_parameter('step_duration', 5.0)
-        self.declare_parameter('frequency_start', 0.1)
-        self.declare_parameter('frequency_end', 15.0)
+        self.declare_parameter("report_name", "full_analysis_report")
+        self.declare_parameter("chirp_duration", 15.0)
+        self.declare_parameter("step_duration", 5.0)
+        self.declare_parameter("frequency_start", 0.1)
+        self.declare_parameter("frequency_end", 15.0)
 
         self.start_time = None
         self.phase = "WAIT_FOR_CLOCK"
@@ -22,7 +23,8 @@ class AutoAnalyzer(Node):
 
     def loop(self):
         now = self.get_clock().now()
-        if now.nanoseconds == 0: return
+        if now.nanoseconds == 0:
+            return
 
         if self.phase == "WAIT_FOR_CLOCK":
             self.start_time = now
@@ -33,10 +35,10 @@ class AutoAnalyzer(Node):
         elapsed = (now - self.start_time).nanoseconds / 1e9
 
         if self.phase == "CHIRP":
-            d = self.get_parameter('chirp_duration').value
+            d = self.get_parameter("chirp_duration").value
             if elapsed < d:
-                f0 = self.get_parameter('frequency_start').value
-                f1 = self.get_parameter('frequency_end').value
+                f0 = self.get_parameter("frequency_start").value
+                f1 = self.get_parameter("frequency_end").value
                 p = 2 * math.pi * (f0 * elapsed + 0.5 * (f1 - f0) * (elapsed**2) / d)
                 self.publish_vel(1.0 * math.sin(p))
             else:
@@ -53,7 +55,7 @@ class AutoAnalyzer(Node):
                 self.get_logger().info(">>> Phase 2: Step Response")
 
         elif self.phase == "STEP":
-            d = self.get_parameter('step_duration').value
+            d = self.get_parameter("step_duration").value
             if (now - self.mid_time).nanoseconds / 1e9 < d:
                 self.publish_vel(2.0)
             else:
@@ -69,6 +71,7 @@ class AutoAnalyzer(Node):
         msg.twist.linear.x = float(vx)
         self.publisher_.publish(msg)
 
+
 def main():
     rclpy.init()
     node = AutoAnalyzer()
@@ -79,5 +82,6 @@ def main():
     finally:
         rclpy.shutdown()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

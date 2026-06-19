@@ -98,3 +98,7 @@ sim-gui:
 # Launch physical robot nodes
 launch:
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile launch
+
+# Run automated control engineering analysis (mode can be step, sine, chirp, auto)
+analyze-control mode="auto" bag="control_analysis_bag":
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}}
