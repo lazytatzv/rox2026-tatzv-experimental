@@ -1,60 +1,72 @@
-# 開発時のTips
+# 開発ワークフローと作業手順
 
-## setup
+このプロジェクトでは、Nix によるホスト環境管理、Docker Compose によるコンテナ実行、そして `Justfile` を使ったタスク自動化を採用しています。基本的な作業手順を以下にまとめます。
 
-```bash
-# clone
-$ git clone <repo>
-$ cd <repo>
+---
 
-# nixenv
-# direnv入れてたらしなくていい.
-$ nix develop
-
-# vscode(devcontainer)
-$ code .
-
-# devcontainerでビルド
-```
-
-## devcontainer
-
-`F1`->`Dev Container: Rebuild Container`で再ビルド. `Dockerfile`を書き換えたら定期的にやる.
-
-`devcontainer.json`に拡張とかかける.
-
-## Docker
-
-Imageが意外と容量食うので定期的に確認する. 特にSDカードとか使ってる場合.
+### 1. Nix / 環境のセットアップ
+ホスト環境に Nix および `direnv` を導入している場合、自動的に開発環境（xhost 設定や必要なホスト側ツール）がロードされます。
 
 ```bash
-# 容量
-$ docker system df
+# 1. Nix 開発環境への手動ログイン（direnv未導入の場合）
+nix develop
 
-# prune (あってるか不明)
-$ docker prune -a
+# 2. direnv 連携の設定（初回のみ推奨）
+just setup-env
 ```
 
-## compose.yaml
+---
 
-networkとデバイス周り、guiの設定は注意.
+### 2. Docker コンテナの管理（ホスト側から実行）
+コンテナイメージのビルド、起動、停止を行います。
 
-GUIに関してはそもそも`rviz2`とか使わずに`foxglove`をブラウザから使えば基本的に問題ない.
+```bash
+# コンテナイメージのビルド (host ネットワークを利用してDNSエラーを回避)
+just build
 
-`xhost`は依然として必要だが、`nix develop`しておくとそのへん勝手にやってくれるので便利. `direnv`入れてると更に便利(自動でやってくれる).
+# コンテナの起動 (バックグラウンドで起動、GUI転送設定なども自動処理)
+just up
 
+# コンテナの停止
+just down
+```
 
-## shell
+---
 
-とりあえず`bash`か`zsh`を大人しくつかっておく. `fish`はpluginで`bass`なんかを入れればなんとかなるが、変数の扱いとか微妙なのでおすすめしない.
+### 3. コンテナへの侵入
+開発作業やロボット/ビジョンの個別実行のために、稼働中のコンテナに入ります。
 
-## foxglove
+```bash
+# メインの開発コンテナ (ros2_rox2026) の bash に入る
+just shell
 
-`foxglove_bridge`が立ち上がるようになっているので、`websocket`で`8765`に繋げば動くはず.
+# ビジョン処理用コンテナ (ros2_vision) の bash に入る
+just vision-shell
+```
 
-joystickっぽいUIが出せたり、urdf書いとくと視覚化が簡単にできたりと便利. ブラウザから使うほうが個人的に好み.
+---
 
+### 4. ROS 2 ワークスペースのビルドとテスト
+ROS 2 パッケージのビルドやテスト、シミュレーション起動はホスト側の `Justfile` ショートカット、またはコンテナ内から実行可能です。
 
+```bash
+# [ホストから] ROS 2 ワークスペースのビルド
+just build-ws
 
+# [ホストから] ヘッドシミュレーションの起動
+just sim
 
+# [ホストから] GUI付きGazeboシミュレーションの起動
+just sim-gui
 
+# [ホストから] ワークスペース内のテスト(colcon test)の一括実行
+docker compose exec ros2_rox2026 just -f main_ws/Justfile test
+```
+
+*（※直接コンテナに入っている場合は、`/root/lazytatzv_ws/main_ws` ディレクトリにて `just build` や `just test` が使用できます。）*
+
+---
+
+### 5. Foxglove を用いた可視化
+コンテナ起動時に `foxglove_bridge` が自動的にバックグラウンドで立ち上がります。
+- Foxglove Studio（ブラウザ版またはアプリ版）を開き、`ws://localhost:8765` に接続することで、ロボットのステータスやトピック、URDF 視覚化が可能です。
