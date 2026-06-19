@@ -15,6 +15,7 @@
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/macros.hpp"
+#include "can_msgs/msg/frame.hpp"
 #include "robstride_driver/robstride_protocol.hpp"
 #include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
@@ -53,6 +54,11 @@ public:
 
 private:
   void can_rx_callback(const seeed_usb_can::CanFrame & frame);
+  void can_rx_topic_callback(const can_msgs::msg::Frame::ConstSharedPtr msg);
+
+  // Configuration parameter
+  std::string can_interface_type_{"serial"};
+  std::string protocol_type_{"at"};
 
   // Protocol Handler
   std::unique_ptr<RobstrideProtocol> protocol_handler_;
@@ -62,6 +68,12 @@ private:
 
   // ROS Node for logging and parameters only
   rclcpp::Node::SharedPtr node_;
+
+  // ROS Topic Communication
+  rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr can_sub_;
+  rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr can_pub_;
+  std::unique_ptr<std::thread> spin_thread_;
+  rclcpp::executors::SingleThreadedExecutor executor_;
 
   // State and Command values
   struct Motor

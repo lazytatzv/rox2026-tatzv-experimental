@@ -15,7 +15,7 @@
   <depend>rclcpp_lifecycle</depend>
   <depend>rclcpp_components</depend>
   <depend>lifecycle_msgs</depend>
-  <depend>custom_interfaces</depend>
+  <depend>can_msgs</depend>
   <exec_depend>boost</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>libatomic</exec_depend>

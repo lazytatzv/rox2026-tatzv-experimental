@@ -32,7 +32,7 @@ sim:
         bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true'; \
     else \
         echo "Not in container. Forwarding..."; \
-        cd .. && just sim; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile sim; \
     fi
 
 # Launch Gazebo simulation with GUI
@@ -42,7 +42,7 @@ sim-gui:
         bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false'; \
     else \
         echo "Not in container. Forwarding..."; \
-        cd .. && just sim-gui; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile sim-gui; \
     fi
 
 # Launch physical robot

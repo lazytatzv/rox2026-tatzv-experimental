@@ -15,7 +15,7 @@
   <depend>pluginlib</depend>
   <depend>std_msgs</depend>
   <depend>sensor_msgs</depend>
-  <depend>custom_interfaces</depend>
+  <depend>can_msgs</depend>
   <depend>diagnostic_updater</depend>
   <depend>seeed_usb_can_analyzer_driver</depend>
 

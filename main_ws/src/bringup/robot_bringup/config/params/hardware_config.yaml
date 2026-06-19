@@ -6,6 +6,7 @@ hardware:
   usb_port: "/dev/ttyUSB0"
   protocol: "at" # 'at' or 'can'
   baud_rate: 115200
+  can_interface_type: "serial" # 'serial' or 'ros_topic' (for socketcan / usb_can_analyzer via topic)
 
   motors:
     front_left:  {id: 1, invert: false}

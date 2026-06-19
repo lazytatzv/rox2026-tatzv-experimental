@@ -8,7 +8,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
-#include "seeed_usb_can_analyzer_driver/msg/can_frame.hpp"
+#include "can_msgs/msg/frame.hpp"
 #include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
 namespace seeed_usb_can
@@ -34,13 +34,13 @@ public:
 
 private:
   static uint8_t to_can_baud_code(int bitrate);
-  void handle_transmit(const seeed_usb_can_analyzer_driver::msg::CanFrame & msg);
+  void handle_transmit(const can_msgs::msg::Frame & msg);
 
   UsbCanSerialDriver serial_driver_;
   SerialDriverConfig config_;
-  rclcpp_lifecycle::LifecyclePublisher<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr
+  rclcpp_lifecycle::LifecyclePublisher<can_msgs::msg::Frame>::SharedPtr
     publisher_;
-  rclcpp::Subscription<seeed_usb_can_analyzer_driver::msg::CanFrame>::SharedPtr subscription_;
+  rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr subscription_;
 };
 
 }  // namespace seeed_usb_can

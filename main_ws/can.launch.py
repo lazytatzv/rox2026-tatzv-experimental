@@ -1,6 +1,8 @@
-import launch
+import os
 from launch import LaunchDescription
-from launch.actions import EmitEvent, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler, GroupAction
+from launch.conditions import IfCondition
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch.events import matches_action
 from launch_ros.actions import LifecycleNode
 from launch_ros.events.lifecycle import ChangeState
@@ -8,10 +10,44 @@ from launch_ros.event_handlers import OnStateTransition
 from lifecycle_msgs.msg import Transition
 
 def generate_launch_description():
-    # 使用するインターフェース（実機で使うときは 'can0' に書き換えてください）
-    can_interface = 'vcan0'
+    # Declare Launch Arguments
+    declare_can_driver = DeclareLaunchArgument(
+        'can_driver',
+        default_value='socketcan',
+        description='CAN driver to use: "socketcan" or "usb_can_analyzer"'
+    )
+    
+    declare_can_interface = DeclareLaunchArgument(
+        'interface',
+        default_value='vcan0',
+        description='SocketCAN interface name (only used for socketcan)'
+    )
 
-    # 1. LifecycleNode としてノードを定義
+    declare_usb_path = DeclareLaunchArgument(
+        'usb_path',
+        default_value='/dev/ttyUSB0',
+        description='USB serial path (only used for usb_can_analyzer)'
+    )
+
+    declare_serial_baud = DeclareLaunchArgument(
+        'serial_baud',
+        default_value='2000000',
+        description='Serial baud rate (only used for usb_can_analyzer)'
+    )
+
+    declare_bitrate = DeclareLaunchArgument(
+        'bitrate',
+        default_value='500000',
+        description='CAN bus bitrate'
+    )
+
+    can_driver = LaunchConfiguration('can_driver')
+    can_interface = LaunchConfiguration('interface')
+    usb_path = LaunchConfiguration('usb_path')
+    serial_baud = LaunchConfiguration('serial_baud')
+    bitrate = LaunchConfiguration('bitrate')
+
+    # --- [ 1. SocketCAN Configurations ] ---
     receiver_node = LifecycleNode(
         package='ros2_socketcan',
         executable='socket_can_receiver_node_exe',
@@ -34,7 +70,6 @@ def generate_launch_description():
         output='screen'
     )
 
-    # 2. 起動直後に「Configure（準備）」イベントを発火させる設定
     configure_receiver = EmitEvent(
         event=ChangeState(
             lifecycle_node_matcher=matches_action(receiver_node),
@@ -49,8 +84,6 @@ def generate_launch_description():
         )
     )
 
-    # 3. Configureが完了して「Inactive（待機）」状態になったのを検知したら、
-    # 自動的に「Activate（稼働）」イベントを発火させる設定
     activate_receiver = RegisterEventHandler(
         OnStateTransition(
             target_lifecycle_node=receiver_node,
@@ -81,12 +114,71 @@ def generate_launch_description():
         )
     )
 
-    # 以上の設定をすべてLaunchの実行リストに登録
+    socketcan_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", can_driver, "' == 'socketcan'"])),
+        actions=[
+            receiver_node,
+            sender_node,
+            configure_receiver,
+            configure_sender,
+            activate_receiver,
+            activate_sender,
+        ]
+    )
+
+    # --- [ 2. USB-CAN Analyzer Configurations ] ---
+    usb_can_node = LifecycleNode(
+        package='seeed_usb_can_analyzer_driver',
+        executable='usb_can_analyzer_node',
+        name='usb_can_analyzer',
+        namespace='',
+        parameters=[{
+            'usb_path': usb_path,
+            'serial_baud': serial_baud,
+            'bitrate': bitrate,
+            'can_rx_topic': '/from_can_bus',
+            'can_tx_topic': '/to_can_bus',
+        }],
+        output='screen'
+    )
+
+    configure_usb_can = EmitEvent(
+        event=ChangeState(
+            lifecycle_node_matcher=matches_action(usb_can_node),
+            transition_id=Transition.TRANSITION_CONFIGURE
+        )
+    )
+
+    activate_usb_can = RegisterEventHandler(
+        OnStateTransition(
+            target_lifecycle_node=usb_can_node,
+            goal_state='inactive',
+            entities=[
+                EmitEvent(
+                    event=ChangeState(
+                        lifecycle_node_matcher=matches_action(usb_can_node),
+                        transition_id=Transition.TRANSITION_ACTIVATE
+                    )
+                )
+            ]
+        )
+    )
+
+    usb_can_group = GroupAction(
+        condition=IfCondition(PythonExpression(["'", can_driver, "' == 'usb_can_analyzer'"])),
+        actions=[
+            usb_can_node,
+            configure_usb_can,
+            activate_usb_can,
+        ]
+    )
+
     return LaunchDescription([
-        receiver_node,
-        sender_node,
-        configure_receiver,
-        configure_sender,
-        activate_receiver,
-        activate_sender,
+        declare_can_driver,
+        declare_can_interface,
+        declare_usb_path,
+        declare_serial_baud,
+        declare_bitrate,
+        socketcan_group,
+        usb_can_group,
     ])

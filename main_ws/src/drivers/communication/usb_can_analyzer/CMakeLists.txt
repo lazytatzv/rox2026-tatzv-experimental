@@ -16,7 +16,7 @@ find_package(rclcpp_lifecycle REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(lifecycle_msgs REQUIRED)
 find_package(Boost CONFIG REQUIRED)
-find_package(custom_interfaces REQUIRED)
+find_package(can_msgs REQUIRED)
 find_package(Threads REQUIRED)
 
 # 1. Internal protocol library
@@ -44,7 +44,7 @@ ament_target_dependencies(usb_can_analyzer_component
   rclcpp_lifecycle
   rclcpp_components
   lifecycle_msgs
-  custom_interfaces
+  can_msgs
 )
 
 target_link_libraries(usb_can_analyzer_component
@@ -74,6 +74,6 @@ install(TARGETS
 
 ament_export_include_directories(include)
 ament_export_libraries(usb_can_serial_protocol usb_can_analyzer_component)
-ament_export_dependencies(rclcpp rclcpp_lifecycle rclcpp_components lifecycle_msgs custom_interfaces)
+ament_export_dependencies(rclcpp rclcpp_lifecycle rclcpp_components lifecycle_msgs can_msgs)
 
 ament_package()

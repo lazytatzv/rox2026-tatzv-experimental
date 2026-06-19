@@ -19,9 +19,9 @@ profile := "--profile main"
 @default:
     just --list
 
-# --- [ Environment ] ---
+# --- [ Environment Setup ] ---
 
-# Setup direnv hooks
+# Setup direnv hooks for shell integration
 setup-env:
     @echo "Configuring direnv for Bash..."
     @grep -q 'direnv hook bash' ~/.bashrc || echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
@@ -33,26 +33,27 @@ setup-env:
     @direnv allow .
     @echo ">>> Environment setup complete. Please restart your shell <<<"
 
-# Switch RMW to FastDDS
+# Switch ROS 2 middleware to FastDDS
 use-fastdds:
     @sed -i '' '/RMW_IMPLEMENTATION/d' .env 2>/dev/null || sed -i '/RMW_IMPLEMENTATION/d' .env
     @echo "RMW_IMPLEMENTATION=rmw_fastrtps_cpp" >> .env
     @echo "Switched to FastDDS. Restart container to apply."
 
-# Switch RMW to Zenoh
+# Switch ROS 2 middleware to Zenoh
 use-zenoh:
     @sed -i '' '/RMW_IMPLEMENTATION/d' .env 2>/dev/null || sed -i '/RMW_IMPLEMENTATION/d' .env
     @echo "RMW_IMPLEMENTATION=rmw_zenoh_cpp" >> .env
     @echo "Switched to Zenoh. Restart container to apply."
 
-# --- [ Docker ] ---
 
-# Start development container
+# --- [ Docker Control ] ---
+
+# Start development container (auto-enabling local xhost access)
 up:
     @xhost +local:docker > /dev/null 2>&1 || true
     DOCKER_NETWORK_MODE={{docker_network_mode}} docker compose {{profile}} {{compose_files}} up -d
 
-# Build Docker images (dev)
+# Build Docker images
 build:
     DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose {{profile}} {{compose_files}} build
 
@@ -60,7 +61,40 @@ build:
 down:
     docker compose {{profile}} {{compose_files}} down
 
-# Enter running container
+# Enter running container shell
 shell:
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 /bin/bash
 
+
+# --- [ ROS 2 Workspace (Executed inside Container) ] ---
+
+# Compile all ROS 2 packages in workspace
+colcon:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile build
+
+# Run all ROS 2 workspace tests
+test:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile test
+
+# Clean all build artifacts (build/, install/, log/)
+clean:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile clean
+
+# Auto-format codebase (Black & Uncrustify)
+format:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 bash -c "scripts/fix_style.sh"
+
+
+# --- [ Simulation & Robot Control (Executed inside Container) ] ---
+
+# Launch headless Gazebo simulation
+sim:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile sim
+
+# Launch Gazebo simulation with GUI (noVNC display :2)
+sim-gui:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile sim-gui
+
+# Launch physical robot nodes
+launch:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile launch
