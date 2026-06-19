@@ -76,12 +76,13 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager-timeout", "120"],
+        parameters=[{"use_sim_time": False}],
     )
     spawn_controller = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["mecanum_drive_controller", "--controller-manager-timeout", "120"],
-        remappings=[("/mecanum_drive_controller/cmd_vel", "/cmd_vel_stabilized")],
+        parameters=[{"use_sim_time": False}],
     )
 
     return LaunchDescription(

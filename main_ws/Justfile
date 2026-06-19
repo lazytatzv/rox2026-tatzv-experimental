@@ -29,7 +29,7 @@ test:
 # Launch headless simulation
 sim:
     @if [ "{{is_container}}" = "yes" ]; then \
-        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true'; \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=true use_sim_time:=true'; \
     else \
         echo "Not in container. Forwarding..."; \
         cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile sim; \
@@ -39,7 +39,7 @@ sim:
 sim-gui:
     @if [ "{{is_container}}" = "yes" ]; then \
         echo "Skipping pkill cleanup..."; \
-        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false'; \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup robot_bringup.launch.py gazebo:=true headless:=false use_sim_time:=true'; \
     else \
         echo "Not in container. Forwarding..."; \
         cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile sim-gui; \
@@ -59,7 +59,7 @@ analyze-control mode="auto" bag="control_analysis_bag":
     @if [ "{{is_container}}" = "yes" ]; then \
         rm -rf {{bag}} && \
         echo "Starting control analysis launch (recording & injecting, mode: {{mode}})..." && \
-        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch control_analysis control_analysis.launch.py mode:={{mode}} bag_name:={{bag}}' || true; \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch control_analysis control_analysis.launch.py mode:={{mode}} bag_name:={{bag}} use_sim_time:=true' || true; \
         echo "Launch finished. Waiting for bag file to flush..." && sleep 2 && \
         echo "Running professional control engineering analysis on {{bag}}..." && \
         bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 run control_analysis analyze {{bag}}'; \

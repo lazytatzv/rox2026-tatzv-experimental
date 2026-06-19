@@ -29,7 +29,7 @@ def generate_launch_description():
                 parameters=[tuning_config, {"use_sim_time": use_sim_time}],
                 remappings=[
                     ("/cmd_vel_in", "/cmd_vel_teleop"),
-                    ("/cmd_vel_out", "/cmd_vel_stabilized"),
+                    ("/cmd_vel_out", "/mecanum_drive_controller/reference"),
                 ],
             ),
         ],

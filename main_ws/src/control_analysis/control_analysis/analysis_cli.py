@@ -38,22 +38,37 @@ def extract_bag_data(bag_path):
         (topic, data, t) = reader.read_next()
         if topic == "/cmd_vel_ext":
             msg = deserialize_message(data, TwistStamped)
-            results["cmd"].append((t / 1e9, msg.twist.linear.x))
-        elif topic == "/cmd_vel_stabilized":
+            t_msg = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
+            if t_msg < 1e-3:
+                t_msg = t / 1e9
+            results["cmd"].append((t_msg, msg.twist.linear.x))
+        elif topic == "/mecanum_drive_controller/reference":
             msg = deserialize_message(data, TwistStamped)
-            results["cmd_stab"].append((t / 1e9, msg.twist.linear.x))
+            t_msg = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
+            if t_msg < 1e-3:
+                t_msg = t / 1e9
+            results["cmd_stab"].append((t_msg, msg.twist.linear.x))
         elif topic == "/odometry/filtered":
             msg = deserialize_message(data, Odometry)
+            t_msg = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
+            if t_msg < 1e-3:
+                t_msg = t / 1e9
             vel = msg.twist.twist.linear.x
             if abs(vel) < 20.0:  # Filter outliers
-                results["ekf"].append((t / 1e9, vel))
+                results["ekf"].append((t_msg, vel))
         elif topic == "/odom/ground_truth":
             msg = deserialize_message(data, Odometry)
-            results["gt"].append((t / 1e9, msg.twist.twist.linear.x))
+            t_msg = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
+            if t_msg < 1e-3:
+                t_msg = t / 1e9
+            results["gt"].append((t_msg, msg.twist.twist.linear.x))
         elif topic == "/joint_states":
             msg = deserialize_message(data, JointState)
+            t_msg = msg.header.stamp.sec + msg.header.stamp.nanosec / 1e9
+            if t_msg < 1e-3:
+                t_msg = t / 1e9
             if msg.effort:
-                results["effort"].append((t / 1e9, np.mean(np.abs(msg.effort))))
+                results["effort"].append((t_msg, np.mean(np.abs(msg.effort))))
 
     return {k: np.array(v) for k, v in results.items() if len(v) > 0}
 
@@ -165,6 +180,8 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step):
         "y_norm": y_norm + u_baseline,
         "y_fit": y_fit + u_baseline,
         "K_p": K_p,
+        "u_step": u_step,
+        "y_ss": y_ss + u_baseline,
         "overshoot": overshoot,
         "t_peak": t_peak,
         "rise_time": rise_time,
@@ -180,6 +197,12 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step):
 def analyze_frequency_response(t_cmd, u_cmd, t_resp, y_resp, chirp_t0, chirp_t1):
     fs = 100.0
     dt = 1.0 / fs
+    duration = chirp_t1 - chirp_t0
+    if duration <= 0.0 or duration > 100.0:
+        print(
+            f"Error: Invalid chirp duration {duration:.2f}s (must be between 0 and 100s). Check time synchronization."
+        )
+        return None
     t_uniform = np.arange(chirp_t0, chirp_t1, dt)
     u_uniform = np.interp(t_uniform, t_cmd, u_cmd)
     y_uniform = np.interp(t_uniform, t_resp, y_resp)

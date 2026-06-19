@@ -21,6 +21,10 @@ def generate_launch_description():
     # Qtの描画プラットフォームとして xcb (X11) を指定
     set_qt_cmd = SetEnvironmentVariable(name="QT_QPA_PLATFORM", value="xcb")
 
+    # Force Gazebo Sim to use loopback interface for local gz-transport discovery
+    set_gz_ip = SetEnvironmentVariable(name="GZ_IP", value="127.0.0.1")
+    set_ign_ip = SetEnvironmentVariable(name="IGN_IP", value="127.0.0.1")
+
     models_path = os.path.join(pkg_robot_bringup, "models")
 
     # Set GZ_SIM_RESOURCE_PATH to include our models
@@ -51,6 +55,29 @@ def generate_launch_description():
         condition=IfCondition(gazebo),
     )
 
+    bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="ros_gz_bridge",
+        parameters=[
+            {
+                "config_file": os.path.join(pkg_robot_bringup, "config", "gz_bridge.yaml"),
+                "use_sim_time": use_sim_time,
+            }
+        ],
+        output="screen",
+        condition=IfCondition(gazebo),
+    )
+
     return LaunchDescription(
-        [set_display_cmd, set_qt_cmd, set_gz_resource_path, gazebo_sim, spawn_robot]
+        [
+            set_display_cmd,
+            set_qt_cmd,
+            set_gz_ip,
+            set_ign_ip,
+            set_gz_resource_path,
+            gazebo_sim,
+            spawn_robot,
+            bridge,
+        ]
     )
