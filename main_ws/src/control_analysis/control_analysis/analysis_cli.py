@@ -211,7 +211,7 @@ def analyze_frequency_response(t_cmd, u_cmd, t_resp, y_resp, chirp_t0, chirp_t1)
     u_detrend = signal.detrend(u_uniform)
     y_detrend = signal.detrend(y_uniform)
 
-    nperseg = min(512, len(t_uniform) // 2)
+    nperseg = min(128, len(t_uniform) // 2)
     if nperseg < 64:
         return None
 
