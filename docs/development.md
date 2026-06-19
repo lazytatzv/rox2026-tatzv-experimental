@@ -34,6 +34,8 @@ $ nix develop
 
 `nix`環境化で実行してください
 
+メインのros2wsで作業するとき
+
 ```bash
 # ビルド
 $ just build
@@ -50,6 +52,8 @@ $ just vision-shell
 # コンテナの停止
 $ just down
 ```
+
+rdk用のtrosが使えるコンテナを使いたい際は`Justfile`のprofileを書き換えてコマンドを打つことで制御できます
 
 ---
 
