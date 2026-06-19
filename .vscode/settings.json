@@ -1,0 +1,24 @@
+{
+    "cSpell.words": [
+        "mecanum",
+        "robstride",
+        "rosdep",
+        "colcon",
+        "direnv",
+        "tatzv",
+        "foxglove",
+        "DDSM",
+        "DDSM115",
+        "twist_mux",
+        "joint_aggregator",
+        "asio",
+        "streambuf",
+        "rclcpp",
+        "rosidl",
+        "ament",
+        "uncrustify",
+        "ccache",
+        "ripgrep",
+        "teleop"
+    ]
+}

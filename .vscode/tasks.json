@@ -1,0 +1,44 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Workspace (colcon)",
+            "type": "shell",
+            "command": "make colcon",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Launch Robot (Physical)",
+            "type": "shell",
+            "command": "make launch",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Launch Robot (Virtual)",
+            "type": "shell",
+            "command": "make virtual",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            }
+        },
+        {
+            "label": "Format Code",
+            "type": "shell",
+            "command": "make format",
+            "presentation": {
+                "reveal": "silent"
+            }
+        }
+    ]
+}

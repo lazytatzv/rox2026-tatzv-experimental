@@ -14,6 +14,12 @@ def generate_launch_description():
     gazebo = LaunchConfiguration('gazebo')
     headless = LaunchConfiguration('headless', default='false')
 
+    display_env = os.environ.get('DISPLAY', ':0')
+    set_display_cmd = SetEnvironmentVariable(name='DISPLAY', value=display_env)
+    
+    # Qtの描画プラットフォームとして xcb (X11) を指定
+    set_qt_cmd = SetEnvironmentVariable(name='QT_QPA_PLATFORM', value='xcb')
+
     models_path = os.path.join(pkg_robot_bringup, 'models')
     
     # Set GZ_SIM_RESOURCE_PATH to include our models
@@ -49,6 +55,8 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        set_display_cmd,
+        set_qt_cmd,
         set_gz_resource_path,
         gazebo_sim,
         spawn_robot

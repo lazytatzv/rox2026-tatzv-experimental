@@ -67,7 +67,7 @@ FROM deps AS dev
 
 # Extra dev tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    fish neovim nano less curl gh evtest black ros-${ROS_DISTRO}-plotjuggler-ros just \
+    fish neovim nano less curl gh iproute2 tmux can-utils evtest tree black ros-${ROS_DISTRO}-plotjuggler-ros just \
     && rm -rf /var/lib/apt/lists/*
 
 # Use ccache

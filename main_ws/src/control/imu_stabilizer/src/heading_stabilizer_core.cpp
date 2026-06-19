@@ -5,9 +5,7 @@ namespace imu_stabilizer
 {
 
 HeadingStabilizerCore::HeadingStabilizerCore(const HeadingStabilizerConfig & config)
-: config_(config),
-  pid_heading_(0.0, 0.0, 0.0, 1.0, -1.0),
-  pid_rate_(0.0, 0.0, 0.0, 1.0, -1.0)
+: config_(config)
 {
   setGains(config_);
 }
