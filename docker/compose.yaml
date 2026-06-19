@@ -57,6 +57,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.vision
+      network: host
     container_name: rox2026_vision
     init: true
     stdin_open: true
