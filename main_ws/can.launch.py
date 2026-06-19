@@ -1,4 +1,5 @@
 import os
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler, GroupAction
 from launch.conditions import IfCondition
@@ -47,13 +48,26 @@ def generate_launch_description():
     serial_baud = LaunchConfiguration('serial_baud')
     bitrate = LaunchConfiguration('bitrate')
 
+    # Resolve configuration file path
+    try:
+        pkg_robot_bringup = get_package_share_directory('robot_bringup')
+        hardware_nodes_config = os.path.join(pkg_robot_bringup, 'config', 'hardware_nodes.yaml')
+    except Exception:
+        hardware_nodes_config = os.path.join(
+            os.path.dirname(__file__),
+            'src', 'bringup', 'robot_bringup', 'config', 'hardware_nodes.yaml'
+        )
+
     # --- [ 1. SocketCAN Configurations ] ---
     receiver_node = LifecycleNode(
         package='ros2_socketcan',
         executable='socket_can_receiver_node_exe',
         name='socket_can_receiver',
         namespace='',
-        parameters=[{'interface': can_interface, 'enable_can_fd': False}],
+        parameters=[
+            hardware_nodes_config,
+            {'interface': can_interface, 'enable_can_fd': False}
+        ],
         output='screen'
     )
 
@@ -62,11 +76,14 @@ def generate_launch_description():
         executable='socket_can_sender_node_exe',
         name='socket_can_sender',
         namespace='',
-        parameters=[{
-            'interface': can_interface, 
-            'enable_can_fd': False, 
-            'timeout_sec': 0.01
-        }],
+        parameters=[
+            hardware_nodes_config,
+            {
+                'interface': can_interface, 
+                'enable_can_fd': False, 
+                'timeout_sec': 0.01
+            }
+        ],
         output='screen'
     )
 
@@ -130,15 +147,18 @@ def generate_launch_description():
     usb_can_node = LifecycleNode(
         package='seeed_usb_can_analyzer_driver',
         executable='usb_can_analyzer_node',
-        name='usb_can_analyzer',
+        name='usb_can_analyzer_node',
         namespace='',
-        parameters=[{
-            'usb_path': usb_path,
-            'serial_baud': serial_baud,
-            'bitrate': bitrate,
-            'can_rx_topic': '/from_can_bus',
-            'can_tx_topic': '/to_can_bus',
-        }],
+        parameters=[
+            hardware_nodes_config,
+            {
+                'usb_path': usb_path,
+                'serial_baud': serial_baud,
+                'bitrate': bitrate,
+                'can_rx_topic': '/from_can_bus',
+                'can_tx_topic': '/to_can_bus',
+            }
+        ],
         output='screen'
     )
 

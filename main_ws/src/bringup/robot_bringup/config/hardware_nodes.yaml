@@ -17,6 +17,17 @@
     filter_id: 0
     mask_id: 0
     operation_mode: 0
+
+/socket_can_receiver:
+  ros__parameters:
+    interface: "vcan0"
+    enable_can_fd: false
+
+/socket_can_sender:
+  ros__parameters:
+    interface: "vcan0"
+    enable_can_fd: false
+    timeout_sec: 0.01
 # Centralized Sensor Configuration for ROX2026
 bno055_node:
   ros__parameters:
