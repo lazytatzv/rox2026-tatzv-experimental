@@ -12,7 +12,7 @@ HeadingStabilizerNode::HeadingStabilizerNode(const rclcpp::NodeOptions & options
   last_cmd_time_(0, 0, rcl_clock_type_t::RCL_ROS_TIME)
 {
   declare_parameters();
-  
+
   // last_cmd_time_ will be properly set on first cmd_callback or in constructor body
   last_cmd_time_ = this->get_clock()->now();
   core_ = std::make_unique<HeadingStabilizerCore>(config_);
@@ -25,7 +25,7 @@ HeadingStabilizerNode::HeadingStabilizerNode(const rclcpp::NodeOptions & options
     "/imu", rclcpp::SensorDataQoS(), std::bind(&HeadingStabilizerNode::imu_callback, this, std::placeholders::_1));
 
   pub_cmd_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel_out", 10);
-  
+
   // Parameter callback for dynamic tuning
   param_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&HeadingStabilizerNode::on_parameter_change, this, std::placeholders::_1));
@@ -112,7 +112,7 @@ void HeadingStabilizerNode::control_loop()
   auto out_msg = last_cmd_;
   out_msg.header.stamp = now;
   out_msg.twist.angular.z = (core_->isLockActive()) ? out_rate : last_cmd_.twist.angular.z;
-  
+
   pub_cmd_->publish(out_msg);
 }
 

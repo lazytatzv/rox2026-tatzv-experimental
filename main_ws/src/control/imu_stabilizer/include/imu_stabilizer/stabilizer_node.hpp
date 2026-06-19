@@ -24,7 +24,7 @@ public:
 private:
   void declare_parameters();
   void update_config_from_params();
-  
+
   rcl_interfaces::msg::SetParametersResult on_parameter_change(
     const std::vector<rclcpp::Parameter> & params);
 
@@ -35,7 +35,7 @@ private:
 
   std::unique_ptr<HeadingStabilizerCore> core_;
   HeadingStabilizerConfig config_;
-  
+
   rclcpp::Subscription<geometry_msgs::msg::TwistStamped>::SharedPtr sub_cmd_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr sub_imu_;
