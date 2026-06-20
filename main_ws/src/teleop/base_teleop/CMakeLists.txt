@@ -47,8 +47,12 @@ install(TARGETS
   RUNTIME DESTINATION bin
 )
 
+add_executable(twist_to_stamped src/twist_to_stamped.cpp)
+ament_target_dependencies(twist_to_stamped rclcpp geometry_msgs)
+
 install(TARGETS
   base_teleop_node
+  twist_to_stamped
   DESTINATION lib/${PROJECT_NAME}
 )
 

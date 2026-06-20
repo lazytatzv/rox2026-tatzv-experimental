@@ -47,11 +47,19 @@ def generate_launch_description():
         remappings=[("/cmd_vel_out", "/cmd_vel_teleop")],
     )
 
+    foxglove_teleop_relay = Node(
+        package="base_teleop",
+        executable="twist_to_stamped",
+        name="twist_to_stamped",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument("analysis_mode", default_value="false"),
             joy_node,
             base_teleop_node,
             twist_mux_node,
+            foxglove_teleop_relay,
         ]
     )
