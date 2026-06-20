@@ -56,10 +56,10 @@
   <xacro:property name="off_x" value="${wheel_base / 2.0}"/>
   <xacro:property name="off_y" value="${wheel_sep / 2.0}"/>
 
-  <xacro:mecanum_wheel name="front_left"  x="${off_x}"  y="${off_y}" roller_type="-1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
-  <xacro:mecanum_wheel name="front_right" x="${off_x}"  y="${-off_y}" roller_type="1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
-  <xacro:mecanum_wheel name="rear_left"   x="${-off_x}" y="${off_y}"  roller_type="1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
-  <xacro:mecanum_wheel name="rear_right"  x="${-off_x}" y="${-off_y}" roller_type="-1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="front_left"  x="${off_x}"  y="${off_y}" roller_type="1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="front_right" x="${off_x}"  y="${-off_y}" roller_type="-1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="rear_left"   x="${-off_x}" y="${off_y}"  roller_type="-1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="rear_right"  x="${-off_x}" y="${-off_y}" roller_type="1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
 
   <!-- 6. ros2_control & Gazebo -->
   <xacro:arg name="gazebo" default="false"/>
