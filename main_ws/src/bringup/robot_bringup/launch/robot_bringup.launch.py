@@ -79,6 +79,13 @@ def generate_launch_description():
         launch_arguments={"use_sim_time": use_sim_time}.items(),
     )
 
+    include_navigation = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [os.path.join(get_package_share_directory("base_navigation"), "launch", "navigation.launch.py")]
+        ),
+        launch_arguments={"use_sim_time": use_sim_time}.items(),
+    )
+
     # 4. Spawners & High-level Logic
     spawn_broadcaster = Node(
         package="controller_manager",
@@ -107,6 +114,7 @@ def generate_launch_description():
             include_input,
             include_foxglove,
             include_perception,
+            include_navigation,
             spawn_broadcaster,
             spawn_controller,
         ]
