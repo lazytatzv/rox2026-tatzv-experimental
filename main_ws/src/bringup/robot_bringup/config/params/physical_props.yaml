@@ -3,14 +3,14 @@
 
 base:
   mass: 18.0
-  width: 0.5
-  length: 0.5
+  width: 0.45
+  length: 0.60
   height: 0.1
 
 wheels:
   radius: 0.05
-  track_width: 0.60
-  wheel_base: 0.45
+  track_width: 0.50
+  wheel_base: 0.50
   mass: 0.5
 
 sensors:
