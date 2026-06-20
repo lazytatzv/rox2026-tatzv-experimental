@@ -6,7 +6,7 @@
 class TwistToStampedNode : public rclcpp::Node
 {
 public:
-  TwistToStampedNode() : Node("twist_to_stamped")
+  TwistToStampedNode() : Node("twist_to_stamped", rclcpp::NodeOptions().allow_undeclared_parameters(true))
   {
     pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel_ext", 10);
     sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
