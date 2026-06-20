@@ -48,8 +48,8 @@ def generate_launch_description():
     )
 
     tag_localization = Node(
-        package="apriltag_localization",
-        executable="tag_to_pose_node",
+        package="vision_localization",
+        executable="tag_localizer",
         name="tag_localization_node",
         parameters=[
             {"use_sim_time": use_sim_time},
