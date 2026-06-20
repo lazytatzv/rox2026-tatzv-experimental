@@ -61,48 +61,53 @@ controller_server:
       xy_goal_tolerance: 0.25
       yaw_goal_tolerance: 0.25
       
-    # Configuration for omni-directional (Mecanum) movement
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
-      debug_trajectory_details: True
-      min_vel_x: -0.5
-      min_vel_y: -0.5
-      max_vel_x: 0.5
-      max_vel_y: 0.5
-      max_vel_theta: 1.0
-      min_speed_xy: 0.0
-      max_speed_xy: 0.5
-      min_speed_theta: 0.0
-      
-      acc_lim_x: 2.5
-      acc_lim_y: 2.5
-      acc_lim_theta: 3.2
-      decel_lim_x: -2.5
-      decel_lim_y: -2.5
-      decel_lim_theta: -3.2
-      
-      vx_samples: 20
-      vy_samples: 20
-      vtheta_samples: 20
-      sim_time: 1.5
-      linear_granularity: 0.05
-      angular_granularity: 0.025
-      transform_tolerance: 0.2
-      xy_goal_tolerance: 0.25
-      trans_stopped_velocity: 0.25
-      short_circuit_trajectory_evaluation: True
-      stateful: True
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 0.02
-      PathAlign.scale: 32.0
-      PathAlign.forward_point_distance: 0.1
-      GoalAlign.scale: 24.0
-      GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
-      GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
+      plugin: "nav2_mppi_controller::MPPIController"
+      time_steps: 56
+      model_dt: 0.05
+      batch_size: 2000
+      vx_std: 0.2
+      vy_std: 0.2
+      vtheta_std: 0.2
+      vx_max: 0.5
+      vx_min: -0.5
+      vy_max: 0.5
+      vy_min: -0.5
+      vtheta_max: 1.0
+      iteration_count: 1
+      prune_distance: 1.7
+      transform_tolerance: 0.1
+      temperature: 0.3
+      gamma: 0.015
+      motion_model: "Omni"
+      visualize: false
+      TrajectoryCritic:
+        cost_weight: 2.0
+      GoalCritic:
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      ObstaclesCritic:
+        cost_weight: 20.0
+        repulsion_weight: 1.5
+        critical_weight: 20.0
+        consider_footprint: true
+      PathAlignCritic:
+        cost_weight: 14.0
+        max_heuristic_cost: 0.15
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 3
+        threshold_to_consider: 1.5
+      PathFollowCritic:
+        cost_weight: 5.0
+        offset_from_furthest: 20
+        threshold_to_consider: 1.4
+      PathAngleCritic:
+        cost_weight: 2.0
+        offset_from_furthest: 4
+        threshold_to_consider: 0.5
 
 local_costmap:
   local_costmap:
@@ -183,10 +188,21 @@ planner_server:
     use_sim_time: True
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner::NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
+      plugin: "nav2_smac_planner::SmacPlanner2D"
+      tolerance: 0.125
+      downsample_costmap: false
       allow_unknown: true
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      max_planning_time: 2.0
+      motion_model_for_search: "MOORE"
+      cost_travel_multiplier: 2.0
+      use_final_approach_orientation: false
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1e-10
 
 behavior_server:
   ros__parameters:

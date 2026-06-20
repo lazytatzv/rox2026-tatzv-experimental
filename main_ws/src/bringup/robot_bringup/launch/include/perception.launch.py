@@ -47,10 +47,20 @@ def generate_launch_description():
         }]
     )
 
+    tag_localization = Node(
+        package="apriltag_localization",
+        executable="tag_to_pose_node",
+        name="tag_localization_node",
+        parameters=[
+            {"use_sim_time": use_sim_time},
+        ],
+    )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="false"),
             apriltag_node,
             pc_to_laserscan,
+            tag_localization,
         ]
     )
