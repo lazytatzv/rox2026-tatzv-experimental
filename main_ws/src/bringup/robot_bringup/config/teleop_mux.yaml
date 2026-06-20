@@ -40,7 +40,7 @@ twist_mux:
       external:
         topic: "cmd_vel_ext"
         timeout: 2.0
-        priority: 5
+        priority: 90
       # Persistent baseline
       idle:
         topic: "cmd_vel_idle"
