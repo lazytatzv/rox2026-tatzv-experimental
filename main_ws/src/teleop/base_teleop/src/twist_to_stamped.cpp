@@ -10,7 +10,7 @@ public:
   {
     pub_ = this->create_publisher<geometry_msgs::msg::TwistStamped>("/cmd_vel_ext", 10);
     sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
-      "/cmd_vel_foxglove", 10,
+      "/cmd_vel", 10,
       [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
         auto stamped_msg = geometry_msgs::msg::TwistStamped();
         stamped_msg.header.stamp = this->now();
@@ -18,7 +18,7 @@ public:
         stamped_msg.twist = *msg;
         pub_->publish(stamped_msg);
       });
-    RCLCPP_INFO(this->get_logger(), "TwistToStampedNode started. Relaying /cmd_vel_foxglove -> /cmd_vel_ext");
+    RCLCPP_INFO(this->get_logger(), "TwistToStampedNode started. Relaying /cmd_vel -> /cmd_vel_ext");
   }
 
 private:
