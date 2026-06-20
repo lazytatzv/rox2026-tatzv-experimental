@@ -29,6 +29,11 @@
       <limit effort="50.0" velocity="100.0"/> 
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
+    <gazebo reference="${name}_wheel_link">
+      <mu1>0.0</mu1>
+      <mu2>1.0</mu2>
+      <fdir1>${-sin(roller_type * pi/4)} 0 ${cos(roller_type * pi/4)}</fdir1>
+    </gazebo>
     <xacro:barrel wheel_prefix="${name}_wheel" num="0" angle_deg="0"   roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${name}_wheel" num="1" angle_deg="40"  roller_type="${roller_type}"/>
     <xacro:barrel wheel_prefix="${name}_wheel" num="2" angle_deg="80"  roller_type="${roller_type}"/>
