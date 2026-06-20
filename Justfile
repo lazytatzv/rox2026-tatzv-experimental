@@ -57,6 +57,10 @@ up:
 build:
     DOCKER_BUILDKIT=1 DOCKER_BUILD_TARGET=dev IMAGE_TAG=dev docker compose {{profile}} {{compose_files}} build
 
+# Start Foxglove Bridge for Web/App UI
+foxglove:
+    docker exec -it rox2026_container bash -c "source /opt/ros/jazzy/setup.bash && ros2 run foxglove_bridge foxglove_bridge"
+
 # Stop container
 down:
     docker compose {{profile}} {{compose_files}} down
