@@ -5,21 +5,15 @@
     <xacro:property name="pos_x" value="${0.038 * cos(angle_rad)}"/>
     <xacro:property name="pos_y" value="${0.038 * sin(angle_rad)}"/>
     <xacro:property name="rot_r" value="${roller_type * pi/4}"/>
-    <joint name="${wheel_prefix}_barrel_${num}_joint" type="continuous">
+    <joint name="${wheel_prefix}_barrel_${num}_joint" type="fixed">
       <parent link="${wheel_prefix}_link"/><child link="${wheel_prefix}_barrel_${num}_link"/>
       <origin xyz="${pos_x} ${pos_y} 0" rpy="${rot_r} 0 ${angle_rad}"/>
-      <axis xyz="0 0 1"/>
-      <dynamics damping="0.0" friction="0.0"/>
     </joint>
     <link name="${wheel_prefix}_barrel_${num}_link">
-      <xacro:cylinder_inertia m="0.01" r="0.012" h="0.032"/>
       <visual name="${wheel_prefix}_barrel_${num}_vis">
         <geometry><cylinder radius="0.012" length="0.032"/></geometry>
         <material name="black"/>
       </visual>
-      <collision name="${wheel_prefix}_barrel_${num}_col">
-        <geometry><sphere radius="0.012"/></geometry>
-      </collision>
     </link>
   </xacro:macro>
 
@@ -27,7 +21,7 @@
     <link name="${name}_wheel_link">
       <xacro:cylinder_inertia m="${hub_mass}" r="${wheel_radius}" h="0.04"/>
       <visual name="${name}_hub_vis"><geometry><cylinder radius="${wheel_radius}" length="0.04"/></geometry><material name="aluminum"/></visual>
-      <!-- Hub collision removed to allow rollers to contact the ground -->
+      <collision name="${name}_hub_col"><geometry><sphere radius="${wheel_radius}"/></geometry></collision>
     </link>
     <joint name="${name}_wheel_joint" type="continuous">
       <parent link="base_link"/><child link="${name}_wheel_link"/>
