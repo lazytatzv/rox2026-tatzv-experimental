@@ -146,21 +146,21 @@
 
   <!-- Gazebo Camera Sensor Plugin -->
   <gazebo reference="camera_link">
-    <sensor name="camera_sensor" type="camera">
+    <sensor name="camera_sensor" type="rgbd_camera">
       <always_on>true</always_on>
       <update_rate>30.0</update_rate>
-      <topic>/camera/image_raw</topic>
+      <topic>/camera</topic>
       <gz_frame_id>camera_link_optical</gz_frame_id>
       <camera>
-        <horizontal_fov>1.047198</horizontal_fov>
+        <horizontal_fov>2.61799</horizontal_fov>
         <image>
-          <width>640</width>
-          <height>480</height>
+          <width>1920</width>
+          <height>1080</height>
           <format>R8G8B8</format>
         </image>
         <clip>
-          <near>0.05</near>
-          <far>8.0</far>
+          <near>0.1</near>
+          <far>10.0</far>
         </clip>
       </camera>
     </sensor>

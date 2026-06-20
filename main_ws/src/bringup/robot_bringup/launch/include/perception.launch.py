@@ -23,9 +23,34 @@ def generate_launch_description():
         ],
     )
 
+    pc_to_laserscan = Node(
+        package="pointcloud_to_laserscan",
+        executable="pointcloud_to_laserscan_node",
+        name="pointcloud_to_laserscan",
+        remappings=[
+            ("cloud_in", "/camera/depth/points"),
+            ("scan", "/scan"),
+        ],
+        parameters=[{
+            "target_frame": "camera_link",
+            "transform_tolerance": 0.01,
+            "min_height": 0.0,
+            "max_height": 1.0,
+            "angle_min": -1.309,  # -75 degrees
+            "angle_max": 1.309,   # 75 degrees
+            "angle_increment": 0.0087, # 0.5 degrees
+            "scan_time": 0.03333,
+            "range_min": 0.1,
+            "range_max": 10.0,
+            "use_inf": True,
+            "inf_epsilon": 1.0
+        }]
+    )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="false"),
             apriltag_node,
+            pc_to_laserscan,
         ]
     )
