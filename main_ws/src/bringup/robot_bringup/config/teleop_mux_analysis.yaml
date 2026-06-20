@@ -1,0 +1,28 @@
+# twist_mux configuration for control system identification
+# External test signal must win over idle teleop during automated analysis.
+twist_mux:
+  ros__parameters:
+    use_stamped: true
+    topics:
+      external:
+        topic: "cmd_vel_ext"
+        timeout: 2.0
+        priority: 200
+      teleop:
+        topic: "cmd_vel_joy"
+        timeout: 2.0
+        priority: 100
+      navigation:
+        topic: "cmd_vel_nav"
+        timeout: 2.0
+        priority: 10
+      idle:
+        topic: "cmd_vel_idle"
+        timeout: 10.0
+        priority: 1
+
+    locks:
+      e_stop:
+        topic: "stop_lock"
+        timeout: 0.0
+        priority: 255

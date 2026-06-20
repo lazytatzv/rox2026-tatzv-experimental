@@ -45,9 +45,12 @@ def launch_setup(context, *args, **kwargs):
         "/cmd_vel_ext",
         "/cmd_vel_teleop",
         "/mecanum_drive_controller/reference",
+        "/mecanum_drive_controller/odometry",
         "/odometry/filtered",
         "/odom/ground_truth",
         "/joint_states",
+        "/imu",
+        "/control_analysis/phase",
     ]
     if is_sim:
         cmd.append("--use-sim-time")

@@ -45,6 +45,7 @@ private:
 
   geometry_msgs::msg::TwistStamped last_cmd_;
   rclcpp::Time last_cmd_time_;
+  rclcpp::Time last_control_time_;
   double current_yaw_ = 0.0;
   double current_raw_rate_ = 0.0;
 };

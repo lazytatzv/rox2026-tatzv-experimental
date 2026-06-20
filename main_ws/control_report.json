@@ -1,0 +1,33 @@
+{
+  "report_name": "control_report",
+  "bag": "control_analysis_bag",
+  "generated_at": "2026-06-19T19:19:23.182901+00:00",
+  "input_signal": "Controller Reference",
+  "output_signal": "Wheel Odometry",
+  "segment_detection": "phase_marker",
+  "warnings": [
+    "Ground truth not recorded. Bridge /model/rox2026/odometry in simulation.",
+    "Wheel odometry and EKF disagree (normalized error 0.60). Prefer wheel odometry for plant ID."
+  ],
+  "time_domain": {
+    "K_p": 0.0,
+    "u_step": 0.0,
+    "y_ss": -4.4593416261205594e-13,
+    "overshoot": 0.0,
+    "t_peak": 5.683,
+    "rise_time": 0.0,
+    "settling_time_2": 7.003,
+    "ss_error": 4.4593416261205594e-13,
+    "fopdt_K": 0.01,
+    "fopdt_tau": 5.0,
+    "fopdt_L": 0.05,
+    "fopdt_r2": -2.4865269377813246
+  },
+  "frequency_domain": {
+    "sample_rate_hz": 100.00000000000213,
+    "f_cg": 0.5468943366400794,
+    "phase_margin": 179.92895837273704,
+    "f_cp": null,
+    "gain_margin": null
+  }
+}

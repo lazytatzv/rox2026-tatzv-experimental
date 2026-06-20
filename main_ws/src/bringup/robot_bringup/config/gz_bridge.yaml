@@ -8,7 +8,7 @@
   direction: ROS_TO_GZ
 
 - ros_topic_name: "/odom/ground_truth"
-  gz_topic_name: "/odom/ground_truth"
+  gz_topic_name: "/model/rox2026/odometry"
   ros_type_name: "nav_msgs/msg/Odometry"
   gz_type_name: "gz.msgs.Odometry"
   direction: GZ_TO_ROS

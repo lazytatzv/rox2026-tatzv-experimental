@@ -75,11 +75,11 @@ ros2 run robstride_driver set_motor_id --ros-args -p old:=127 -p new:=1 -p port:
 `analysis_settings.yaml` で定義されたパラメータに基づき、周波数応答やステップ応答を計測します。
 
 ```bash
-# 自動レポート生成 (シミュレーション起動、Chirp注入、Bode図生成)
-make report
+# 自動レポート生成 (sim を analysis_mode で起動した状態で実行)
+just report
 
 # 手動での信号注入
-make injector
+just analyze-control step
 ```
 
 ## Deployment

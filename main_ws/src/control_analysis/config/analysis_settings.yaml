@@ -18,4 +18,9 @@
   ros__parameters:
     chirp_duration: 15.0
     step_duration: 5.0
+    step_amplitude: 2.0
+    chirp_amplitude: 1.0
+    rest_duration: 2.0
+    frequency_start: 0.1
+    frequency_end: 15.0
     report_name: "full_analysis_report"

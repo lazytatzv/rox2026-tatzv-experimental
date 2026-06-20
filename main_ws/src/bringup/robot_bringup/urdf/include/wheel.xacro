@@ -26,7 +26,7 @@
     <joint name="${name}_wheel_joint" type="continuous">
       <parent link="base_link"/><child link="${name}_wheel_link"/>
       <origin xyz="${x} ${y} 0" rpy="-1.57 0 0"/><axis xyz="0 0 1"/>
-      <limit effort="6.0" velocity="25.0"/> 
+      <limit effort="50.0" velocity="100.0"/> 
       <dynamics damping="0.1" friction="0.1"/>
     </joint>
     <xacro:barrel wheel_prefix="${name}_wheel" num="0" angle_deg="0"   roller_type="${roller_type}"/>

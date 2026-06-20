@@ -27,7 +27,7 @@ ekf_filter_node:
                   false, false, true,
                   false, false, false,
                   false, false, true,
-                  true,  true,  false]
+                  false, false, false]
     imu0_remove_gravitational_acceleration: true
 
     # 3. AprilTag (Absolute Pose)

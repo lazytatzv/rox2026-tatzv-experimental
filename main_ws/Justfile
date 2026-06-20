@@ -55,18 +55,22 @@ launch:
     fi
 
 # Run automated control engineering analysis (mode can be step, sine, chirp, auto)
-analyze-control mode="auto" bag="control_analysis_bag":
+analyze-control mode="auto" bag="control_analysis_bag" report="full_analysis_report":
     @if [ "{{is_container}}" = "yes" ]; then \
-        rm -rf {{bag}} && \
+        rm -rf {{bag}} reports && mkdir -p reports && \
         echo "Starting control analysis launch (recording & injecting, mode: {{mode}})..." && \
         bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch control_analysis control_analysis.launch.py mode:={{mode}} bag_name:={{bag}} use_sim_time:=true' || true; \
         echo "Launch finished. Waiting for bag file to flush..." && sleep 2 && \
         echo "Running professional control engineering analysis on {{bag}}..." && \
-        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 run control_analysis analyze {{bag}}'; \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 run control_analysis analyze {{bag}} {{report}} reports'; \
     else \
         echo "Not in container. Forwarding..."; \
-        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}}; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}} {{report}}; \
     fi
+
+# Alias for README compatibility
+report mode="auto" bag="control_analysis_bag" report_name="full_analysis_report":
+    @just analyze-control {{mode}} {{bag}} {{report_name}}
 
 # Purge artifacts
 clean:

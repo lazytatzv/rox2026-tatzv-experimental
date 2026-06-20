@@ -181,25 +181,30 @@
       <pose relative_to="corner_panel_2d_code_panel_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel -->
       <visual name="2d_code_panel_visual_mesh_1">
-        <pose relative_to="corner_panel_2d_code_panel">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel_2d_code_panel">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_0.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_collision_mesh_2">
-        <pose relative_to="corner_panel_2d_code_panel">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel_2d_code_panel">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -293,25 +298,30 @@
       <pose relative_to="corner_panel_2d_code_panel_2_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_2 -->
       <visual name="2d_code_panel_2_visual_mesh_1">
-        <pose relative_to="corner_panel_2d_code_panel_2">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel_2d_code_panel_2">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_1.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_2_collision_mesh_2">
-        <pose relative_to="corner_panel_2d_code_panel_2">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel_2d_code_panel_2">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -365,25 +375,30 @@
       <pose relative_to="corner_panel__1_2d_code_panel_3_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_3 -->
       <visual name="2d_code_panel_3_visual_mesh_1">
-        <pose relative_to="corner_panel__1_2d_code_panel_3">0 0 0 0 -0 -0</pose>
+        <pose relative_to="corner_panel__1_2d_code_panel_3">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_2.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_3_collision_mesh_2">
-        <pose relative_to="corner_panel__1_2d_code_panel_3">0 0 0 0 -0 -0</pose>
+        <pose relative_to="corner_panel__1_2d_code_panel_3">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -477,25 +492,30 @@
       <pose relative_to="corner_panel__1_2d_code_panel_4_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_4 -->
       <visual name="2d_code_panel_4_visual_mesh_1">
-        <pose relative_to="corner_panel__1_2d_code_panel_4">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel__1_2d_code_panel_4">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_3.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_4_collision_mesh_2">
-        <pose relative_to="corner_panel__1_2d_code_panel_4">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel__1_2d_code_panel_4">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -549,25 +569,30 @@
       <pose relative_to="corner_panel__2_2d_code_panel_5_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_5 -->
       <visual name="2d_code_panel_5_visual_mesh_1">
-        <pose relative_to="corner_panel__2_2d_code_panel_5">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel__2_2d_code_panel_5">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_0.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_5_collision_mesh_2">
-        <pose relative_to="corner_panel__2_2d_code_panel_5">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel__2_2d_code_panel_5">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -605,25 +630,30 @@
       <pose relative_to="corner_panel__2_2d_code_panel_6_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_6 -->
       <visual name="2d_code_panel_6_visual_mesh_1">
-        <pose relative_to="corner_panel__2_2d_code_panel_6">0 0 0 0 -0 -0</pose>
+        <pose relative_to="corner_panel__2_2d_code_panel_6">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_1.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_6_collision_mesh_2">
-        <pose relative_to="corner_panel__2_2d_code_panel_6">0 0 0 0 -0 -0</pose>
+        <pose relative_to="corner_panel__2_2d_code_panel_6">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -799,7 +829,12 @@
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_2.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_7_collision_mesh_2">
@@ -845,25 +880,30 @@
       <pose relative_to="corner_panel__3_2d_code_panel_8_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_8 -->
       <visual name="2d_code_panel_8_visual_mesh_1">
-        <pose relative_to="corner_panel__3_2d_code_panel_8">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel__3_2d_code_panel_8">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_3.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_8_collision_mesh_2">
-        <pose relative_to="corner_panel__3_2d_code_panel_8">0 0 0 0 -0 0</pose>
+        <pose relative_to="corner_panel__3_2d_code_panel_8">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -917,25 +957,30 @@
       <pose relative_to="game1_center_panel_2d_code_panel_9_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_9 -->
       <visual name="2d_code_panel_9_visual_mesh_1">
-        <pose relative_to="game1_center_panel_2d_code_panel_9">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_9">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_12.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_9_collision_mesh_2">
-        <pose relative_to="game1_center_panel_2d_code_panel_9">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_9">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -973,25 +1018,30 @@
       <pose relative_to="game1_center_panel_2d_code_panel_10_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_10 -->
       <visual name="2d_code_panel_10_visual_mesh_1">
-        <pose relative_to="game1_center_panel_2d_code_panel_10">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_10">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_13.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_10_collision_mesh_2">
-        <pose relative_to="game1_center_panel_2d_code_panel_10">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_10">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1085,25 +1135,30 @@
       <pose relative_to="game1_center_panel_2d_code_panel_11_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_11 -->
       <visual name="2d_code_panel_11_visual_mesh_1">
-        <pose relative_to="game1_center_panel_2d_code_panel_11">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_11">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_12.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_11_collision_mesh_2">
-        <pose relative_to="game1_center_panel_2d_code_panel_11">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_11">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1141,25 +1196,30 @@
       <pose relative_to="game1_center_panel_2d_code_panel_12_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_12 -->
       <visual name="2d_code_panel_12_visual_mesh_1">
-        <pose relative_to="game1_center_panel_2d_code_panel_12">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_12">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_13.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_12_collision_mesh_2">
-        <pose relative_to="game1_center_panel_2d_code_panel_12">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_center_panel_2d_code_panel_12">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1213,25 +1273,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel -->
       <visual name="game2_panel_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_14.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1269,25 +1334,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_2_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_2 -->
       <visual name="game2_panel_2_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_2">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_2">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_15.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_2_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_2">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_2">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1325,25 +1395,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_3_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_3 -->
       <visual name="game2_panel_3_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_3">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_3">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_16.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_3_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_3">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_3">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1381,25 +1456,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_4_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_4 -->
       <visual name="game2_panel_4_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_4">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_4">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_17.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_4_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_4">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_4">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1437,25 +1517,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_5_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_5 -->
       <visual name="game2_panel_5_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_5">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_5">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_18.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_5_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_5">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_5">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1549,25 +1634,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_6_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_6 -->
       <visual name="game2_panel_6_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_6">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_6">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_19.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_6_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_6">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_6">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1605,25 +1695,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_7_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_7 -->
       <visual name="game2_panel_7_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_7">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_7">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_20.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_7_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_7">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_7">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1661,25 +1756,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_8_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_8 -->
       <visual name="game2_panel_8_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_8">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_8">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_21.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_8_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_8">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_8">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1717,25 +1817,30 @@
       <pose relative_to="game2_shoot_panel_game2_panel_9_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_9 -->
       <visual name="game2_panel_9_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel_game2_panel_9">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_9">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_22.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_9_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel_game2_panel_9">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel_game2_panel_9">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1789,25 +1894,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_10_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_10 -->
       <visual name="game2_panel_10_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_10">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_10">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_14.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_10_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_10">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_10">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1845,25 +1955,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_11_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_11 -->
       <visual name="game2_panel_11_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_11">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_11">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_15.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_11_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_11">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_11">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1901,25 +2016,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_12_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_12 -->
       <visual name="game2_panel_12_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_12">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_12">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_16.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_12_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_12">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_12">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -1957,25 +2077,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_13_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_13 -->
       <visual name="game2_panel_13_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_13">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_13">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_17.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_13_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_13">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_13">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2013,25 +2138,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_14_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_14 -->
       <visual name="game2_panel_14_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_14">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_14">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_18.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_14_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_14">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_14">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2069,25 +2199,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_15_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_15 -->
       <visual name="game2_panel_15_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_15">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_15">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_19.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_15_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_15">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_15">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2125,25 +2260,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_16_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_16 -->
       <visual name="game2_panel_16_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_16">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_16">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_20.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_16_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_16">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_16">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2181,25 +2321,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_17_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_17 -->
       <visual name="game2_panel_17_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_17">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_17">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_21.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_17_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_17">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_17">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2293,25 +2438,30 @@
       <pose relative_to="game2_shoot_panel__1_game2_panel_18_fixed">0 0 0 0 -0 0</pose>
       <!-- Part game2_panel_18 -->
       <visual name="game2_panel_18_visual_mesh_1">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_18">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_18">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_22.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="game2_panel_18_collision_mesh_2">
-        <pose relative_to="game2_shoot_panel__1_game2_panel_18">0 0 0 0 -0 0</pose>
+        <pose relative_to="game2_shoot_panel__1_game2_panel_18">0.2 0.2 0.0 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/game2_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.4 0.4 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2621,25 +2771,30 @@
       <pose relative_to="game3_goal_area_2d_code_panel_13_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_13 -->
       <visual name="2d_code_panel_13_visual_mesh_1">
-        <pose relative_to="game3_goal_area_2d_code_panel_13">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_13">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_23.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_13_collision_mesh_2">
-        <pose relative_to="game3_goal_area_2d_code_panel_13">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_13">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2733,25 +2888,30 @@
       <pose relative_to="game3_goal_area_2d_code_panel_14_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_14 -->
       <visual name="2d_code_panel_14_visual_mesh_1">
-        <pose relative_to="game3_goal_area_2d_code_panel_14">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_14">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_24.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_14_collision_mesh_2">
-        <pose relative_to="game3_goal_area_2d_code_panel_14">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_14">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2789,25 +2949,30 @@
       <pose relative_to="game3_goal_area_2d_code_panel_15_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_15 -->
       <visual name="2d_code_panel_15_visual_mesh_1">
-        <pose relative_to="game3_goal_area_2d_code_panel_15">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_15">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_25.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_15_collision_mesh_2">
-        <pose relative_to="game3_goal_area_2d_code_panel_15">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_15">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -2901,25 +3066,30 @@
       <pose relative_to="game3_goal_area_2d_code_panel_16_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_16 -->
       <visual name="2d_code_panel_16_visual_mesh_1">
-        <pose relative_to="game3_goal_area_2d_code_panel_16">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_16">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_26.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_16_collision_mesh_2">
-        <pose relative_to="game3_goal_area_2d_code_panel_16">0 0 0 0 -0 0</pose>
+        <pose relative_to="game3_goal_area_2d_code_panel_16">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3029,25 +3199,30 @@
       <pose relative_to="game1_df_panel_2d_code_panel_17_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_17 -->
       <visual name="2d_code_panel_17_visual_mesh_1">
-        <pose relative_to="game1_df_panel_2d_code_panel_17">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_17">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_4.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_17_collision_mesh_2">
-        <pose relative_to="game1_df_panel_2d_code_panel_17">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_17">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3141,25 +3316,30 @@
       <pose relative_to="game1_df_panel_2d_code_panel_18_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_18 -->
       <visual name="2d_code_panel_18_visual_mesh_1">
-        <pose relative_to="game1_df_panel_2d_code_panel_18">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_18">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_5.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_18_collision_mesh_2">
-        <pose relative_to="game1_df_panel_2d_code_panel_18">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_18">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3197,25 +3377,30 @@
       <pose relative_to="game1_df_panel_2d_code_panel_19_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_19 -->
       <visual name="2d_code_panel_19_visual_mesh_1">
-        <pose relative_to="game1_df_panel_2d_code_panel_19">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_19">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_6.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_19_collision_mesh_2">
-        <pose relative_to="game1_df_panel_2d_code_panel_19">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_19">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3253,25 +3438,30 @@
       <pose relative_to="game1_df_panel_2d_code_panel_20_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_20 -->
       <visual name="2d_code_panel_20_visual_mesh_1">
-        <pose relative_to="game1_df_panel_2d_code_panel_20">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_20">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_7.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_20_collision_mesh_2">
-        <pose relative_to="game1_df_panel_2d_code_panel_20">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel_2d_code_panel_20">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3325,25 +3515,30 @@
       <pose relative_to="game1_df_panel__1_2d_code_panel_21_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_21 -->
       <visual name="2d_code_panel_21_visual_mesh_1">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_21">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_21">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_8.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_21_collision_mesh_2">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_21">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_21">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3381,25 +3576,30 @@
       <pose relative_to="game1_df_panel__1_2d_code_panel_22_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_22 -->
       <visual name="2d_code_panel_22_visual_mesh_1">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_22">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_22">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_9.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_22_collision_mesh_2">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_22">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_22">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3437,25 +3637,30 @@
       <pose relative_to="game1_df_panel__1_2d_code_panel_23_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_23 -->
       <visual name="2d_code_panel_23_visual_mesh_1">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_23">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_23">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_10.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_23_collision_mesh_2">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_23">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_23">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3549,25 +3754,30 @@
       <pose relative_to="game1_df_panel__1_2d_code_panel_24_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_24 -->
       <visual name="2d_code_panel_24_visual_mesh_1">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_24">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_24">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_11.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_24_collision_mesh_2">
-        <pose relative_to="game1_df_panel__1_2d_code_panel_24">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__1_2d_code_panel_24">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3621,25 +3831,30 @@
       <pose relative_to="game1_df_panel__2_2d_code_panel_25_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_25 -->
       <visual name="2d_code_panel_25_visual_mesh_1">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_25">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_25">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_4.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_25_collision_mesh_2">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_25">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_25">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3677,25 +3892,30 @@
       <pose relative_to="game1_df_panel__2_2d_code_panel_26_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_26 -->
       <visual name="2d_code_panel_26_visual_mesh_1">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_26">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_26">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_5.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_26_collision_mesh_2">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_26">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_26">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3733,25 +3953,30 @@
       <pose relative_to="game1_df_panel__2_2d_code_panel_27_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_27 -->
       <visual name="2d_code_panel_27_visual_mesh_1">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_27">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_27">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_6.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_27_collision_mesh_2">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_27">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_27">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3789,25 +4014,30 @@
       <pose relative_to="game1_df_panel__2_2d_code_panel_28_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_28 -->
       <visual name="2d_code_panel_28_visual_mesh_1">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_28">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_28">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_7.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_28_collision_mesh_2">
-        <pose relative_to="game1_df_panel__2_2d_code_panel_28">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__2_2d_code_panel_28">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3917,25 +4147,30 @@
       <pose relative_to="game1_df_panel__3_2d_code_panel_29_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_29 -->
       <visual name="2d_code_panel_29_visual_mesh_1">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_29">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_29">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_8.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_29_collision_mesh_2">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_29">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_29">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -3973,25 +4208,30 @@
       <pose relative_to="game1_df_panel__3_2d_code_panel_30_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_30 -->
       <visual name="2d_code_panel_30_visual_mesh_1">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_30">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_30">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_9.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_30_collision_mesh_2">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_30">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_30">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -4029,25 +4269,30 @@
       <pose relative_to="game1_df_panel__3_2d_code_panel_31_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_31 -->
       <visual name="2d_code_panel_31_visual_mesh_1">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_31">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_31">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_10.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_31_collision_mesh_2">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_31">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_31">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>
@@ -4085,25 +4330,30 @@
       <pose relative_to="game1_df_panel__3_2d_code_panel_32_fixed">0 0 0 0 -0 0</pose>
       <!-- Part 2d_code_panel_32 -->
       <visual name="2d_code_panel_32_visual_mesh_1">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_32">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_32">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
         <material>
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>0.1 0.1 0.1 1</specular>
-          <emissive>0 0 0 0</emissive>
+          <pbr>
+            <metal>
+              <albedo_map>model://rox2026_field/materials/textures/tag_11.png</albedo_map>
+              <roughness>0.8</roughness>
+            </metal>
+          </pbr>
         </material>
       </visual>
       <collision name="2d_code_panel_32_collision_mesh_2">
-        <pose relative_to="game1_df_panel__3_2d_code_panel_32">0 0 0 0 -0 0</pose>
+        <pose relative_to="game1_df_panel__3_2d_code_panel_32">0.1 0.1 0.005 0 0 0</pose>
         <geometry>
-          <mesh>
-            <uri>model://rox2026_field/assets/2d_code_panel.stl</uri>
-          </mesh>
+          <box>
+            <size>0.2 0.2 0.01</size>
+          </box>
         </geometry>
       </collision>
     </link>

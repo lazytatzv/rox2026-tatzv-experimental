@@ -2,14 +2,28 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 
 
 def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory("robot_bringup")
-    config_file = os.path.join(pkg_robot_bringup, "config", "teleop_mux.yaml")
+    default_config = os.path.join(pkg_robot_bringup, "config", "teleop_mux.yaml")
+    analysis_config = os.path.join(pkg_robot_bringup, "config", "teleop_mux_analysis.yaml")
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
+    analysis_mode = LaunchConfiguration("analysis_mode", default="false")
+    config_file = PythonExpression(
+        [
+            "'",
+            analysis_config,
+            "' if '",
+            analysis_mode,
+            "' == 'true' else '",
+            default_config,
+            "'",
+        ]
+    )
 
     joy_node = Node(
         package="joy",
@@ -33,4 +47,11 @@ def generate_launch_description():
         remappings=[("/cmd_vel_out", "/cmd_vel_teleop")],
     )
 
-    return LaunchDescription([joy_node, base_teleop_node, twist_mux_node])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument("analysis_mode", default_value="false"),
+            joy_node,
+            base_teleop_node,
+            twist_mux_node,
+        ]
+    )

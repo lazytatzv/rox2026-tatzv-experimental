@@ -44,9 +44,11 @@ void BaseTeleopNode::declare_parameters()
   this->declare_parameter("joy_axis_angular_z", 2);
   this->declare_parameter("joy_button_software_stop", 15);
   this->declare_parameter("joy_button_joy_mode_on", 8);
-  this->declare_parameter("scale_linear_velocity", 1.0);
+  this->declare_parameter("scale_linear_x", 1.0);
+  this->declare_parameter("scale_linear_y", 1.0);
   this->declare_parameter("scale_angular_velocity", 1.0);
   this->declare_parameter("smoothing_factor", 0.3);
+  this->declare_parameter("joy_deadband", 0.05);
   this->declare_parameter("topic_joy", "joy");
   this->declare_parameter("topic_cmd_vel", "cmd_vel_joy");
   this->declare_parameter("topic_stop_lock", "stop_lock");
@@ -59,9 +61,11 @@ void BaseTeleopNode::update_parameters()
   axis_angular_z_ = this->get_parameter("joy_axis_angular_z").as_int();
   button_software_stop_ = this->get_parameter("joy_button_software_stop").as_int();
   button_joy_mode_on_ = this->get_parameter("joy_button_joy_mode_on").as_int();
-  scale_linear_velocity_ = this->get_parameter("scale_linear_velocity").as_double();
+  scale_linear_x_ = this->get_parameter("scale_linear_x").as_double();
+  scale_linear_y_ = this->get_parameter("scale_linear_y").as_double();
   scale_angular_velocity_ = this->get_parameter("scale_angular_velocity").as_double();
   smoothing_factor_ = std::clamp(this->get_parameter("smoothing_factor").as_double(), 0.01, 1.0);
+  joy_deadband_ = this->get_parameter("joy_deadband").as_double();
   topic_joy_ = this->get_parameter("topic_joy").as_string();
   topic_cmd_vel_ = this->get_parameter("topic_cmd_vel").as_string();
   topic_stop_lock_ = this->get_parameter("topic_stop_lock").as_string();
@@ -108,9 +112,13 @@ void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr ms
       axis_angular_z_}));
   if (msg->axes.size() <= req_axes) {return;}
 
-  target_twist_.linear.x = msg->axes[axis_linear_x_] * scale_linear_velocity_;
-  target_twist_.linear.y = msg->axes[axis_linear_y_] * scale_linear_velocity_;
-  target_twist_.angular.z = msg->axes[axis_angular_z_] * scale_angular_velocity_;
+  auto apply_deadband = [this](double val) {
+    return std::abs(val) < joy_deadband_ ? 0.0 : val;
+  };
+
+  target_twist_.linear.x = apply_deadband(msg->axes[axis_linear_x_]) * scale_linear_x_;
+  target_twist_.linear.y = apply_deadband(msg->axes[axis_linear_y_]) * scale_linear_y_;
+  target_twist_.angular.z = apply_deadband(msg->axes[axis_angular_z_]) * scale_angular_velocity_;
 }
 
 }  // namespace base_teleop

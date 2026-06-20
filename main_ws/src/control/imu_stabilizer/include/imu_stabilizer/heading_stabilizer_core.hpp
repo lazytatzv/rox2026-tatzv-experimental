@@ -20,6 +20,7 @@ struct HeadingStabilizerConfig
   double heading_limit = 1.0;
   double rate_limit = 0.5;
   double gyro_alpha = 0.3;
+  double lock_deadband = 0.01;
 };
 
 /**

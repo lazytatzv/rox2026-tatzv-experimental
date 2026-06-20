@@ -86,7 +86,9 @@
       <xacro:macro name="joint_if" params="name hw_node">
         <joint name="${name}_wheel_joint">
           <command_interface name="velocity">
-            <param name="p">40.0</param><param name="i">1.0</param><param name="d">1.0</param>
+            <param name="p">80.0</param><param name="i">10.0</param><param name="d">2.0</param>
+            <param name="i_clamp">10.0</param>
+            <param name="max_effort">20.0</param>
           </command_interface>
           <state_interface name="position"/><state_interface name="velocity"/><state_interface name="effort"/>
           <param name="motor_id">${hw['hardware']['motors'][hw_node]['id']}</param>
@@ -104,5 +106,27 @@
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
       <parameters>$(find robot_bringup)/config/controllers.yaml</parameters>
     </plugin>
+  </gazebo>
+
+  <!-- Gazebo IMU Sensor Plugin -->
+  <gazebo reference="base_link">
+    <sensor name="imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>/imu</topic>
+      <gz_frame_id>base_link</gz_frame_id>
+      <imu>
+        <angular_velocity>
+          <x><noise type="none"/></x>
+          <y><noise type="none"/></y>
+          <z><noise type="none"/></z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x><noise type="none"/></x>
+          <y><noise type="none"/></y>
+          <z><noise type="none"/></z>
+        </linear_acceleration>
+      </imu>
+    </sensor>
   </gazebo>
 </robot>

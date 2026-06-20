@@ -1,0 +1,20 @@
+{
+  "report_name": "full_analysis_report",
+  "bag": "control_analysis_bag",
+  "generated_at": "2026-06-19T20:25:01.120533+00:00",
+  "input_signal": "Controller Reference",
+  "output_signal": "EKF Estimate",
+  "segment_detection": "phase_marker",
+  "warnings": [
+    "Using EKF output as plant response. Record /mecanum_drive_controller/odometry for accurate drive plant identification.",
+    "Ground truth not recorded. Bridge /model/rox2026/odometry in simulation."
+  ],
+  "time_domain": null,
+  "frequency_domain": {
+    "sample_rate_hz": 30.303030303016104,
+    "f_cg": null,
+    "phase_margin": null,
+    "f_cp": null,
+    "gain_margin": null
+  }
+}

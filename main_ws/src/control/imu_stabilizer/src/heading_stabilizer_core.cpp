@@ -29,7 +29,7 @@ void HeadingStabilizerCore::setGains(const HeadingStabilizerConfig & config)
 
 void HeadingStabilizerCore::updateCommand(double target_angular_z, double current_yaw)
 {
-  if (std::abs(target_angular_z) < 0.001) {
+  if (std::abs(target_angular_z) < config_.lock_deadband) {
     if (!lock_active_) {
       target_yaw_lock_ = current_yaw;
       lock_active_ = true;

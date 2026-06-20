@@ -9,7 +9,8 @@ namespace imu_stabilizer
 
 HeadingStabilizerNode::HeadingStabilizerNode(const rclcpp::NodeOptions & options)
 : Node("heading_stabilizer", options),
-  last_cmd_time_(0, 0, rcl_clock_type_t::RCL_ROS_TIME)
+  last_cmd_time_(0, 0, rcl_clock_type_t::RCL_ROS_TIME),
+  last_control_time_(0, 0, rcl_clock_type_t::RCL_ROS_TIME)
 {
   declare_parameters();
 
@@ -39,6 +40,8 @@ HeadingStabilizerNode::HeadingStabilizerNode(const rclcpp::NodeOptions & options
 void HeadingStabilizerNode::declare_parameters()
 {
   this->declare_parameter("enable_lock", true);
+  this->declare_parameter("use_odom_for_yaw", false);
+  this->declare_parameter("lock_deadband", 0.01);
   this->declare_parameter("gyro_alpha", 0.3);
   this->declare_parameter("heading_pid.p", 3.0);
   this->declare_parameter("heading_pid.i", 0.5);
@@ -52,6 +55,7 @@ void HeadingStabilizerNode::declare_parameters()
 
 void HeadingStabilizerNode::update_config_from_params()
 {
+  config_.lock_deadband = this->get_parameter("lock_deadband").as_double();
   config_.gyro_alpha = this->get_parameter("gyro_alpha").as_double();
   config_.heading_p = this->get_parameter("heading_pid.p").as_double();
   config_.heading_i = this->get_parameter("heading_pid.i").as_double();
@@ -76,13 +80,21 @@ rcl_interfaces::msg::SetParametersResult HeadingStabilizerNode::on_parameter_cha
 void HeadingStabilizerNode::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
 {
   current_raw_rate_ = msg->angular_velocity.z;
+  if (!this->get_parameter("use_odom_for_yaw").as_bool()) {
+    double qz = msg->orientation.z;
+    double qw = msg->orientation.w;
+    // Simple yaw extraction assuming flat ground (roll/pitch approx 0)
+    current_yaw_ = 2.0 * std::atan2(qz, qw);
+  }
 }
 
 void HeadingStabilizerNode::odom_callback(const nav_msgs::msg::Odometry::SharedPtr msg)
 {
-  double qz = msg->pose.pose.orientation.z;
-  double qw = msg->pose.pose.orientation.w;
-  current_yaw_ = 2.0 * atan2(qz, qw);
+  if (this->get_parameter("use_odom_for_yaw").as_bool()) {
+    double qz = msg->pose.pose.orientation.z;
+    double qw = msg->pose.pose.orientation.w;
+    current_yaw_ = 2.0 * std::atan2(qz, qw);
+  }
 }
 
 void HeadingStabilizerNode::cmd_callback(const geometry_msgs::msg::TwistStamped::SharedPtr msg)
@@ -95,7 +107,18 @@ void HeadingStabilizerNode::cmd_callback(const geometry_msgs::msg::TwistStamped:
 void HeadingStabilizerNode::control_loop()
 {
   auto now = this->get_clock()->now();
-  const double dt_s = 0.01;
+  
+  if (last_control_time_.nanoseconds() == 0) {
+    last_control_time_ = now;
+    return;
+  }
+  
+  double dt_s = (now - last_control_time_).seconds();
+  last_control_time_ = now;
+  
+  if (dt_s <= 0.0) {
+    dt_s = 0.01; // Fallback
+  }
 
   if ((now - last_cmd_time_).seconds() > 0.5) {
     pub_cmd_->publish(geometry_msgs::msg::TwistStamped());

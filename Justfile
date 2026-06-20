@@ -100,5 +100,9 @@ launch:
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile launch
 
 # Run automated control engineering analysis (mode can be step, sine, chirp, auto)
-analyze-control mode="auto" bag="control_analysis_bag":
-    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}}
+analyze-control mode="auto" bag="control_analysis_bag" report="full_analysis_report":
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}} {{report}}
+
+# Alias for README compatibility
+report mode="auto" bag="control_analysis_bag" report_name="full_analysis_report":
+    just analyze-control {{mode}} {{bag}} {{report_name}}

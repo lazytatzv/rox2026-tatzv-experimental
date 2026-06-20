@@ -35,9 +35,11 @@ private:
   int axis_angular_z_;
   int button_software_stop_;
   int button_joy_mode_on_;
-  double scale_linear_velocity_;
+  double scale_linear_x_;
+  double scale_linear_y_;
   double scale_angular_velocity_;
   double smoothing_factor_;
+  double joy_deadband_;
   std::string topic_joy_;
   std::string topic_cmd_vel_;
   std::string topic_stop_lock_;

@@ -19,6 +19,7 @@ def generate_launch_description():
     gazebo = LaunchConfiguration("gazebo", default="false")
     headless = LaunchConfiguration("headless", default="false")
     use_mock_hardware = LaunchConfiguration("use_mock_hardware", default="false")
+    analysis_mode = LaunchConfiguration("analysis_mode", default="false")
 
     # 3. Modular Launch Includes
     include_description = IncludeLaunchDescription(
@@ -61,7 +62,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             [os.path.join(pkg_robot_bringup, "launch", "include", "input.launch.py")]
         ),
-        launch_arguments={"use_sim_time": use_sim_time}.items(),
+        launch_arguments={"use_sim_time": use_sim_time, "analysis_mode": analysis_mode}.items(),
     )
 
     include_foxglove = IncludeLaunchDescription(
@@ -76,13 +77,13 @@ def generate_launch_description():
         package="controller_manager",
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager-timeout", "120"],
-        parameters=[{"use_sim_time": False}],
+        parameters=[{"use_sim_time": use_sim_time}],
     )
     spawn_controller = Node(
         package="controller_manager",
         executable="spawner",
         arguments=["mecanum_drive_controller", "--controller-manager-timeout", "120"],
-        parameters=[{"use_sim_time": False}],
+        parameters=[{"use_sim_time": use_sim_time}],
     )
 
     return LaunchDescription(
@@ -91,6 +92,7 @@ def generate_launch_description():
             DeclareLaunchArgument("gazebo", default_value="false"),
             DeclareLaunchArgument("headless", default_value="false"),
             DeclareLaunchArgument("use_mock_hardware", default_value="false"),
+            DeclareLaunchArgument("analysis_mode", default_value="false"),
             include_description,
             include_localization,
             include_sim,
