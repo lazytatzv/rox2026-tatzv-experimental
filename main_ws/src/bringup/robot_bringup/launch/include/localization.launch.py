@@ -22,13 +22,22 @@ def generate_launch_description():
         parameters=[hardware_nodes_config, {"use_sim_time": use_sim_time}],
     )
 
-    ekf_node = Node(
+    local_ekf_node = Node(
         package="robot_localization",
         executable="ekf_node",
-        name="ekf_filter_node",
+        name="local_ekf_node",
+        output="screen",
+        parameters=[ekf_config, {"use_sim_time": use_sim_time}],
+        remappings=[("/odometry/filtered", "/odometry/local")],
+    )
+
+    global_ekf_node = Node(
+        package="robot_localization",
+        executable="ekf_node",
+        name="global_ekf_node",
         output="screen",
         parameters=[ekf_config, {"use_sim_time": use_sim_time}],
         remappings=[("/odometry/filtered", "/odometry/filtered")],
     )
 
-    return LaunchDescription([imu_driver, ekf_node])
+    return LaunchDescription([imu_driver, local_ekf_node, global_ekf_node])

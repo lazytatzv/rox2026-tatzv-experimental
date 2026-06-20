@@ -1,7 +1,41 @@
-# robot_localization EKF configuration
-# "The Sensor Fusion Master with Visual Localization"
+# robot_localization Dual EKF configuration
+# "The Professional Sensor Fusion Master with Visual Localization"
 
-ekf_filter_node:
+# --- LOCAL EKF (Continuous, Smooth, No Drift) ---
+# Fuses Wheel Odometry and IMU. Publishes odom -> base_footprint.
+local_ekf_node:
+  ros__parameters:
+    frequency: 50.0
+    sensor_timeout: 0.1
+    two_d_mode: true
+    publish_tf: true
+
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+
+    odom0: /mecanum_drive_controller/odometry
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  true,  false,
+                   false, false, true,
+                   false, false, false]
+
+    imu0: imu
+    imu0_config: [false, false, false,
+                  false, false, true,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_remove_gravitational_acceleration: true
+
+    use_control: false
+
+
+# --- GLOBAL EKF (Absolute Positioning) ---
+# Fuses Wheel Odom, IMU, and AprilTag. Publishes map -> odom.
+global_ekf_node:
   ros__parameters:
     frequency: 30.0
     sensor_timeout: 0.1
@@ -11,9 +45,8 @@ ekf_filter_node:
     map_frame: map
     odom_frame: odom
     base_link_frame: base_footprint
-    world_frame: map # Now map is the world to fuse AprilTag global info
+    world_frame: map
 
-    # 1. Wheel Odometry (Velocity only)
     odom0: /mecanum_drive_controller/odometry
     odom0_config: [false, false, false,
                    false, false, false,
@@ -21,7 +54,6 @@ ekf_filter_node:
                    false, false, true,
                    false, false, false]
 
-    # 2. IMU (Angular and Acceleration)
     imu0: imu
     imu0_config: [false, false, false,
                   false, false, true,
@@ -30,11 +62,9 @@ ekf_filter_node:
                   false, false, false]
     imu0_remove_gravitational_acceleration: true
 
-    # 3. AprilTag (Absolute Pose)
-    # This comes from the detector node (relative to map/world)
     pose0: /apriltag_pose
-    pose0_config: [true,  true,  false, # X, Y position from Tag
-                   false, false, true,  # Yaw orientation from Tag
+    pose0_config: [true,  true,  false,
+                   false, false, true,
                    false, false, false,
                    false, false, false,
                    false, false, false]
