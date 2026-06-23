@@ -2,7 +2,7 @@
 
 /serial_driver:
   ros__parameters:
-    device_name: "/dev/ttyUSB0"
+    device_name: "/dev/ttyUSB1"
     baud_rate: 921600
     flow_control: "none"
     parity: "none"
@@ -10,7 +10,7 @@
 
 /usb_can_analyzer_node:
   ros__parameters:
-    usb_path: "/dev/ttyUSB0"
+    usb_path: "/dev/ttyUSB1"
     serial_baud: 2000000
     bitrate: 500000
     tx_extended: false

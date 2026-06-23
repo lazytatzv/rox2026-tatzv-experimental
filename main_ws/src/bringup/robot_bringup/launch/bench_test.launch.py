@@ -12,7 +12,7 @@ def generate_launch_description():
 
     # Arguments
     motor_id = LaunchConfiguration("motor_id", default="1")
-    usb_path = LaunchConfiguration("usb_path", default="/dev/ttyUSB0")
+    usb_path = LaunchConfiguration("usb_path", default="/dev/ttyUSB1")
 
     urdf_path = os.path.join(pkg_robot_bringup, "urdf", "robot.urdf.xacro")
     controllers_config = os.path.join(pkg_robot_bringup, "config", "bench_controllers.yaml")
@@ -72,7 +72,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("motor_id", default_value="1"),
-            DeclareLaunchArgument("usb_path", default_value="/dev/ttyUSB0"),
+            DeclareLaunchArgument("usb_path", default_value="/dev/ttyUSB1"),
             robot_state_publisher,
             controller_manager,
             spawn_controller,

@@ -2,10 +2,10 @@
 motor:
   ids: [1, 2, 3, 4]   # モーターIDリスト (複数同時に動かす場合)
   mode: "velocity"    # 制御モード ("position" (位置制御) または "velocity" (速度制御))
-  speed: 5.0          # 制御速度 (velocityモード時の目標速度 / positionモード時の制限速度。単位: rad/s)
+  speed: 45.0          # 制御速度 (velocityモード時の目標速度 / positionモード時の制限速度。単位: rad/s)
   position: 1.5708    # 目標位置 (positionモード用)
   limit_current: 5.0  # 制限電流 (positionモード時の最大電流。単位: A)
-  duration: 3.0       # 動作させる時間 (秒)
+  duration: 60.0       # 動作させる時間 (秒)
 
 # 通信設定
 serial:

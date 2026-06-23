@@ -3,7 +3,7 @@
 # Experts: Tune hardware-level limits.
 
 hardware:
-  usb_port: "/dev/ttyUSB0"
+  usb_port: "/dev/ttyUSB1"
   protocol: "at" # 'at' or 'can'
   baud_rate: 921600
   can_interface_type: "serial" # 'serial' or 'ros_topic' (for socketcan / usb_can_analyzer via topic)

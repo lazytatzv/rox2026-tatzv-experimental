@@ -69,7 +69,8 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
   for (size_t i = 0; i < info_.joints.size(); ++i) {
     const auto & joint = info_.joints[i];
     motors_[i].id = std::stoi(joint.parameters.at("motor_id"), nullptr, 0);
-    motors_[i].invert = (joint.parameters.at("invert_direction") == "true");
+    const std::string & invert_str = joint.parameters.at("invert_direction");
+    motors_[i].invert = (invert_str == "true" || invert_str == "True" || invert_str == "1");
     id_to_index_[motors_[i].id] = i;
   }
 

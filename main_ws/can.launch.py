@@ -26,7 +26,7 @@ def generate_launch_description():
 
     declare_usb_path = DeclareLaunchArgument(
         'usb_path',
-        default_value='/dev/ttyUSB0',
+        default_value='/dev/ttyUSB1',
         description='USB serial path (only used for usb_can_analyzer)'
     )
 
