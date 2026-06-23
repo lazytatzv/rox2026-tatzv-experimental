@@ -134,20 +134,39 @@ def main():
             time.sleep(0.05)
 
         print("\n=== 6. 停止フェーズ ===")
-        print("  [DEBUG] 安全に停止させるため、速度 0.0 を5回送信します。")
-        for i in range(5):
-            send_command(ser, f"Stop #{i+1}", CMD_STOP)
+        print("  [DEBUG] 減速のため、速度 0.0 を3回送信します。")
+        for i in range(3):
+            send_command(ser, f"Stop Decel #{i+1}", CMD_STOP)
+            time.sleep(0.02)
+            time.sleep(0.05)
+
+        print("  [DEBUG] 完全に停止させるため、無効化 (Disable) コマンドを3回送信します。")
+        disable_cmd = build_at_frame(4, MOTOR_ID, [0, 0, 0, 0, 0, 0, 0, 0])
+        for i in range(3):
+            send_command(ser, f"Disable #{i+1}", disable_cmd)
+            time.sleep(0.02)
             time.sleep(0.05)
 
         print("\n✓ 正常にテスト終了しました。")
 
     except KeyboardInterrupt:
-        print("\n\n[中断] ユーザーにより処理が中断されました。緊急停止します...")
-        for i in range(5):
+        print("\n\n[中断] ユーザーにより処理が中断されました。緊急停止/無効化します...")
+        # 1. 減速
+        for i in range(3):
             try:
                 send_command(ser, f"Emergency Stop #{i+1}", CMD_STOP)
             except Exception:
                 pass
+            time.sleep(0.02)
+            time.sleep(0.05)
+        # 2. 完全無効化
+        disable_cmd = build_at_frame(4, MOTOR_ID, [0, 0, 0, 0, 0, 0, 0, 0])
+        for i in range(3):
+            try:
+                send_command(ser, f"Emergency Disable #{i+1}", disable_cmd)
+            except Exception:
+                pass
+            time.sleep(0.02)
             time.sleep(0.05)
     finally:
         if ser:

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -137,8 +138,8 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
     });
   }
 
+  // 1. Send Mode Select Command (to Velocity mode) for ALL motors
   for (const auto & motor : motors_) {
-    // 1. Send Mode Select Command (to Velocity mode, as done in the python exact run script)
     auto mode_data = protocol_handler_->create_mode_select_command(motor.id, "velocity");
     if (!mode_data.empty()) {
       if (can_interface_type_ != "serial") {
@@ -153,13 +154,17 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
       } else {
         for (int i = 0; i < 3; ++i) {
           transport_->send_raw(mode_data);
-          std::this_thread::sleep_for(std::chrono::milliseconds(50));
+          std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Python: time.sleep(0.02)
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Match python setup sequence
       }
     }
+  }
+  if (can_interface_type_ == "serial") {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Python: time.sleep(0.5)
+  }
 
-    // 2. Send Enable Command (repeated 3 times for robustness as done in python script)
+  // 2. Send Enable Command for ALL motors
+  for (const auto & motor : motors_) {
     auto frame_data = protocol_handler_->create_enable_command(motor.id);
     if (!frame_data.empty()) {
       if (can_interface_type_ != "serial") {
@@ -190,13 +195,17 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
       } else {
         for (int i = 0; i < 3; ++i) {
           transport_->send_raw(frame_data);
-          std::this_thread::sleep_for(std::chrono::milliseconds(50));
+          std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Python: time.sleep(0.02)
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Match python setup sequence
       }
     }
+  }
+  if (can_interface_type_ == "serial") {
+    std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Python: time.sleep(0.5)
+  }
 
-    // 3. Send Initial Command (0.0 rad/s) for safety (as done in python exact run script)
+  // 3. Send Initial Command (0.0 rad/s) for safety for ALL motors
+  for (const auto & motor : motors_) {
     auto init_data = protocol_handler_->create_velocity_command(motor.id, 0.0);
     if (!init_data.empty()) {
       if (can_interface_type_ != "serial") {
@@ -210,10 +219,14 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
         can_pub_->publish(msg);
       } else {
         transport_->send_raw(init_data);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Match python setup sequence
+        std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Python: time.sleep(0.02)
       }
     }
   }
+  if (can_interface_type_ == "serial") {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Python: time.sleep(0.1)
+  }
+
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -249,7 +262,11 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_deactivate(
         }
         can_pub_->publish(msg);
       } else {
-        transport_->send_raw(frame_data);
+        // Send disable 3 times per motor with delay, matching motor_exact_run.py
+        for (int i = 0; i < 3; ++i) {
+          transport_->send_raw(frame_data);
+          std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
       }
     }
   }
@@ -332,6 +349,10 @@ hardware_interface::return_type RobstrideSystemHardware::write(
         can_pub_->publish(msg);
       } else {
         transport_->send_raw(frame_data);
+        // 0.5ms inter-frame delay: gives the serial-to-CAN board time to
+        // process each frame without the ~3ms overhead of tcdrain().
+        // 4 motors × 0.5ms = 2ms total, within the 10ms cycle budget.
+        usleep(500);
       }
     }
   }

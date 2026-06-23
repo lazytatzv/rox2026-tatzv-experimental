@@ -9,9 +9,9 @@ hardware:
   can_interface_type: "serial" # 'serial' or 'ros_topic' (for socketcan / usb_can_analyzer via topic)
 
   motors:
-    front_left:  {id: 1, invert: false}
+    front_left:  {id: 1, invert: true}
     front_right: {id: 2, invert: false}
-    rear_left:   {id: 3, invert: false}
+    rear_left:   {id: 3, invert: true}
     rear_right:  {id: 4, invert: false}
     bench_id: 1
 

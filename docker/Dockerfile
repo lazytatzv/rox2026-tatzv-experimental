@@ -24,6 +24,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-robot-localization \
     ros-${ROS_DISTRO}-rmw-zenoh-cpp \
     ros-${ROS_DISTRO}-ros2-socketcan \
+    ros-${ROS_DISTRO}-apriltag-ros \
+    ros-${ROS_DISTRO}-pointcloud-to-laserscan \
+    ros-${ROS_DISTRO}-nav2-bringup \
     tigervnc-standalone-server \
     tigervnc-common \
     tigervnc-tools \

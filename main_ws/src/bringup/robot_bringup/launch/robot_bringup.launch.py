@@ -4,8 +4,10 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, Command
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
+from launch.conditions import UnlessCondition
 
 
 def generate_launch_description():
@@ -91,6 +93,27 @@ def generate_launch_description():
     )
 
     # 4. Spawners & High-level Logic
+    urdf_path = os.path.join(pkg_robot_bringup, "urdf", "robot.urdf.xacro")
+    controllers_config = os.path.join(pkg_robot_bringup, "config", "controllers.yaml")
+
+    robot_description_content = ParameterValue(
+        Command(
+            ["xacro ", urdf_path, " gazebo:=", gazebo, " use_mock_hardware:=", use_mock_hardware]
+        ),
+        value_type=str,
+    )
+
+    ros2_control_node = Node(
+        package="controller_manager",
+        executable="ros2_control_node",
+        parameters=[
+            {"robot_description": robot_description_content, "use_sim_time": use_sim_time},
+            controllers_config,
+        ],
+        output="screen",
+        condition=UnlessCondition(gazebo),
+    )
+
     spawn_broadcaster = Node(
         package="controller_manager",
         executable="spawner",
@@ -119,6 +142,7 @@ def generate_launch_description():
             include_foxglove,
             include_perception,
             include_navigation,
+            ros2_control_node,
             spawn_broadcaster,
             spawn_controller,
         ]

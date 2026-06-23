@@ -36,6 +36,7 @@ public:
 
   void set_receive_callback(std::function<void(const std::vector<uint8_t> &)> callback);
   void send_raw(const std::vector<uint8_t> & data);
+  void drain();
 
 private:
   void start_async_read();

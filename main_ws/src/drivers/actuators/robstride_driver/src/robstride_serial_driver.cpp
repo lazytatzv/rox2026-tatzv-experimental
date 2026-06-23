@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <system_error>
 #include <utility>
+#include <unistd.h>
 #include <termios.h>
 
 namespace robstride_driver
@@ -186,6 +187,14 @@ void RobstrideSerialDriver::send_raw(const std::vector<uint8_t> & data)
     throw std::runtime_error("Serial port is not open");
   }
   boost::asio::write(serial_port_, boost::asio::buffer(data));
+}
+
+void RobstrideSerialDriver::drain()
+{
+  std::lock_guard<std::mutex> lock(serial_mutex_);
+  if (serial_port_.is_open()) {
+    ::tcdrain(serial_port_.native_handle());
+  }
 }
 
 void RobstrideSerialDriver::start_async_read()

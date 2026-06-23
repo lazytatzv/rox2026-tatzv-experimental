@@ -103,6 +103,10 @@ sim-gui:
 launch:
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile launch
 
+# Launch minimal teleop-only (no sensors, no Nav2, just mecanum + joystick)
+teleop:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile teleop
+
 # Run automated control engineering analysis (mode can be step, sine, chirp, auto)
 analyze-control mode="auto" bag="control_analysis_bag" report="full_analysis_report":
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile analyze-control {{mode}} {{bag}} {{report}}
