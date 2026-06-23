@@ -1,0 +1,14 @@
+# モーター制御設定
+motor:
+  id: 0xFC            # モーターID (0xFC = 252: ブロードキャストID。個別IDの場合は 0x7F や 0x0C など)
+  mode: "position"    # 制御モード ("position" (位置制御) または "velocity" (速度制御))
+  speed: 10.0         # 制御速度 (velocityモード時の目標速度 / positionモード時の制限速度。単位: rad/s)
+  position: 1.5708    # 目標位置 (positionモード用。単位: ラジアン。例: 1.5708 = 90度, 3.1416 = 180度, -1.5708 = -90度)
+  limit_current: 5.0  # 制限電流 (positionモード時の最大電流。単位: A)
+  duration: 5.0       # 動作させる時間 (秒)
+
+# 通信設定
+serial:
+  port: null          # シリアルポート（null の場合は自動検出します）
+  baudrate: 921600    # 通信ボーレート
+
