@@ -295,21 +295,31 @@ def main():
             time.sleep(0.05)
 
         print("\n=== 6. 停止・原点復帰フェーズ ===")
-        print("  [DEBUG] モーターを安全に初期位置（0.0）に戻すコマンドを5回送信します。")
-        for i in range(5):
+        print("  [DEBUG] 減速のため、速度/位置 0.0 を3回送信します。")
+        for i in range(3):
             for motor_id in motor_ids:
                 if control_mode == "position":
                     stop_cmd = build_position_cmd(motor_id, 0.0)
                 else:
                     stop_cmd = build_velocity_cmd(motor_id, 0.0)
-                send_command(ser, f"Stop ID {motor_id} #{i+1}", stop_cmd)
+                send_command(ser, f"Stop Decel ID {motor_id} #{i+1}", stop_cmd)
+                time.sleep(0.02)
+            time.sleep(0.05)
+
+        print("  [DEBUG] 完全に停止させるため、無効化 (Disable) コマンドを3回送信します。")
+        for i in range(3):
+            for motor_id in motor_ids:
+                cmd = build_at_frame(4, motor_id, [0, 0, 0, 0, 0, 0, 0, 0])
+                send_command(ser, f"Disable ID {motor_id} #{i+1}", cmd)
+                time.sleep(0.02)
             time.sleep(0.05)
 
         print("\n✓ 正常にテスト終了しました。")
 
     except KeyboardInterrupt:
-        print("\n\n[中断] ユーザーにより処理が中断されました。原点復帰/緊急停止します...")
-        for i in range(5):
+        print("\n\n[中断] ユーザーにより処理が中断されました。原点復帰/緊急停止/無効化します...")
+        # 1. 減速
+        for i in range(3):
             for motor_id in motor_ids:
                 if control_mode == "position":
                     stop_cmd = build_position_cmd(motor_id, 0.0)
@@ -319,6 +329,17 @@ def main():
                     send_command(ser, f"Emergency Stop ID {motor_id} #{i+1}", stop_cmd)
                 except Exception:
                     pass
+                time.sleep(0.02)
+            time.sleep(0.05)
+        # 2. 完全無効化
+        for i in range(3):
+            for motor_id in motor_ids:
+                cmd = build_at_frame(4, motor_id, [0, 0, 0, 0, 0, 0, 0, 0])
+                try:
+                    send_command(ser, f"Emergency Disable ID {motor_id} #{i+1}", cmd)
+                except Exception:
+                    pass
+                time.sleep(0.02)
             time.sleep(0.05)
     finally:
         if ser:
