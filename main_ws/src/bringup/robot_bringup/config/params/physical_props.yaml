@@ -8,7 +8,7 @@ base:
   height: 0.1
 
 wheels:
-  radius: 0.05
+  radius: 0.06
   track_width: 0.44
   wheel_base: 0.60
   mass: 0.5
