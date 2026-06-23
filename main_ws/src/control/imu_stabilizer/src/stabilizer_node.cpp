@@ -107,15 +107,15 @@ void HeadingStabilizerNode::cmd_callback(const geometry_msgs::msg::TwistStamped:
 void HeadingStabilizerNode::control_loop()
 {
   auto now = this->get_clock()->now();
-  
+
   if (last_control_time_.nanoseconds() == 0) {
     last_control_time_ = now;
     return;
   }
-  
+
   double dt_s = (now - last_control_time_).seconds();
   last_control_time_ = now;
-  
+
   if (dt_s <= 0.0) {
     dt_s = 0.01; // Fallback
   }

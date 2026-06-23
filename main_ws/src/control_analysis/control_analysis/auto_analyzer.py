@@ -69,9 +69,7 @@ class AutoAnalyzer(Node):
                 f0 = self.get_parameter("frequency_start").value
                 f1 = self.get_parameter("frequency_end").value
                 amp = self.get_parameter("chirp_amplitude").value
-                phase = 2 * math.pi * (
-                    f0 * elapsed + 0.5 * (f1 - f0) * (elapsed**2) / duration
-                )
+                phase = 2 * math.pi * (f0 * elapsed + 0.5 * (f1 - f0) * (elapsed**2) / duration)
                 self.publish_vel(amp * math.sin(phase))
             else:
                 self.publish_phase("CHIRP_END")

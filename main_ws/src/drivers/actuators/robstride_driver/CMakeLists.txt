@@ -22,6 +22,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 # --- Hardware Interface Library ---
 add_library(robstride_system_hardware SHARED
   src/robstride_system_hardware.cpp
+  src/robstride_serial_driver.cpp
 )
 target_include_directories(robstride_system_hardware PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

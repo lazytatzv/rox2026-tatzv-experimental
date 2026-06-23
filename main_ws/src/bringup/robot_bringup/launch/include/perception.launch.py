@@ -1,9 +1,11 @@
+# Copyright 2026 Tatsukiyano
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+
 
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
@@ -31,20 +33,22 @@ def generate_launch_description():
             ("cloud_in", "/camera/depth/points"),
             ("scan", "/scan"),
         ],
-        parameters=[{
-            "target_frame": "camera_link",
-            "transform_tolerance": 0.01,
-            "min_height": 0.0,
-            "max_height": 1.0,
-            "angle_min": -1.309,  # -75 degrees
-            "angle_max": 1.309,   # 75 degrees
-            "angle_increment": 0.0087, # 0.5 degrees
-            "scan_time": 0.03333,
-            "range_min": 0.1,
-            "range_max": 10.0,
-            "use_inf": True,
-            "inf_epsilon": 1.0
-        }]
+        parameters=[
+            {
+                "target_frame": "camera_link",
+                "transform_tolerance": 0.01,
+                "min_height": 0.0,
+                "max_height": 1.0,
+                "angle_min": -1.309,  # -75 degrees
+                "angle_max": 1.309,  # 75 degrees
+                "angle_increment": 0.0087,  # 0.5 degrees
+                "scan_time": 0.03333,
+                "range_min": 0.1,
+                "range_max": 10.0,
+                "use_inf": True,
+                "inf_epsilon": 1.0,
+            }
+        ],
     )
 
     tag_localization = Node(

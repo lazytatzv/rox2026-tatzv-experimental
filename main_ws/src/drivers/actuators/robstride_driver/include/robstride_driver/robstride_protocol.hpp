@@ -34,6 +34,14 @@ public:
   virtual std::vector<uint8_t> create_disable_command(uint8_t motor_id) = 0;
   virtual std::vector<uint8_t> create_velocity_command(uint8_t motor_id, double velocity_rad_s) = 0;
   virtual std::vector<uint8_t> create_id_set_command(uint8_t motor_id, uint8_t new_id) = 0;
+  virtual std::vector<uint8_t> create_mode_select_command(
+    uint8_t motor_id,
+    const std::string & mode)
+  {
+    (void)motor_id;
+    (void)mode;
+    return {};
+  }
 
   virtual DecodeResult decode_frame(const std::vector<uint8_t> & data) = 0;
 

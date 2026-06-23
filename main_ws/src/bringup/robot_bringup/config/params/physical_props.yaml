@@ -9,8 +9,8 @@ base:
 
 wheels:
   radius: 0.05
-  track_width: 0.50
-  wheel_base: 0.50
+  track_width: 0.44
+  wheel_base: 0.60
   mass: 0.5
 
 sensors:

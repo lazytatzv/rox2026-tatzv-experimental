@@ -8,7 +8,7 @@
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
-  
+
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>nav2_core</exec_depend>
   <exec_depend>nav2_costmap_2d</exec_depend>

@@ -81,7 +81,11 @@ def generate_launch_description():
 
     include_navigation = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [os.path.join(get_package_share_directory("base_navigation"), "launch", "navigation.launch.py")]
+            [
+                os.path.join(
+                    get_package_share_directory("base_navigation"), "launch", "navigation.launch.py"
+                )
+            ]
         ),
         launch_arguments={"use_sim_time": use_sim_time}.items(),
     )

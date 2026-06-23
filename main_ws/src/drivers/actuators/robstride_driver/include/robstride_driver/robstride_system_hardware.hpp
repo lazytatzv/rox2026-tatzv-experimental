@@ -17,7 +17,7 @@
 #include "rclcpp/macros.hpp"
 #include "can_msgs/msg/frame.hpp"
 #include "robstride_driver/robstride_protocol.hpp"
-#include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
+#include "robstride_driver/robstride_serial_driver.hpp"
 
 namespace robstride_driver
 {
@@ -53,7 +53,7 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-  void can_rx_callback(const seeed_usb_can::CanFrame & frame);
+  void can_rx_callback(const std::vector<uint8_t> & frame);
   void can_rx_topic_callback(const can_msgs::msg::Frame::ConstSharedPtr msg);
 
   // Configuration parameter
@@ -64,7 +64,7 @@ private:
   std::unique_ptr<RobstrideProtocol> protocol_handler_;
 
   // Direct Communication Driver
-  std::unique_ptr<seeed_usb_can::UsbCanSerialDriver> transport_;
+  std::unique_ptr<RobstrideSerialDriver> transport_;
 
   // ROS Node for logging and parameters only
   rclcpp::Node::SharedPtr node_;

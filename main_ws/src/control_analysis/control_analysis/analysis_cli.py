@@ -209,14 +209,16 @@ def detect_segments(data, t_cmd, u_cmd):
         step_start = phase[phase[:, 1] == "STEP_START"]
         prbs_start = phase[phase[:, 1] == "PRBS_START"]
         prbs_end = phase[phase[:, 1] == "PRBS_END"]
-        
+
         step_end = phase[phase[:, 1] == "STEP_END"]
-        
+
         if len(step_start) > 0:
             t_step = float(step_start[0, 0])
             step_t1 = float(step_end[0, 0]) if len(step_end) > 0 else t_cmd[-1]
             chirp_t0 = float(chirp_start[0, 0]) if len(chirp_start) else 1.0
-            chirp_t1 = float(chirp_end[0, 0]) if len(chirp_end) else max(t_step - 1.0, chirp_t0 + 1.0)
+            chirp_t1 = (
+                float(chirp_end[0, 0]) if len(chirp_end) else max(t_step - 1.0, chirp_t0 + 1.0)
+            )
             if len(prbs_start) > 0:
                 prbs_t0 = float(prbs_start[0, 0])
                 prbs_t1 = float(prbs_end[0, 0]) if len(prbs_end) else t_cmd[-1]
@@ -340,17 +342,17 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1):
     }
 
 
-def analyze_frequency_response(t_cmd, u_cmd, t_resp, y_resp, chirp_t0, chirp_t1, prbs_t0=None, prbs_t1=None):
+def analyze_frequency_response(
+    t_cmd, u_cmd, t_resp, y_resp, chirp_t0, chirp_t1, prbs_t0=None, prbs_t1=None
+):
     duration = chirp_t1 - chirp_t0
     if duration <= 0.0 or duration > 100.0:
-        print(
-            f"Error: Invalid chirp duration {duration:.2f}s. Check phase markers or time sync."
-        )
+        print(f"Error: Invalid chirp duration {duration:.2f}s. Check phase markers or time sync.")
         return None
 
     fs = estimate_sample_rate(t_resp)
     dt = 1.0 / fs
-    
+
     def get_uniform(t0, t1):
         t_uni = np.arange(t0, t1, dt)
         u_uni = np.interp(t_uni, t_cmd, u_cmd)
@@ -383,7 +385,7 @@ def analyze_frequency_response(t_cmd, u_cmd, t_resp, y_resp, chirp_t0, chirp_t1,
     coh_valid = coherence[valid]
     mag_db = 20 * np.log10(np.abs(H_valid) + 1e-12)
     phase_deg = np.rad2deg(np.unwrap(np.angle(H_valid)))
-    
+
     mag_db_all = 20 * np.log10(np.abs(H) + 1e-12)
     phase_deg_all = np.rad2deg(np.unwrap(np.angle(H)))
 
@@ -508,14 +510,30 @@ def export_json_report(
 ):
     slim_time = None
     if time_metrics:
-        slim_time = {k: v for k, v in time_metrics.items() if k not in ("t_norm", "y_norm", "y_fit")}
+        slim_time = {
+            k: v for k, v in time_metrics.items() if k not in ("t_norm", "y_norm", "y_fit")
+        }
 
     slim_freq = None
     if freq_metrics:
         slim_freq = {
             k: v
             for k, v in freq_metrics.items()
-            if k not in ("freq", "H", "mag_db", "phase_deg", "coherence", "f_all", "Pxx", "Pyy", "coherence_all", "H_all", "mag_db_all", "phase_deg_all")
+            if k
+            not in (
+                "freq",
+                "H",
+                "mag_db",
+                "phase_deg",
+                "coherence",
+                "f_all",
+                "Pxx",
+                "Pyy",
+                "coherence_all",
+                "H_all",
+                "mag_db_all",
+                "phase_deg_all",
+            )
         }
 
     payload = {
@@ -559,7 +577,9 @@ def run_pro_analysis(bag_path, report_name="control_report", output_dir="."):
     t_cmd, u_cmd, t_resp, y_resp, warnings, input_label, output_label, _ = selection
     seg_t = data["cmd"][:, 0] if "cmd" in data else t_cmd
     seg_u = data["cmd"][:, 1] if "cmd" in data else u_cmd
-    t_step, step_t1, chirp_t0, chirp_t1, prbs_t0, prbs_t1, segment_method = detect_segments(data, seg_t, seg_u)
+    t_step, step_t1, chirp_t0, chirp_t1, prbs_t0, prbs_t1, segment_method = detect_segments(
+        data, seg_t, seg_u
+    )
 
     time_metrics = analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1)
     freq_metrics = None
@@ -622,7 +642,12 @@ def _render_dashboard(
     ax1 = axs[0, 0]
     if "cmd" in data:
         ax1.step(
-            data["cmd"][:, 0], data["cmd"][:, 1], "r--", label="External Cmd", where="post", alpha=0.5
+            data["cmd"][:, 0],
+            data["cmd"][:, 1],
+            "r--",
+            label="External Cmd",
+            where="post",
+            alpha=0.5,
         )
     if "cmd_stab" in data:
         ax1.step(
@@ -646,7 +671,9 @@ def _render_dashboard(
     ax1.set_title("Step Response (Time Domain)")
     ax1.set_xlabel("Time [s]")
     ax1.set_ylabel(f"Velocity [{VELOCITY_UNIT}]")
-    ax1.set_xlim(max(0.0, t_step - 1.0), data["cmd_stab"][-1, 0] if "cmd_stab" in data else t_step + 6.0)
+    ax1.set_xlim(
+        max(0.0, t_step - 1.0), data["cmd_stab"][-1, 0] if "cmd_stab" in data else t_step + 6.0
+    )
     ax1.grid(True, linestyle=":")
     ax1.legend(loc="lower right", fontsize=8)
 
@@ -657,9 +684,7 @@ def _render_dashboard(
             None,
         )
         if primary is not None:
-            ref_interp = np.interp(
-                primary[:, 0], data["cmd_stab"][:, 0], data["cmd_stab"][:, 1]
-            )
+            ref_interp = np.interp(primary[:, 0], data["cmd_stab"][:, 0], data["cmd_stab"][:, 1])
             error = ref_interp - primary[:, 1]
             ax2.plot(primary[:, 0], error, "r-", label=f"Tracking Error ({output_label})")
             ax2.set_ylabel(f"Error [{VELOCITY_UNIT}]", color="r")
@@ -687,15 +712,26 @@ def _render_dashboard(
         coh_all = freq_metrics["coherence_all"]
         try:
             from scipy.signal import savgol_filter
+
             win = min(21, len(mag_all) | 1)
             mag_smooth = savgol_filter(mag_all, window_length=win, polyorder=3)
-            phase_smooth = savgol_filter(freq_metrics["phase_deg_all"], window_length=win, polyorder=3)
+            phase_smooth = savgol_filter(
+                freq_metrics["phase_deg_all"], window_length=win, polyorder=3
+            )
         except Exception:
             mag_smooth = mag_all
             phase_smooth = freq_metrics["phase_deg_all"]
 
         ax3.semilogx(f_all, mag_smooth, "b-", lw=2, label="Magnitude")
-        ax3.fill_between(f_all, -100, 100, where=(coh_all < COHERENCE_MIN), color='gray', alpha=0.3, label="Noise Region")
+        ax3.fill_between(
+            f_all,
+            -100,
+            100,
+            where=(coh_all < COHERENCE_MIN),
+            color="gray",
+            alpha=0.3,
+            label="Noise Region",
+        )
         ax3.set_title("Bode Magnitude Plot")
         ax3.set_xlabel("Frequency [Hz]")
         ax3.set_ylabel("Magnitude [dB]")
@@ -713,7 +749,7 @@ def _render_dashboard(
     ax4 = axs[1, 1]
     if freq_metrics and "phase_deg_all" in freq_metrics:
         ax4.semilogx(f_all, phase_smooth, "b-", lw=2)
-        ax4.fill_between(f_all, -360, 180, where=(coh_all < COHERENCE_MIN), color='gray', alpha=0.3)
+        ax4.fill_between(f_all, -360, 180, where=(coh_all < COHERENCE_MIN), color="gray", alpha=0.3)
         ax4.set_title("Bode Phase Plot")
         ax4.set_xlabel("Frequency [Hz]")
         ax4.set_ylabel("Phase [deg]")
@@ -741,17 +777,19 @@ def _render_dashboard(
         H_all = freq_metrics["H_all"]
         coh = freq_metrics["coherence_all"]
         valid = coh >= COHERENCE_MIN
-        
+
         ax5.plot(np.real(H_all), np.imag(H_all), "b-", lw=1.0, alpha=0.3, label="Low Coherence")
         ax5.plot(np.real(H_all[valid]), np.imag(H_all[valid]), "b-", lw=2.5, label="High Coherence")
         ax5.plot(-1, 0, "rx", ms=10, mew=2, label="Critical Point")
-        
+
         theta = np.linspace(0, 2 * np.pi, 100)
         ax5.plot(np.cos(theta), np.sin(theta), "k--", alpha=0.2)
-        
-        exclusion_circle = plt.Circle((-1, 0), 0.5, color='r', fill=True, alpha=0.1, label="Exclusion Zone (M-Circle)")
+
+        exclusion_circle = plt.Circle(
+            (-1, 0), 0.5, color="r", fill=True, alpha=0.1, label="Exclusion Zone (M-Circle)"
+        )
         ax5.add_patch(exclusion_circle)
-        
+
         ax5.set_title("Nyquist Plot (Zoomed for Stability)")
         ax5.set_xlabel("Real")
         ax5.set_ylabel("Imaginary")

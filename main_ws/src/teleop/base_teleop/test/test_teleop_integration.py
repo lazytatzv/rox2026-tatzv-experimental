@@ -1,4 +1,4 @@
-// Copyright 2026 Tatsukiyano
+# Copyright 2026 Tatsukiyano
 import unittest
 import rclpy
 from rclpy.node import Node

@@ -58,7 +58,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
 
   if (can_interface_type_ == "serial") {
     // Initialize Transport
-    transport_ = std::make_unique<seeed_usb_can::UsbCanSerialDriver>();
+    transport_ = std::make_unique<RobstrideSerialDriver>();
     transport_->set_receive_callback(std::bind(&RobstrideSystemHardware::can_rx_callback, this,
         std::placeholders::_1));
   }
@@ -79,7 +79,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
   if (can_interface_type_ == "serial") {
-    seeed_usb_can::SerialDriverConfig config;
+    RobstrideSerialConfig config;
     if (info_.hardware_parameters.count("usb_path")) {
       config.usb_path = info_.hardware_parameters.at("usb_path");
     }
@@ -138,6 +138,28 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   }
 
   for (const auto & motor : motors_) {
+    // 1. Send Mode Select Command (to Velocity mode, as done in the python exact run script)
+    auto mode_data = protocol_handler_->create_mode_select_command(motor.id, "velocity");
+    if (!mode_data.empty()) {
+      if (can_interface_type_ != "serial") {
+        can_msgs::msg::Frame msg;
+        msg.header.stamp = node_->get_clock()->now();
+        msg.id = motor.id;
+        msg.is_extended = false;
+        msg.is_rtr = false;
+        msg.dlc = std::min(static_cast<size_t>(mode_data.size()), static_cast<size_t>(8));
+        std::memcpy(msg.data.data(), mode_data.data(), msg.dlc);
+        can_pub_->publish(msg);
+      } else {
+        for (int i = 0; i < 3; ++i) {
+          transport_->send_raw(mode_data);
+          std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Match python setup sequence
+      }
+    }
+
+    // 2. Send Enable Command (repeated 3 times for robustness as done in python script)
     auto frame_data = protocol_handler_->create_enable_command(motor.id);
     if (!frame_data.empty()) {
       if (can_interface_type_ != "serial") {
@@ -166,11 +188,29 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
         }
         can_pub_->publish(msg);
       } else {
-        seeed_usb_can::CanFrame frame;
-        frame.id = motor.id; // Simplified, assuming handler handles ID mapping if needed
-        frame.data = frame_data;
-        frame.dlc = static_cast<uint8_t>(frame_data.size());
-        transport_->send_frame(frame);
+        for (int i = 0; i < 3; ++i) {
+          transport_->send_raw(frame_data);
+          std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Match python setup sequence
+      }
+    }
+
+    // 3. Send Initial Command (0.0 rad/s) for safety (as done in python exact run script)
+    auto init_data = protocol_handler_->create_velocity_command(motor.id, 0.0);
+    if (!init_data.empty()) {
+      if (can_interface_type_ != "serial") {
+        can_msgs::msg::Frame msg;
+        msg.header.stamp = node_->get_clock()->now();
+        msg.id = motor.id;
+        msg.is_extended = false;
+        msg.is_rtr = false;
+        msg.dlc = std::min(static_cast<size_t>(init_data.size()), static_cast<size_t>(8));
+        std::memcpy(msg.data.data(), init_data.data(), msg.dlc);
+        can_pub_->publish(msg);
+      } else {
+        transport_->send_raw(init_data);
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Match python setup sequence
       }
     }
   }
@@ -209,11 +249,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_deactivate(
         }
         can_pub_->publish(msg);
       } else {
-        seeed_usb_can::CanFrame frame;
-        frame.id = motor.id;
-        frame.data = frame_data;
-        frame.dlc = static_cast<uint8_t>(frame_data.size());
-        transport_->send_frame(frame);
+        transport_->send_raw(frame_data);
       }
     }
   }
@@ -295,22 +331,16 @@ hardware_interface::return_type RobstrideSystemHardware::write(
         }
         can_pub_->publish(msg);
       } else {
-        seeed_usb_can::CanFrame frame;
-        // Note: In real CAN, the ID might be different from motor.id depending on protocol
-        // Here we assume motor.id is the CAN ID for simplicity.
-        frame.id = motor.id;
-        frame.data = frame_data;
-        frame.dlc = static_cast<uint8_t>(frame_data.size());
-        transport_->send_frame(frame);
+        transport_->send_raw(frame_data);
       }
     }
   }
   return hardware_interface::return_type::OK;
 }
 
-void RobstrideSystemHardware::can_rx_callback(const seeed_usb_can::CanFrame & frame)
+void RobstrideSystemHardware::can_rx_callback(const std::vector<uint8_t> & frame)
 {
-  auto result = protocol_handler_->decode_frame(frame.data);
+  auto result = protocol_handler_->decode_frame(frame);
   if (!result.success) {return;}
 
   uint8_t motor_id = result.motor_id;

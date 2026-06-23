@@ -7,27 +7,27 @@
 # ///
 
 """
-モーター実機動作シーケンス再現プログラム
+モーター実機動作シーケンス再現プログラム (複数モーター個別連送対応版 - motor_testing.py)
 ================================================
 
 【概要】
-  公式GUIツールとシリアルモニターで確認された「実機が動作する生のバイトデータ」を
-  完全に同じ手順・同じタイミングで送信し、モーターを確実に回転させるためのテストスクリプトです。
+  動かしたい複数のモーターID（ID 1, 2, 3, 4）に対して、個別に高速に
+  シリアル経由で速度制御指令を送信し、同時に回転させるためのテストスクリプトです。
 
 【実行手順】
-  1. USBケーブルをPC（RDK X5）に接続
-  2. uv run motor_testing/motor_exact_run.py
+  1. USBケーブルを接続
+  2. python3 motor_testing.py
 """
 
 import serial
 import time
 import glob
-import os
 import sys
 import struct
 
 SERIAL_BAUD = 921600
-MOTOR_ID = 1  # Target Motor ID (Automatic ID mask generation)
+MOTOR_IDS = [1, 2, 3, 4]  # 動かしたいモーターIDのリスト
+TARGET_SPEED = 5.0  # 5.0 rad/s
 
 def build_at_frame(command_id: int, motor_addr: int, data: list[int]) -> bytes:
     byte0 = command_id << 3
@@ -44,26 +44,10 @@ def build_at_frame(command_id: int, motor_addr: int, data: list[int]) -> bytes:
     return bytes(frame)
 
 # Open serial and detect devices
-CMD_OPEN_SERIAL  = bytes.fromhex("41542b41540d0a")        # AT+AT\r\n (シリアルポート開通)
+CMD_OPEN_SERIAL = bytes.fromhex("41542b41540d0a")        # AT+AT\r\n
 CMD_DETECT_DEV   = bytes.fromhex("41540007e84401000d0a")  # デバイス検出
 
-# Dynamically generated command payloads
-CMD_SET_VEL_MODE = build_at_frame(18, MOTOR_ID, [0x05, 0x70, 0x00, 0x00, 2, 0x00, 0x00, 0x00]) # Velocity Mode (2)
-CMD_ENABLE       = build_at_frame(3, MOTOR_ID, [0, 0, 0, 0, 0, 0, 0, 0]) # Enable
-
-# Float packing for speed control
-val_45 = struct.pack("<f", 45.0)
-CMD_DRIVE_45RAD  = build_at_frame(18, MOTOR_ID, [0x0A, 0x70, 0x00, 0x00, val_45[0], val_45[1], val_45[2], val_45[3]])
-
-val_0 = struct.pack("<f", 0.0)
-CMD_STOP         = build_at_frame(18, MOTOR_ID, [0x0A, 0x70, 0x00, 0x00, val_0[0], val_0[1], val_0[2], val_0[3]])
-
-# ============================================================
-# シリアルポート候補のリストを取得
-# ============================================================
-
 def candidate_serial_ports() -> list[str]:
-    """接続候補となるシリアルポートの一覧を返す"""
     ports = ["/dev/ttyUSB0", "/dev/ttyUSB1"]
     for pattern in ("/dev/ttyUSB*", "/dev/ttyACM*"):
         for path in sorted(glob.glob(pattern)):
@@ -71,20 +55,11 @@ def candidate_serial_ports() -> list[str]:
                 ports.append(path)
     return ports
 
-# ============================================================
-# デバッグ出力付きシリアル送信関数
-# ============================================================
-
 def send_command(ser: serial.Serial, label: str, data: bytes) -> None:
-    """データをシリアル送信し、その生のバイナリデータとタイムスタンプを出力する"""
     hex_str = " ".join(f"0x{b:02X}" for b in data)
     timestamp = time.strftime("%H:%M:%S") + f".{int(time.time() * 1000) % 1000:03d}"
     print(f"  [DEBUG] [{timestamp}] Send ({label}): {hex_str}")
     ser.write(data)
-
-# ============================================================
-# メイン処理
-# ============================================================
 
 def main():
     ports = candidate_serial_ports()
@@ -107,7 +82,6 @@ def main():
 
     try:
         print("\n=== 1. シリアルポート開通コマンド ===")
-        print("  [DEBUG] 送信データ: AT+AT\\r\\n")
         send_command(ser, "Open Serial Port", CMD_OPEN_SERIAL)
         time.sleep(0.5)
 
@@ -115,39 +89,65 @@ def main():
         send_command(ser, "Detect Devices", CMD_DETECT_DEV)
         time.sleep(0.5)
 
-        print("\n=== 3. 速度制御モード (Velocity Mode) 設定 ===")
-        print("  [DEBUG] 動作モード -> Speed Mode (Mode = 2)")
-        send_command(ser, "Set Velocity Mode", CMD_SET_VEL_MODE)
+        print(f"\n=== 3. 動作モード設定 (Velocity Mode) (IDs: {MOTOR_IDS}) ===")
+        for motor_id in MOTOR_IDS:
+            cmd = build_at_frame(18, motor_id, [0x05, 0x70, 0x00, 0x00, 2, 0x00, 0x00, 0x00])
+            for i in range(3):
+                send_command(ser, f"Set Mode ID {motor_id} #{i+1}", cmd)
+                time.sleep(0.02)
         time.sleep(0.5)
 
-        print("\n=== 4. モーター有効化 (Enable) ===")
-        send_command(ser, "Enable", CMD_ENABLE)
+        print(f"\n=== 4. モーター有効化 (Enable) (IDs: {MOTOR_IDS}) ===")
+        for motor_id in MOTOR_IDS:
+            cmd = build_at_frame(3, motor_id, [0, 0, 0, 0, 0, 0, 0, 0])
+            for i in range(3):
+                send_command(ser, f"Enable ID {motor_id} #{i+1}", cmd)
+                time.sleep(0.02)
         time.sleep(0.5)
 
-        print("\n=== 5. 速度指令送信 (45.0 rad/s で 3秒間回転) ===")
+        print("   [DEBUG] 初期値 (0.0) を安全対策として送信します。")
+        for motor_id in MOTOR_IDS:
+            cmd = build_at_frame(18, motor_id, [0x0A, 0x70, 0x00, 0x00, 0, 0, 0, 0])
+            send_command(ser, f"Init Stop ID {motor_id} (0.0)", cmd)
+            time.sleep(0.02)
+        time.sleep(0.1)
+
+        print(f"\n=== 5. 速度指令送信 ({TARGET_SPEED} rad/s で 3.0秒間回転) ===")
         print("  [DEBUG] 20Hz (0.05秒間隔) で送信し続けます。")
         t_start = time.monotonic()
         count = 0
+        
+        # Float packing for speed control
+        val_speed = struct.pack("<f", TARGET_SPEED)
+        
         while time.monotonic() - t_start < 3.0:
             count += 1
-            send_command(ser, f"Drive #{count}", CMD_DRIVE_45RAD)
+            for motor_id in MOTOR_IDS:
+                cmd = build_at_frame(18, motor_id, [0x0A, 0x70, 0x00, 0x00, val_speed[0], val_speed[1], val_speed[2], val_speed[3]])
+                send_command(ser, f"Drive ID {motor_id} #{count}", cmd)
             time.sleep(0.05)
 
         print("\n=== 6. 停止フェーズ ===")
         print("  [DEBUG] 安全に停止させるため、速度 0.0 を5回送信します。")
+        val_0 = struct.pack("<f", 0.0)
         for i in range(5):
-            send_command(ser, f"Stop #{i+1}", CMD_STOP)
+            for motor_id in MOTOR_IDS:
+                cmd = build_at_frame(18, motor_id, [0x0A, 0x70, 0x00, 0x00, val_0[0], val_0[1], val_0[2], val_0[3]])
+                send_command(ser, f"Stop ID {motor_id} #{i+1}", cmd)
             time.sleep(0.05)
 
         print("\n✓ 正常にテスト終了しました。")
 
     except KeyboardInterrupt:
         print("\n\n[中断] ユーザーにより処理が中断されました。緊急停止します...")
+        val_0 = struct.pack("<f", 0.0)
         for i in range(5):
-            try:
-                send_command(ser, f"Emergency Stop #{i+1}", CMD_STOP)
-            except Exception:
-                pass
+            for motor_id in MOTOR_IDS:
+                cmd = build_at_frame(18, motor_id, [0x0A, 0x70, 0x00, 0x00, val_0[0], val_0[1], val_0[2], val_0[3]])
+                try:
+                    send_command(ser, f"Emergency Stop ID {motor_id} #{i+1}", cmd)
+                except Exception:
+                    pass
             time.sleep(0.05)
     finally:
         if ser:

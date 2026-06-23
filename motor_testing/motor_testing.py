@@ -24,7 +24,7 @@
 
 【実行手順】
   1. USBケーブルをPC（RDK X5）に接続
-  2. uv run motor_testing/motor_exact_run.py
+  2. uv run motor_testing/motor_testing.py
 """
 
 import serial

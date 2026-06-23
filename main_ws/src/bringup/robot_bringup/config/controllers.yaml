@@ -20,7 +20,7 @@ mecanum_drive_controller:
 
     kinematics:
       wheels_radius: 0.05
-      sum_of_robot_center_projection_on_X_Y_axis: 0.525
+      sum_of_robot_center_projection_on_X_Y_axis: 0.52
       base_frame_offset: {x: 0.0, y: 0.0, theta: 0.0}
 
     use_stamped_vel: true
