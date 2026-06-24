@@ -27,6 +27,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-${ROS_DISTRO}-apriltag-ros \
     ros-${ROS_DISTRO}-pointcloud-to-laserscan \
     ros-${ROS_DISTRO}-nav2-bringup \
+    ros-${ROS_DISTRO}-v4l2-camera \
     tigervnc-standalone-server \
     tigervnc-common \
     tigervnc-tools \
