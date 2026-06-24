@@ -1,6 +1,6 @@
 # モーター制御設定
 motor:
-  ids: [1, 2, 3, 4]   # モーターIDリスト (複数同時に動かす場合)
+  ids: [0x02]   # モーターIDリスト (複数同時に動かす場合)
   mode: "velocity"    # 制御モード ("position" (位置制御) または "velocity" (速度制御))
   speed: 45.0          # 制御速度 (velocityモード時の目標速度 / positionモード時の制限速度。単位: rad/s)
   position: 1.5708    # 目標位置 (positionモード用)
