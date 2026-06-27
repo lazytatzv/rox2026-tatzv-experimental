@@ -82,7 +82,7 @@
           <param name="usb_path">$(arg usb_path)</param>
           <param name="protocol">${hw['hardware']['protocol']}</param>
           <param name="serial_baud">${hw['hardware']['baud_rate']}</param>
-          <param name="can_interface_type">${hw['hardware'].get('can_interface_type', 'serial')}</param>
+          <param name="transport">${hw['hardware'].get('transport', 'serial_port')}</param>
         </xacro:unless>
       </xacro:unless>
     </hardware>

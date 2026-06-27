@@ -27,17 +27,19 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
 
   node_ = std::make_shared<rclcpp::Node>("robstride_hardware_interface_node");
 
-  // Determine Protocol and CAN Interface Type
-  protocol_type_ = "at";
+  // Determine Protocol and Transport Layer Type
+  protocol_type_ = "at_gateway";
   if (info_.hardware_parameters.count("protocol")) {
     protocol_type_ = info_.hardware_parameters.at("protocol");
   }
 
-  if (info_.hardware_parameters.count("can_interface_type")) {
-    can_interface_type_ = info_.hardware_parameters.at("can_interface_type");
+  transport_type_ = "serial_port";
+  if (info_.hardware_parameters.count("transport")) {
+    transport_type_ = info_.hardware_parameters.at("transport");
   }
 
-  if (protocol_type_ == "at") {
+  // 1. Protocol Validation & Initialization
+  if (protocol_type_ == "at_gateway") {
     double max_speed_percentage = 50.0;
     if (info_.hardware_parameters.count("max_speed_limit_percentage")) {
       max_speed_percentage = std::stod(info_.hardware_parameters.at("max_speed_limit_percentage"));
@@ -45,23 +47,33 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
     int max_delta = static_cast<int>(at_protocol::NEUTRAL_VELOCITY_VALUE *
       (max_speed_percentage / 100.0));
     protocol_handler_ = std::make_unique<AtProtocolHandler>(vel_max_, max_delta);
-  } else if (protocol_type_ == "can" || protocol_type_ == "ddsm") {
-    // Both use CAN frames over serial
-    if (protocol_type_ == "can") {
-      protocol_handler_ = std::make_unique<CanProtocolHandler>();
-    } else {
-      protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
-    }
+  } else if (protocol_type_ == "native_can") {
+    protocol_handler_ = std::make_unique<CanProtocolHandler>();
+  } else if (protocol_type_ == "ddsm") {
+    protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
   } else {
-    RCLCPP_FATAL(node_->get_logger(), "Unknown protocol type: %s", protocol_type_.c_str());
+    RCLCPP_FATAL(
+      node_->get_logger(),
+      "Unknown protocol: %s (Must be 'at_gateway', 'native_can', or 'ddsm')",
+      protocol_type_.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  if (can_interface_type_ == "serial") {
+  // 2. Transport Validation & Initialization
+  if (transport_type_ == "serial_port") {
     // Initialize Transport
     transport_ = std::make_unique<RobstrideSerialDriver>();
     transport_->set_receive_callback(std::bind(&RobstrideSystemHardware::can_rx_callback, this,
         std::placeholders::_1));
+  } else if (transport_type_ == "socketcan") {
+    // SocketCAN mode (handled via ros2_socketcan bridge using ROS topic)
+    // transport_ is not used
+  } else {
+    RCLCPP_FATAL(
+      node_->get_logger(),
+      "Unknown transport: %s (Must be 'serial_port' or 'socketcan')",
+      transport_type_.c_str());
+    return hardware_interface::CallbackReturn::ERROR;
   }
 
   // Initialize motors from URDF joints
@@ -80,7 +92,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  if (can_interface_type_ == "serial") {
+  if (transport_type_ == "serial_port") {
     RobstrideSerialConfig config;
     if (info_.hardware_parameters.count("usb_path")) {
       config.usb_path = info_.hardware_parameters.at("usb_path");
@@ -120,7 +132,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_configure(
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_cleanup(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  if (can_interface_type_ == "serial") {
+  if (transport_type_ == "serial_port") {
     transport_->close();
   } else {
     can_pub_.reset();
@@ -132,7 +144,7 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_cleanup(
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  if (can_interface_type_ != "serial") {
+  if (transport_type_ != "serial_port") {
     executor_.add_node(node_);
     spin_thread_ = std::make_unique<std::thread>([this]() {
           executor_.spin();
@@ -143,40 +155,17 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   for (const auto & motor : motors_) {
     auto mode_data = protocol_handler_->create_mode_select_command(motor.id, "velocity");
     if (!mode_data.empty()) {
-      if (can_interface_type_ != "serial") {
-        can_msgs::msg::Frame msg;
-        msg.header.stamp = node_->get_clock()->now();
-        if (protocol_type_ == "can") {
-          uint32_t can_id;
-          std::memcpy(&can_id, &mode_data[1], 4);
-          msg.id = can_id;
-          msg.is_extended = (mode_data[5] == 0x01);
-          msg.is_rtr = (mode_data[6] == 0x01);
-          msg.dlc = mode_data[7];
-          std::memcpy(msg.data.data(), &mode_data[8], 8);
-        } else if (protocol_type_ == "ddsm") {
-          msg.id = mode_data[0];
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = 8;
-          std::memcpy(msg.data.data(), &mode_data[1], 8);
-        } else {
-          msg.id = motor.id;
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = std::min(static_cast<size_t>(mode_data.size()), static_cast<size_t>(8));
-          std::memcpy(msg.data.data(), mode_data.data(), msg.dlc);
-        }
-        can_pub_->publish(msg);
-      } else {
+      if (transport_type_ == "serial_port") {
         for (int i = 0; i < 3; ++i) {
-          transport_->send_raw(mode_data);
+          send_command(motor.id, mode_data);
           std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Python: time.sleep(0.02)
         }
+      } else {
+        send_command(motor.id, mode_data);
       }
     }
   }
-  if (can_interface_type_ == "serial") {
+  if (transport_type_ == "serial_port") {
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Python: time.sleep(0.5)
   }
 
@@ -184,40 +173,17 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   for (const auto & motor : motors_) {
     auto frame_data = protocol_handler_->create_enable_command(motor.id);
     if (!frame_data.empty()) {
-      if (can_interface_type_ != "serial") {
-        can_msgs::msg::Frame msg;
-        msg.header.stamp = node_->get_clock()->now();
-        if (protocol_type_ == "can") {
-          uint32_t can_id;
-          std::memcpy(&can_id, &frame_data[1], 4);
-          msg.id = can_id;
-          msg.is_extended = (frame_data[5] == 0x01);
-          msg.is_rtr = (frame_data[6] == 0x01);
-          msg.dlc = frame_data[7];
-          std::memcpy(msg.data.data(), &frame_data[8], 8);
-        } else if (protocol_type_ == "ddsm") {
-          msg.id = frame_data[0];
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = 8;
-          std::memcpy(msg.data.data(), &frame_data[1], 8);
-        } else {
-          msg.id = motor.id;
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = std::min(static_cast<size_t>(frame_data.size()), static_cast<size_t>(8));
-          std::memcpy(msg.data.data(), frame_data.data(), msg.dlc);
-        }
-        can_pub_->publish(msg);
-      } else {
+      if (transport_type_ == "serial_port") {
         for (int i = 0; i < 3; ++i) {
-          transport_->send_raw(frame_data);
+          send_command(motor.id, frame_data);
           std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Python: time.sleep(0.02)
         }
+      } else {
+        send_command(motor.id, frame_data);
       }
     }
   }
-  if (can_interface_type_ == "serial") {
+  if (transport_type_ == "serial_port") {
     std::this_thread::sleep_for(std::chrono::milliseconds(500)); // Python: time.sleep(0.5)
   }
 
@@ -225,38 +191,13 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   for (const auto & motor : motors_) {
     auto init_data = protocol_handler_->create_velocity_command(motor.id, 0.0);
     if (!init_data.empty()) {
-      if (can_interface_type_ != "serial") {
-        can_msgs::msg::Frame msg;
-        msg.header.stamp = node_->get_clock()->now();
-        if (protocol_type_ == "can") {
-          uint32_t can_id;
-          std::memcpy(&can_id, &init_data[1], 4);
-          msg.id = can_id;
-          msg.is_extended = (init_data[5] == 0x01);
-          msg.is_rtr = (init_data[6] == 0x01);
-          msg.dlc = init_data[7];
-          std::memcpy(msg.data.data(), &init_data[8], 8);
-        } else if (protocol_type_ == "ddsm") {
-          msg.id = init_data[0];
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = 8;
-          std::memcpy(msg.data.data(), &init_data[1], 8);
-        } else {
-          msg.id = motor.id;
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = std::min(static_cast<size_t>(init_data.size()), static_cast<size_t>(8));
-          std::memcpy(msg.data.data(), init_data.data(), msg.dlc);
-        }
-        can_pub_->publish(msg);
-      } else {
-        transport_->send_raw(init_data);
+      send_command(motor.id, init_data);
+      if (transport_type_ == "serial_port") {
         std::this_thread::sleep_for(std::chrono::milliseconds(20)); // Python: time.sleep(0.02)
       }
     }
   }
-  if (can_interface_type_ == "serial") {
+  if (transport_type_ == "serial_port") {
     std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Python: time.sleep(0.1)
   }
 
@@ -269,42 +210,19 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_deactivate(
   for (const auto & motor : motors_) {
     auto frame_data = protocol_handler_->create_disable_command(motor.id);
     if (!frame_data.empty()) {
-      if (can_interface_type_ != "serial") {
-        can_msgs::msg::Frame msg;
-        msg.header.stamp = node_->get_clock()->now();
-        if (protocol_type_ == "can") {
-          uint32_t can_id;
-          std::memcpy(&can_id, &frame_data[1], 4);
-          msg.id = can_id;
-          msg.is_extended = (frame_data[5] == 0x01);
-          msg.is_rtr = (frame_data[6] == 0x01);
-          msg.dlc = frame_data[7];
-          std::memcpy(msg.data.data(), &frame_data[8], 8);
-        } else if (protocol_type_ == "ddsm") {
-          msg.id = frame_data[0];
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = 8;
-          std::memcpy(msg.data.data(), &frame_data[1], 8);
-        } else {
-          msg.id = motor.id;
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = std::min(static_cast<size_t>(frame_data.size()), static_cast<size_t>(8));
-          std::memcpy(msg.data.data(), frame_data.data(), msg.dlc);
-        }
-        can_pub_->publish(msg);
-      } else {
+      if (transport_type_ == "serial_port") {
         // Send disable 3 times per motor with delay, matching motor_exact_run.py
         for (int i = 0; i < 3; ++i) {
-          transport_->send_raw(frame_data);
+          send_command(motor.id, frame_data);
           std::this_thread::sleep_for(std::chrono::milliseconds(20));
         }
+      } else {
+        send_command(motor.id, frame_data);
       }
     }
   }
 
-  if (can_interface_type_ != "serial") {
+  if (transport_type_ != "serial_port") {
     executor_.cancel();
     if (spin_thread_ && spin_thread_->joinable()) {
       spin_thread_->join();
@@ -355,33 +273,8 @@ hardware_interface::return_type RobstrideSystemHardware::write(
 
     auto frame_data = protocol_handler_->create_velocity_command(motor.id, velocity);
     if (!frame_data.empty()) {
-      if (can_interface_type_ != "serial") {
-        can_msgs::msg::Frame msg;
-        msg.header.stamp = node_->get_clock()->now();
-        if (protocol_type_ == "can") {
-          uint32_t can_id;
-          std::memcpy(&can_id, &frame_data[1], 4);
-          msg.id = can_id;
-          msg.is_extended = (frame_data[5] == 0x01);
-          msg.is_rtr = (frame_data[6] == 0x01);
-          msg.dlc = frame_data[7];
-          std::memcpy(msg.data.data(), &frame_data[8], 8);
-        } else if (protocol_type_ == "ddsm") {
-          msg.id = frame_data[0];
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = 8;
-          std::memcpy(msg.data.data(), &frame_data[1], 8);
-        } else {
-          msg.id = motor.id;
-          msg.is_extended = false;
-          msg.is_rtr = false;
-          msg.dlc = std::min(static_cast<size_t>(frame_data.size()), static_cast<size_t>(8));
-          std::memcpy(msg.data.data(), frame_data.data(), msg.dlc);
-        }
-        can_pub_->publish(msg);
-      } else {
-        transport_->send_raw(frame_data);
+      send_command(motor.id, frame_data);
+      if (transport_type_ == "serial_port") {
         // 0.5ms inter-frame delay: gives the serial-to-CAN board time to
         // process each frame without the ~3ms overhead of tcdrain().
         // 4 motors × 0.5ms = 2ms total, within the 10ms cycle budget.
@@ -394,31 +287,13 @@ hardware_interface::return_type RobstrideSystemHardware::write(
 
 void RobstrideSystemHardware::can_rx_callback(const std::vector<uint8_t> & frame)
 {
-  auto result = protocol_handler_->decode_frame(frame);
-  if (!result.success) {return;}
-
-  uint8_t motor_id = result.motor_id;
-  if (id_to_index_.find(motor_id) == id_to_index_.end()) {return;}
-
-  size_t idx = id_to_index_[motor_id];
-  auto & state = result.state;
-
-  std::lock_guard<std::mutex> lock(state_mutex_);
-  if (motors_[idx].invert) {
-    motors_[idx].position = -state.position;
-    motors_[idx].velocity = -state.velocity;
-    motors_[idx].effort = -state.effort;
-  } else {
-    motors_[idx].position = state.position;
-    motors_[idx].velocity = state.velocity;
-    motors_[idx].effort = state.effort;
-  }
+  process_received_frame(frame);
 }
 
 void RobstrideSystemHardware::can_rx_topic_callback(const can_msgs::msg::Frame::ConstSharedPtr msg)
 {
   std::vector<uint8_t> frame_data;
-  if (protocol_type_ == "can") {
+  if (protocol_type_ == "native_can") {
     frame_data.resize(16, 0);
     frame_data[0] = 0xAA;
     std::memcpy(&frame_data[1], &msg->id, 4);
@@ -436,25 +311,65 @@ void RobstrideSystemHardware::can_rx_topic_callback(const can_msgs::msg::Frame::
   }
 
   if (!frame_data.empty()) {
-    auto result = protocol_handler_->decode_frame(frame_data);
-    if (!result.success) {return;}
+    process_received_frame(frame_data);
+  }
+}
 
-    uint8_t motor_id = result.motor_id;
-    if (id_to_index_.find(motor_id) == id_to_index_.end()) {return;}
+void RobstrideSystemHardware::send_command(uint8_t motor_id, const std::vector<uint8_t> & frame_data)
+{
+  if (frame_data.empty()) {return;}
 
-    size_t idx = id_to_index_[motor_id];
-    auto & state = result.state;
-
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    if (motors_[idx].invert) {
-      motors_[idx].position = -state.position;
-      motors_[idx].velocity = -state.velocity;
-      motors_[idx].effort = -state.effort;
+  if (transport_type_ == "serial_port") {
+    transport_->send_raw(frame_data);
+  } else {
+    can_msgs::msg::Frame msg;
+    msg.header.stamp = node_->get_clock()->now();
+    if (protocol_type_ == "native_can") {
+      uint32_t can_id;
+      std::memcpy(&can_id, &frame_data[1], 4);
+      msg.id = can_id;
+      msg.is_extended = (frame_data[5] == 0x01);
+      msg.is_rtr = (frame_data[6] == 0x01);
+      msg.dlc = frame_data[7];
+      std::memcpy(msg.data.data(), &frame_data[8], 8);
+    } else if (protocol_type_ == "ddsm") {
+      msg.id = frame_data[0];
+      msg.is_extended = false;
+      msg.is_rtr = false;
+      msg.dlc = 8;
+      std::memcpy(msg.data.data(), &frame_data[1], 8);
     } else {
-      motors_[idx].position = state.position;
-      motors_[idx].velocity = state.velocity;
-      motors_[idx].effort = state.effort;
+      // Fallback/AT mode
+      msg.id = motor_id;
+      msg.is_extended = false;
+      msg.is_rtr = false;
+      msg.dlc = std::min(static_cast<size_t>(frame_data.size()), static_cast<size_t>(8));
+      std::memcpy(msg.data.data(), frame_data.data(), msg.dlc);
     }
+    can_pub_->publish(msg);
+  }
+}
+
+void RobstrideSystemHardware::process_received_frame(const std::vector<uint8_t> & frame_data)
+{
+  auto result = protocol_handler_->decode_frame(frame_data);
+  if (!result.success) {return;}
+
+  uint8_t motor_id = result.motor_id;
+  if (id_to_index_.find(motor_id) == id_to_index_.end()) {return;}
+
+  size_t idx = id_to_index_[motor_id];
+  auto & state = result.state;
+
+  std::lock_guard<std::mutex> lock(state_mutex_);
+  if (motors_[idx].invert) {
+    motors_[idx].position = -state.position;
+    motors_[idx].velocity = -state.velocity;
+    motors_[idx].effort = -state.effort;
+  } else {
+    motors_[idx].position = state.position;
+    motors_[idx].velocity = state.velocity;
+    motors_[idx].effort = state.effort;
   }
 }
 

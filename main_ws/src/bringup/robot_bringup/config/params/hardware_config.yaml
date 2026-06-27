@@ -4,9 +4,9 @@
 
 hardware:
   usb_port: "/dev/ttyUSB1"
-  protocol: "at" # 'at' or 'can'
+  protocol: "at_gateway" # 'at_gateway' (via AT command bridge board) or 'native_can' (direct native CAN frames)
   baud_rate: 921600
-  can_interface_type: "serial" # 'serial' or 'ros_topic' (for socketcan / usb_can_analyzer via topic)
+  transport: "serial_port" # 'serial_port' (direct USB serial port) or 'socketcan' (via ros2_socketcan topic bridge)
 
   motors:
     front_left:  {id: 1, invert: true}

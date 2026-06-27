@@ -55,9 +55,11 @@ public:
 private:
   void can_rx_callback(const std::vector<uint8_t> & frame);
   void can_rx_topic_callback(const can_msgs::msg::Frame::ConstSharedPtr msg);
+  void send_command(uint8_t motor_id, const std::vector<uint8_t> & frame_data);
+  void process_received_frame(const std::vector<uint8_t> & frame_data);
 
   // Configuration parameter
-  std::string can_interface_type_{"serial"};
+  std::string transport_type_{"serial"};
   std::string protocol_type_{"at"};
 
   // Protocol Handler
