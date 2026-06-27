@@ -3,13 +3,13 @@
         image_transport: raw    # image format
         family: 16h5           # tag family name
         size: 0.18          # tag edge size in meter
-        max_hamming: 0          # maximum allowed hamming distance (corrected bits)
-        qos_profile: default    # optional qos_profile, "sensor_data", "default", or "system_default"
+        max_hamming: 1          # maximum allowed hamming distance (1 corrects minor errors for extreme robustness)
+        qos_profile: sensor_data # low-latency UDP-like delivery for real-time vision
 
         # see "apriltag.h" 'struct apriltag_detector' for more documentation on these optional parameters
         detector:
-            threads: 1          # number of threads
-            decimate: 2.0       # decimate resolution for quad detection
+            threads: 4          # multi-threading for maximum FPS (4+ threads recommended)
+            decimate: 1.0       # 1.0 for maximum range/accuracy, or 2.0 for speed. We use 1.0 since threads=4 can handle the load.
             blur: 0.0           # sigma of Gaussian blur for quad detection
             refine: True        # snap to strong gradients
             sharpening: 0.25    # sharpening of decoded images
@@ -17,6 +17,7 @@
 
 
         pose_estimation_method: "pnp"   # method for estimating the tag pose
+        publish_tf: true                # publish TF frames for detected tags (crucial for tag_localizer)
 
         # optional list of tags
         #tag:

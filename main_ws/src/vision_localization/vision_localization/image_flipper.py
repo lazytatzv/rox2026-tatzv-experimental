@@ -23,9 +23,11 @@ class ImageFlipper(Node):
 
     def image_callback(self, msg):
         try:
-            cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+            # Convert directly to mono8 (grayscale) to save bandwidth and CPU
+            # since AprilTag only requires grayscale images.
+            cv_img = self.bridge.imgmsg_to_cv2(msg, desired_encoding='mono8')
             flipped_img = cv2.flip(cv_img, 1) # Horizontal flip
-            flipped_msg = self.bridge.cv2_to_imgmsg(flipped_img, encoding='bgr8')
+            flipped_msg = self.bridge.cv2_to_imgmsg(flipped_img, encoding='mono8')
             flipped_msg.header = msg.header
             self.image_pub.publish(flipped_msg)
         except Exception as e:
