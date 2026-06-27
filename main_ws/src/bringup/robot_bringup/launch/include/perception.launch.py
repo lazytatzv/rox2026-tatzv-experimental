@@ -8,6 +8,9 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    pkg_robot_bringup = get_package_share_directory("robot_bringup")
+    apriltag_config = os.path.join(pkg_robot_bringup, "config", "apriltag.yaml")
+
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
     # Image Flipper node to resolve mirrored textures in simulation
@@ -19,15 +22,13 @@ def generate_launch_description():
     )
 
     # 既存node
-    # apriltagは0.15mだったっけ？
     apriltag_node = Node(
         package="apriltag_ros",
         executable="apriltag_node",
         name="apriltag_node",
         parameters=[
-            {"use_sim_time": use_sim_time},
-            {"family": "16h5"},
-            {"size": 0.15},
+            apriltag_config,
+            {"use_sim_time": use_sim_time}
         ],
         remappings=[
             ("image_rect", "/camera/image_flipped"),
