@@ -31,8 +31,9 @@ def generate_launch_description():
             {"use_sim_time": use_sim_time}
         ],
         remappings=[
-            ("image_rect", "/camera/image_flipped"),
-            ("camera_info", "/camera/camera_info_flipped"),
+            ("image_rect", "/camera_flipped/image_raw"),
+            ("camera_info", "/camera_flipped/camera_info"),
+            ("detections", "/detections"),
         ],
     )
 

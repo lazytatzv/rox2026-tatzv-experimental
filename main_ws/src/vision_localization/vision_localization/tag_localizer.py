@@ -53,7 +53,7 @@ class TagLocalizer(Node):
         }
 
         self.subscription = self.create_subscription(
-            AprilTagDetectionArray, "/apriltag_detections", self.tag_callback, 10
+            AprilTagDetectionArray, "/detections", self.tag_callback, 10
         )
 
         self.publisher = self.create_publisher(PoseWithCovarianceStamped, "/apriltag_pose", 10)

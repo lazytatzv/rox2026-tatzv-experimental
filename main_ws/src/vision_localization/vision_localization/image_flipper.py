@@ -13,13 +13,13 @@ class ImageFlipper(Node):
         self.image_sub = self.create_subscription(
             Image, '/camera/image_raw', self.image_callback, 10)
         self.image_pub = self.create_publisher(
-            Image, '/camera/image_flipped', 10)
+            Image, '/camera_flipped/image_raw', 10)
             
         # Sub/Pub CameraInfo
         self.info_sub = self.create_subscription(
             CameraInfo, '/camera/camera_info', self.info_callback, 10)
         self.info_pub = self.create_publisher(
-            CameraInfo, '/camera/camera_info_flipped', 10)
+            CameraInfo, '/camera_flipped/camera_info', 10)
 
     def image_callback(self, msg):
         try:
