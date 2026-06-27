@@ -10,8 +10,8 @@
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "robstride_driver/at_protocol_handler.hpp"
-#include "robstride_driver/can_protocol_handler.hpp"
 #include "robstride_driver/ddsm_protocol_handler.hpp"
+#include "robstride_driver/private_protocol_handler.hpp"
 
 namespace robstride_driver
 {
@@ -48,7 +48,13 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
       (max_speed_percentage / 100.0));
     protocol_handler_ = std::make_unique<AtProtocolHandler>(vel_max_, max_delta);
   } else if (protocol_type_ == "native_can") {
-    protocol_handler_ = std::make_unique<CanProtocolHandler>();
+    float kp = 6.0f;
+    float ki = 0.02f;
+    float limit_cur = 5.0f;
+    if (info_.hardware_parameters.count("kp")) kp = std::stof(info_.hardware_parameters.at("kp"));
+    if (info_.hardware_parameters.count("ki")) ki = std::stof(info_.hardware_parameters.at("ki"));
+    if (info_.hardware_parameters.count("limit_cur")) limit_cur = std::stof(info_.hardware_parameters.at("limit_cur"));
+    protocol_handler_ = std::make_unique<PrivateProtocolHandler>(0x00, kp, ki, limit_cur);
   } else if (protocol_type_ == "ddsm") {
     protocol_handler_ = std::make_unique<DdsmProtocolHandler>();
   } else {
@@ -322,31 +328,39 @@ void RobstrideSystemHardware::send_command(uint8_t motor_id, const std::vector<u
   if (transport_type_ == "serial_port") {
     transport_->send_raw(frame_data);
   } else {
-    can_msgs::msg::Frame msg;
-    msg.header.stamp = node_->get_clock()->now();
     if (protocol_type_ == "native_can") {
-      uint32_t can_id;
-      std::memcpy(&can_id, &frame_data[1], 4);
-      msg.id = can_id;
-      msg.is_extended = (frame_data[5] == 0x01);
-      msg.is_rtr = (frame_data[6] == 0x01);
-      msg.dlc = frame_data[7];
-      std::memcpy(msg.data.data(), &frame_data[8], 8);
+      for (size_t offset = 0; offset + 16 <= frame_data.size(); offset += 16) {
+        can_msgs::msg::Frame msg;
+        msg.header.stamp = node_->get_clock()->now();
+        uint32_t can_id;
+        std::memcpy(&can_id, &frame_data[offset + 1], 4);
+        msg.id = can_id;
+        msg.is_extended = (frame_data[offset + 5] == 0x01);
+        msg.is_rtr = (frame_data[offset + 6] == 0x01);
+        msg.dlc = frame_data[offset + 7];
+        std::memcpy(msg.data.data(), &frame_data[offset + 8], 8);
+        can_pub_->publish(msg);
+      }
     } else if (protocol_type_ == "ddsm") {
+      can_msgs::msg::Frame msg;
+      msg.header.stamp = node_->get_clock()->now();
       msg.id = frame_data[0];
       msg.is_extended = false;
       msg.is_rtr = false;
       msg.dlc = 8;
       std::memcpy(msg.data.data(), &frame_data[1], 8);
+      can_pub_->publish(msg);
     } else {
       // Fallback/AT mode
+      can_msgs::msg::Frame msg;
+      msg.header.stamp = node_->get_clock()->now();
       msg.id = motor_id;
       msg.is_extended = false;
       msg.is_rtr = false;
       msg.dlc = std::min(static_cast<size_t>(frame_data.size()), static_cast<size_t>(8));
       std::memcpy(msg.data.data(), frame_data.data(), msg.dlc);
+      can_pub_->publish(msg);
     }
-    can_pub_->publish(msg);
   }
 }
 

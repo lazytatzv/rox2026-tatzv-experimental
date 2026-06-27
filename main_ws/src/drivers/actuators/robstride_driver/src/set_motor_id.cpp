@@ -8,7 +8,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "robstride_driver/at_protocol_handler.hpp"
-#include "robstride_driver/can_protocol_handler.hpp"
+#include "robstride_driver/private_protocol_handler.hpp"
 #include "seeed_usb_can_analyzer_driver/serial_protocol.hpp"
 
 /**
@@ -44,10 +44,10 @@ int main(int argc, char ** argv)
   std::unique_ptr<robstride_driver::RobstrideProtocol> handler;
   if (protocol == "at") {
     handler = std::make_unique<robstride_driver::AtProtocolHandler>(50.0, 16384);
-  } else if (protocol == "can") {
-    handler = std::make_unique<robstride_driver::CanProtocolHandler>();
+  } else if (protocol == "can" || protocol == "private_can") {
+    handler = std::make_unique<robstride_driver::PrivateProtocolHandler>();
   } else {
-    std::cerr << "Error: Unknown protocol '" << protocol << "'. Use 'at' or 'can'." << std::endl;
+    std::cerr << "Error: Unknown protocol '" << protocol << "'. Use 'at', 'can', or 'private_can'." << std::endl;
     return 1;
   }
 
