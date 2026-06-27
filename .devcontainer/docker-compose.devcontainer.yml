@@ -1,0 +1,5 @@
+# Override file for Dev Containers to support macOS and local environments seamlessly
+services:
+  ros2_rox2026:
+    profiles: [] # Remove profiles constraint so Dev Containers starts it automatically
+    network_mode: bridge # Force bridge mode for consistent port forwarding in Dev Containers

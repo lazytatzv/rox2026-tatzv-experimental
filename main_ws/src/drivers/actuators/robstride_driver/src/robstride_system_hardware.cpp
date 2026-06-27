@@ -146,11 +146,27 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
       if (can_interface_type_ != "serial") {
         can_msgs::msg::Frame msg;
         msg.header.stamp = node_->get_clock()->now();
-        msg.id = motor.id;
-        msg.is_extended = false;
-        msg.is_rtr = false;
-        msg.dlc = std::min(static_cast<size_t>(mode_data.size()), static_cast<size_t>(8));
-        std::memcpy(msg.data.data(), mode_data.data(), msg.dlc);
+        if (protocol_type_ == "can") {
+          uint32_t can_id;
+          std::memcpy(&can_id, &mode_data[1], 4);
+          msg.id = can_id;
+          msg.is_extended = (mode_data[5] == 0x01);
+          msg.is_rtr = (mode_data[6] == 0x01);
+          msg.dlc = mode_data[7];
+          std::memcpy(msg.data.data(), &mode_data[8], 8);
+        } else if (protocol_type_ == "ddsm") {
+          msg.id = mode_data[0];
+          msg.is_extended = false;
+          msg.is_rtr = false;
+          msg.dlc = 8;
+          std::memcpy(msg.data.data(), &mode_data[1], 8);
+        } else {
+          msg.id = motor.id;
+          msg.is_extended = false;
+          msg.is_rtr = false;
+          msg.dlc = std::min(static_cast<size_t>(mode_data.size()), static_cast<size_t>(8));
+          std::memcpy(msg.data.data(), mode_data.data(), msg.dlc);
+        }
         can_pub_->publish(msg);
       } else {
         for (int i = 0; i < 3; ++i) {
@@ -212,11 +228,27 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
       if (can_interface_type_ != "serial") {
         can_msgs::msg::Frame msg;
         msg.header.stamp = node_->get_clock()->now();
-        msg.id = motor.id;
-        msg.is_extended = false;
-        msg.is_rtr = false;
-        msg.dlc = std::min(static_cast<size_t>(init_data.size()), static_cast<size_t>(8));
-        std::memcpy(msg.data.data(), init_data.data(), msg.dlc);
+        if (protocol_type_ == "can") {
+          uint32_t can_id;
+          std::memcpy(&can_id, &init_data[1], 4);
+          msg.id = can_id;
+          msg.is_extended = (init_data[5] == 0x01);
+          msg.is_rtr = (init_data[6] == 0x01);
+          msg.dlc = init_data[7];
+          std::memcpy(msg.data.data(), &init_data[8], 8);
+        } else if (protocol_type_ == "ddsm") {
+          msg.id = init_data[0];
+          msg.is_extended = false;
+          msg.is_rtr = false;
+          msg.dlc = 8;
+          std::memcpy(msg.data.data(), &init_data[1], 8);
+        } else {
+          msg.id = motor.id;
+          msg.is_extended = false;
+          msg.is_rtr = false;
+          msg.dlc = std::min(static_cast<size_t>(init_data.size()), static_cast<size_t>(8));
+          std::memcpy(msg.data.data(), init_data.data(), msg.dlc);
+        }
         can_pub_->publish(msg);
       } else {
         transport_->send_raw(init_data);

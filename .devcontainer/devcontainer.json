@@ -2,7 +2,8 @@
 {
     "name": "ROX2026 Tatzv Experimental [ULTIMATE]",
     "dockerComposeFile": [
-        "../docker/compose.yaml"
+        "../docker/compose.yaml",
+        "docker-compose.devcontainer.yml"
     ],
     "service": "ros2_rox2026",
     "workspaceFolder": "/root/lazytatzv_ws",
