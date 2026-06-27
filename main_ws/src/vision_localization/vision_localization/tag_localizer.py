@@ -20,6 +20,8 @@ class TagLocalizer(Node):
         # Tag Database (Global Coordinates in 'map' frame)
         # measurement.webp and rulebook mapping
         # Left Side (Side A, X < 0) | Right Side (Side B, X > 0)
+
+        # yaml or jsonで管理できるようにしたほうが良いかも
         self.tag_map = {
             0: {"x": -6.495, "y": -5.020, "z": 0.420, "yaw": -1.571},
             1: {"x": -6.020, "y": -5.495, "z": 0.420, "yaw": -3.142},

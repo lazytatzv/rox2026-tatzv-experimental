@@ -13,6 +13,8 @@ def generate_launch_description():
     pkg_robot_bringup = get_package_share_directory("robot_bringup")
     use_sim_time = LaunchConfiguration("use_sim_time")
     gazebo = LaunchConfiguration("gazebo")
+
+    # GUIなし
     headless = LaunchConfiguration("headless", default="false")
 
     display_env = os.environ.get("DISPLAY", ":0")
@@ -51,7 +53,14 @@ def generate_launch_description():
     spawn_robot = Node(
         package="ros_gz_sim",
         executable="create",
-        arguments=["-name", "rox2026", "-topic", "robot_description"],
+        arguments=[
+            "-name", "rox2026",
+            "-topic", "robot_description",
+            "-x", "-3.43",
+            "-y", "-4.50",
+            "-z", "0.15",
+            "-Y", "-1.57079"
+        ],
         condition=IfCondition(gazebo),
     )
 

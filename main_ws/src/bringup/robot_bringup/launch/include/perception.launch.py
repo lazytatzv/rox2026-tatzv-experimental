@@ -10,6 +10,16 @@ from launch_ros.actions import Node
 def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
+    # Image Flipper node to resolve mirrored textures in simulation
+    image_flipper_node = Node(
+        package="vision_localization",
+        executable="image_flipper",
+        name="image_flipper",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
+    # 既存node
+    # apriltagは0.15mだったっけ？
     apriltag_node = Node(
         package="apriltag_ros",
         executable="apriltag_node",
@@ -20,8 +30,8 @@ def generate_launch_description():
             {"size": 0.15},
         ],
         remappings=[
-            ("image_rect", "/camera/image_raw"),
-            ("camera_info", "/camera/camera_info"),
+            ("image_rect", "/camera/image_flipped"),
+            ("camera_info", "/camera/camera_info_flipped"),
         ],
     )
 
@@ -63,6 +73,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="false"),
+            image_flipper_node,
             apriltag_node,
             pc_to_laserscan,
             tag_localization,

@@ -19,6 +19,9 @@ setup(
     license="MIT",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["tag_localizer = vision_localization.tag_localizer:main"],
+        "console_scripts": [
+            "tag_localizer = vision_localization.tag_localizer:main",
+            "image_flipper = vision_localization.image_flipper:main"
+        ],
     },
 )
