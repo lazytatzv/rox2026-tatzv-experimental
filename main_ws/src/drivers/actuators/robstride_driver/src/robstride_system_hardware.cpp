@@ -6,6 +6,11 @@
 #include <string>
 #include <vector>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <linux/can.h>
+#include <linux/can/raw.h>
 
 #include "hardware_interface/types/hardware_interface_type_values.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -72,12 +77,13 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_init(
     transport_->set_receive_callback(std::bind(&RobstrideSystemHardware::can_rx_callback, this,
         std::placeholders::_1));
   } else if (transport_type_ == "socketcan") {
-    // SocketCAN mode (handled via ros2_socketcan bridge using ROS topic)
-    // transport_ is not used
+    // Direct Linux SocketCAN for lowest latency
+  } else if (transport_type_ == "ros_topic") {
+    // Legacy SocketCAN mode via ros2_socketcan bridge using ROS topic
   } else {
     RCLCPP_FATAL(
       node_->get_logger(),
-      "Unknown transport: %s (Must be 'serial_port' or 'socketcan')",
+      "Unknown transport: %s (Must be 'serial_port', 'socketcan', or 'ros_topic')",
       transport_type_.c_str());
     return hardware_interface::CallbackReturn::ERROR;
   }
@@ -114,7 +120,45 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_configure(
       RCLCPP_FATAL(node_->get_logger(), "Failed to open transport: %s", e.what());
       return hardware_interface::CallbackReturn::ERROR;
     }
-  } else {
+  } else if (transport_type_ == "socketcan") {
+    if (info_.hardware_parameters.count("can_interface")) {
+      can_interface_ = info_.hardware_parameters.at("can_interface");
+    }
+
+    can_socket_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
+    if (can_socket_ < 0) {
+      RCLCPP_FATAL(node_->get_logger(), "Error creating socket for SocketCAN");
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    struct ifreq ifr;
+    std::strncpy(ifr.ifr_name, can_interface_.c_str(), IFNAMSIZ - 1);
+    ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+    if (ioctl(can_socket_, SIOCGIFINDEX, &ifr) < 0) {
+      RCLCPP_FATAL(node_->get_logger(), "Error finding CAN interface: %s", can_interface_.c_str());
+      close(can_socket_);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    struct sockaddr_can addr;
+    std::memset(&addr, 0, sizeof(addr));
+    addr.can_family = AF_CAN;
+    addr.can_ifindex = ifr.ifr_ifindex;
+
+    // Set receive timeout to allow thread to exit smoothly
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000; // 100ms
+    setsockopt(can_socket_, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
+
+    if (bind(can_socket_, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+      RCLCPP_FATAL(node_->get_logger(), "Error binding SocketCAN to %s", can_interface_.c_str());
+      close(can_socket_);
+      return hardware_interface::CallbackReturn::ERROR;
+    }
+
+    RCLCPP_INFO(node_->get_logger(), "Direct SocketCAN initialized on %s (Ultimate Performance Mode)", can_interface_.c_str());
+  } else if (transport_type_ == "ros_topic") {
     std::string rx_topic = "/from_can_bus";
     std::string tx_topic = "/to_can_bus";
     if (info_.hardware_parameters.count("can_rx_topic")) {
@@ -140,7 +184,12 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_cleanup(
 {
   if (transport_type_ == "serial_port") {
     transport_->close();
-  } else {
+  } else if (transport_type_ == "socketcan") {
+    if (can_socket_ >= 0) {
+      close(can_socket_);
+      can_socket_ = -1;
+    }
+  } else if (transport_type_ == "ros_topic") {
     can_pub_.reset();
     can_sub_.reset();
   }
@@ -150,7 +199,17 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_cleanup(
 hardware_interface::CallbackReturn RobstrideSystemHardware::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  if (transport_type_ != "serial_port") {
+  if (transport_type_ == "socketcan") {
+    can_rx_running_ = true;
+    can_rx_thread_ = std::make_unique<std::thread>(&RobstrideSystemHardware::can_rx_thread_func, this);
+
+    // Set thread priority to real-time for zero-latency CAN RX
+    struct sched_param param;
+    param.sched_priority = 80;
+    if (pthread_setschedparam(can_rx_thread_->native_handle(), SCHED_FIFO, &param) != 0) {
+      RCLCPP_WARN(node_->get_logger(), "Failed to set SCHED_FIFO for CAN RX thread. Requires sudo/root for ultimate latency.");
+    }
+  } else if (transport_type_ == "ros_topic") {
     executor_.add_node(node_);
     spin_thread_ = std::make_unique<std::thread>([this]() {
           executor_.spin();
@@ -228,7 +287,13 @@ hardware_interface::CallbackReturn RobstrideSystemHardware::on_deactivate(
     }
   }
 
-  if (transport_type_ != "serial_port") {
+  if (transport_type_ == "socketcan") {
+    can_rx_running_ = false;
+    if (can_rx_thread_ && can_rx_thread_->joinable()) {
+      can_rx_thread_->join();
+    }
+    can_rx_thread_.reset();
+  } else if (transport_type_ == "ros_topic") {
     executor_.cancel();
     if (spin_thread_ && spin_thread_->joinable()) {
       spin_thread_->join();
@@ -327,7 +392,43 @@ void RobstrideSystemHardware::send_command(uint8_t motor_id, const std::vector<u
 
   if (transport_type_ == "serial_port") {
     transport_->send_raw(frame_data);
-  } else {
+  } else if (transport_type_ == "socketcan") {
+    if (can_socket_ < 0) return;
+    
+    if (protocol_type_ == "native_can") {
+      for (size_t offset = 0; offset + 16 <= frame_data.size(); offset += 16) {
+        struct can_frame frame;
+        std::memset(&frame, 0, sizeof(struct can_frame));
+        uint32_t can_id;
+        std::memcpy(&can_id, &frame_data[offset + 1], 4);
+        
+        bool is_ext = (frame_data[offset + 5] == 0x01);
+        bool is_rtr = (frame_data[offset + 6] == 0x01);
+        frame.can_id = can_id;
+        if (is_ext) frame.can_id |= CAN_EFF_FLAG;
+        if (is_rtr) frame.can_id |= CAN_RTR_FLAG;
+        
+        frame.can_dlc = frame_data[offset + 7];
+        std::memcpy(frame.data, &frame_data[offset + 8], 8);
+        
+        ::write(can_socket_, &frame, sizeof(struct can_frame));
+      }
+    } else if (protocol_type_ == "ddsm") {
+      struct can_frame frame;
+      std::memset(&frame, 0, sizeof(struct can_frame));
+      frame.can_id = frame_data[0];
+      frame.can_dlc = 8;
+      std::memcpy(frame.data, &frame_data[1], 8);
+      ::write(can_socket_, &frame, sizeof(struct can_frame));
+    } else {
+      struct can_frame frame;
+      std::memset(&frame, 0, sizeof(struct can_frame));
+      frame.can_id = motor_id;
+      frame.can_dlc = std::min(static_cast<size_t>(frame_data.size()), static_cast<size_t>(8));
+      std::memcpy(frame.data, frame_data.data(), frame.can_dlc);
+      ::write(can_socket_, &frame, sizeof(struct can_frame));
+    }
+  } else if (transport_type_ == "ros_topic") {
     if (protocol_type_ == "native_can") {
       for (size_t offset = 0; offset + 16 <= frame_data.size(); offset += 16) {
         can_msgs::msg::Frame msg;
@@ -384,6 +485,34 @@ void RobstrideSystemHardware::process_received_frame(const std::vector<uint8_t> 
     motors_[idx].position = state.position;
     motors_[idx].velocity = state.velocity;
     motors_[idx].effort = state.effort;
+  }
+}
+
+void RobstrideSystemHardware::can_rx_thread_func()
+{
+  while (can_rx_running_) {
+    struct can_frame frame;
+    int nbytes = ::read(can_socket_, &frame, sizeof(struct can_frame));
+    if (nbytes > 0 && (size_t)nbytes == sizeof(struct can_frame)) {
+      std::vector<uint8_t> frame_data;
+      if (protocol_type_ == "native_can") {
+        frame_data.resize(16, 0);
+        frame_data[0] = 0xAA;
+        uint32_t can_id = frame.can_id & CAN_EFF_MASK;
+        std::memcpy(&frame_data[1], &can_id, 4);
+        frame_data[5] = (frame.can_id & CAN_EFF_FLAG) ? 0x01 : 0x00;
+        frame_data[6] = (frame.can_id & CAN_RTR_FLAG) ? 0x01 : 0x00;
+        frame_data[7] = frame.can_dlc;
+        std::memcpy(&frame_data[8], frame.data, 8);
+      } else if (protocol_type_ == "ddsm") {
+        frame_data.resize(10, 0);
+        frame_data[0] = frame.can_id & 0xFF;
+        std::memcpy(&frame_data[1], frame.data, 8);
+      } else {
+        frame_data.assign(frame.data, frame.data + frame.can_dlc);
+      }
+      process_received_frame(frame_data);
+    }
   }
 }
 

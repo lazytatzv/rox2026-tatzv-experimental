@@ -77,6 +77,13 @@ private:
   std::unique_ptr<std::thread> spin_thread_;
   rclcpp::executors::SingleThreadedExecutor executor_;
 
+  // SocketCAN Direct Communication
+  int can_socket_{-1};
+  std::string can_interface_{"can0"};
+  std::unique_ptr<std::thread> can_rx_thread_;
+  std::atomic<bool> can_rx_running_{false};
+  void can_rx_thread_func();
+
   // State and Command values
   struct Motor
   {
