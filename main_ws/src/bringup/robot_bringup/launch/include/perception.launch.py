@@ -13,26 +13,29 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration("use_sim_time", default="false")
 
-    # Image Flipper node to resolve mirrored textures in simulation
-    image_flipper_node = Node(
+    # Node 2: Image Syncer (to fix timestamp mismatches in Gazebo Harmonic)
+    image_syncer_node = Node(
         package="vision_localization",
-        executable="image_flipper",
-        name="image_flipper",
-        parameters=[{"use_sim_time": use_sim_time}],
+        executable="image_syncer",
+        name="image_syncer",
+        output="screen",
+        # image_syncer subscribes to /camera/image_raw and /camera/camera_info,
+        # and publishes to /camera_synced/image_raw and /camera_synced/camera_info
     )
 
-    # 既存node
+    # Node 3: AprilTag Node
     apriltag_node = Node(
         package="apriltag_ros",
         executable="apriltag_node",
         name="apriltag_node",
+        output="screen",
         parameters=[
             apriltag_config,
             {"use_sim_time": use_sim_time}
         ],
         remappings=[
-            ("image_rect", "/camera_flipped/image_raw"),
-            ("camera_info", "/camera_flipped/camera_info"),
+            ("image_rect", "/camera_synced/image_raw"),
+            ("camera_info", "/camera_synced/camera_info"),
             ("detections", "/detections"),
         ],
     )
@@ -75,7 +78,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="false"),
-            image_flipper_node,
+            image_syncer_node,
             apriltag_node,
             pc_to_laserscan,
             tag_localization,
