@@ -1,7 +1,7 @@
 /**:
     ros__parameters:
         image_transport: raw    # image format
-        family: 16h5           # tag family name
+        family: 36h11           # tag family name
         size: 0.18          # tag edge size in meter
         max_hamming: 1          # maximum allowed hamming distance (1 corrects minor errors for extreme robustness)
         qos_profile: sensor_data # low-latency UDP-like delivery for real-time vision

@@ -56,10 +56,10 @@ def generate_launch_description():
         arguments=[
             "-name", "rox2026",
             "-topic", "robot_description",
-            "-x", "-3.43",
-            "-y", "-4.50",
+            "-x", "-6.495",
+            "-y", "-6.020",
             "-z", "0.15",
-            "-Y", "-1.57079"
+            "-Y", "1.57079"
         ],
         condition=IfCondition(gazebo),
     )
