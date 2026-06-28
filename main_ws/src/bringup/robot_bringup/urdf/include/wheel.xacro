@@ -26,7 +26,7 @@
       <xacro:cylinder_inertia m="${hub_mass}" r="${wheel_radius}" h="0.04"/>
       <visual name="${name}_hub_vis"><geometry><cylinder radius="${wheel_radius}" length="0.04"/></geometry><material name="aluminum"/></visual>
       <collision name="${name}_hub_col">
-        <geometry><cylinder radius="${wheel_radius}" length="0.04"/></geometry>
+        <geometry><sphere radius="${wheel_radius}"/></geometry>
       </collision>
     </link>
     <joint name="${name}_wheel_joint" type="continuous">
