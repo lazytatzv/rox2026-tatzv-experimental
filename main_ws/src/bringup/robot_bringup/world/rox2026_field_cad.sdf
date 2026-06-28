@@ -26,7 +26,7 @@
     <!-- CAD Field Model -->
     <include>
       <uri>model://rox2026_field</uri>
-      <pose>0 0 0.02 1.5708 0 0</pose>
+      <pose>0 0 0 0 0 0</pose>
     </include>
 
     <!-- Ground Plane for stability -->

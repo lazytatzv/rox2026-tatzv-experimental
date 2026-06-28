@@ -5,13 +5,13 @@ import cv2
 from cv_bridge import CvBridge
 import message_filters
 
-class ImageFlipper(Node):
+class ImageSyncer(Node):
     def __init__(self):
-        super().__init__('image_flipper')
+        super().__init__('image_syncer')
         self.bridge = CvBridge()
         
-        self.image_pub = self.create_publisher(Image, '/camera_flipped/image_raw', 10)
-        self.info_pub = self.create_publisher(CameraInfo, '/camera_flipped/camera_info', 10)
+        self.image_pub = self.create_publisher(Image, '/camera_synced/image_raw', 10)
+        self.info_pub = self.create_publisher(CameraInfo, '/camera_synced/camera_info', 10)
             
         # Use message_filters to synchronize Image and CameraInfo
         self.image_sub = message_filters.Subscriber(self, Image, '/camera/image_raw')
@@ -25,20 +25,20 @@ class ImageFlipper(Node):
             # Convert directly to mono8 (grayscale) to save bandwidth and CPU
             cv_img = self.bridge.imgmsg_to_cv2(img_msg, desired_encoding='mono8')
             # Do NOT flip the image, Gazebo Sim already provides correct textures!
-            flipped_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding='mono8')
-            flipped_msg.header = img_msg.header
-            self.image_pub.publish(flipped_msg)
+            synced_msg = self.bridge.cv2_to_imgmsg(cv_img, encoding='mono8')
+            synced_msg.header = img_msg.header
+            self.image_pub.publish(synced_msg)
             
             # Pass camera_info through directly with matching timestamp
-            flipped_info = info_msg
-            flipped_info.header.stamp = img_msg.header.stamp
-            self.info_pub.publish(flipped_info)
+            synced_info = info_msg
+            synced_info.header.stamp = img_msg.header.stamp
+            self.info_pub.publish(synced_info)
         except Exception as e:
-            self.get_logger().error(f'Failed to flip image: {str(e)}')
+            self.get_logger().error(f'Failed to sync image: {str(e)}')
 
 def main():
     rclpy.init()
-    node = ImageFlipper()
+    node = ImageSyncer()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()

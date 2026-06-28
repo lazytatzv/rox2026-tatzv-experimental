@@ -120,12 +120,6 @@ def generate_launch_description():
         arguments=["joint_state_broadcaster", "--controller-manager-timeout", "120"],
         parameters=[{"use_sim_time": use_sim_time}],
     )
-    spawn_controller = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["mecanum_drive_controller", "--controller-manager-timeout", "120"],
-        parameters=[{"use_sim_time": use_sim_time}],
-    )
 
     return LaunchDescription(
         [
@@ -144,6 +138,6 @@ def generate_launch_description():
             include_navigation,
             ros2_control_node,
             spawn_broadcaster,
-            spawn_controller,
+            # spawn_controller,
         ]
     )
