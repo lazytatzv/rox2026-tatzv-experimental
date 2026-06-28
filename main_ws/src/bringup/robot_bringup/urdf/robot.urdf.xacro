@@ -27,7 +27,7 @@
     <visual name="base_vis"><origin xyz="0 0 0.05"/><geometry><box size="${base_l} ${base_w} ${base_h}"/></geometry><material name="black"/></visual>
     <collision name="base_col"><origin xyz="0 0 0.05"/><geometry><box size="${base_l} ${base_w} ${base_h}"/></geometry></collision>
   </link>
-  <joint name="base_joint" type="fixed"><parent link="base_footprint"/><child link="base_link"/><origin xyz="0 0 ${wheel_radius}"/></joint>
+  <joint name="base_joint" type="fixed"><parent link="base_footprint"/><child link="base_link"/><origin xyz="0 0 0.05"/></joint>
 
   <!-- 4. Sensors -->
   <xacro:property name="imu_o" value="${props['sensors']['imu_offset']}"/>
@@ -56,10 +56,10 @@
   <xacro:property name="off_x" value="${wheel_base / 2.0}"/>
   <xacro:property name="off_y" value="${wheel_sep / 2.0}"/>
 
-  <xacro:mecanum_wheel name="front_left"  x="${off_x}"  y="${off_y}" roller_type="-1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
-  <xacro:mecanum_wheel name="front_right" x="${off_x}"  y="${-off_y}" roller_type="1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
-  <xacro:mecanum_wheel name="rear_left"   x="${-off_x}" y="${off_y}"  roller_type="1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
-  <xacro:mecanum_wheel name="rear_right"  x="${-off_x}" y="${-off_y}" roller_type="-1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="front_left"  x="${off_x}"  y="${off_y}" roller_type="1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="front_right" x="${off_x}"  y="${-off_y}" roller_type="-1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="rear_left"   x="${-off_x}" y="${off_y}"  roller_type="-1"  hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
+  <xacro:mecanum_wheel name="rear_right"  x="${-off_x}" y="${-off_y}" roller_type="1" hub_mass="${hub_mass}" wheel_radius="${wheel_radius}"/>
 
   <!-- 6. ros2_control & Gazebo -->
   <xacro:arg name="gazebo" default="false"/>
@@ -152,7 +152,7 @@
       <topic>/camera</topic>
       <gz_frame_id>camera_link_optical</gz_frame_id>
       <camera>
-        <horizontal_fov>1.2</horizontal_fov>
+        <horizontal_fov>2.61799</horizontal_fov>
         <image>
           <width>640</width>
           <height>480</height>
