@@ -52,3 +52,31 @@ twist_mux:
         topic: "stop_lock"
         timeout: 0.0
         priority: 255
+
+# ==========================================
+# 射出機構 (Shooter) 用の設定（最強の構成）
+# ==========================================
+/shooter_teleop:
+  ros__parameters:
+    # --- ボタン・軸の割り当て ---
+    joy_button_fire: 1        # B / Circleボタン
+    joy_button_charge: 3      # Y / Triangleボタン
+    joy_axis_aim_pitch: 4     # 右スティック上下など
+    
+    # --- トピック設定 ---
+    topic_joy: "joy"
+    topic_shooter_cmd: "shooter/cmd_joy"  # Muxへ送る用のTopic
+
+# 射出用のMux（自作Muxまたはtwist_muxの流用を想定）
+shooter_mux:
+  ros__parameters:
+    topics:
+      teleop:
+        topic: "shooter/cmd_joy"   # 手動操作
+        timeout: 0.5
+        priority: 100              # 手動が最優先
+      auto:
+        topic: "shooter/cmd_auto"  # 自動制御（カメラ・AI等から）
+        timeout: 0.5
+        priority: 10               # 自動運転は優先度低め
+
