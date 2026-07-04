@@ -20,10 +20,11 @@ target_include_directories(mad_motor_command_node PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(mad_motor_command_node
-  rclcpp::rclcpp
-  std_msgs::std_msgs
-  can_msgs::can_msgs
+ament_target_dependencies(mad_motor_command_node
+  rclcpp
+  std_msgs
+  can_msgs
+  rclcpp_components
 )
 rclcpp_components_register_node(mad_motor_command_node
   PLUGIN "mad_motor_driver::MadMotorCommandNode"
