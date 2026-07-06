@@ -13,8 +13,8 @@ class MadMotorDriver : public rclcpp::Node
 public:
   MadMotorDriver() : Node("mad_motor_driver_node"), current_target_rpm_(0.0)
   {
-    this->declare_parameter("motor_id_top", 0x201);
-    this->declare_parameter("motor_id_bottom", 0x202);
+    this->declare_parameter("cmd_id", 0x201);
+    this->declare_parameter("imu_id", 0x202);
     this->declare_parameter("limit_switch_id", 0x200);
     this->declare_parameter("watchdog_timeout", 0.5);
     
@@ -86,7 +86,7 @@ private:
     frame_imu.is_extended = false;
     frame_imu.is_error = false;
     frame_imu.dlc = 8;
-    frame_imu.id = 0x202; // IMU ID
+    frame_imu.id = this->get_parameter("imu_id").as_int();
 
     // Float -> Int16 (10000倍)
     int16_t w = static_cast<int16_t>(msg->orientation.w * 10000.0);
@@ -106,12 +106,14 @@ private:
   {
     uint32_t limit_switch_id = this->get_parameter("limit_switch_id").as_int();
 
+    uint32_t imu_id = this->get_parameter("imu_id").as_int();
+
     if (msg->id == limit_switch_id && msg->dlc >= 1) {
       std_msgs::msg::Bool sw_msg;
       sw_msg.data = ((msg->data[0] & 0x01) != 0); // Bit 0 を取得
       limit_switch_pub_->publish(sw_msg);
     }
-    else if (msg->id == 0x202 && msg->dlc >= 8 && imu_pub_) {
+    else if (msg->id == imu_id && msg->dlc >= 8 && imu_pub_) {
       // STM32から送られてきたIMUデータを復元 (RDK側で使用する場合)
       sensor_msgs::msg::Imu imu_msg;
       
@@ -149,7 +151,7 @@ private:
     frame_cmd.is_extended = false;
     frame_cmd.is_error = false;
     frame_cmd.dlc = 8;
-    frame_cmd.id = 0x201; // System Control ID
+    frame_cmd.id = this->get_parameter("cmd_id").as_int();
 
     // パラメータ取得
     bool invert_top = this->get_parameter("invert_top").as_bool();

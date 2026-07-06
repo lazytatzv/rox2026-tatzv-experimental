@@ -42,10 +42,11 @@ spring_controller:
 
 mad_motor_driver_node:
   ros__parameters:
-    motor_id_top: 513      # 0x201 in hex
-    motor_id_bottom: 514   # 0x202 in hex
+    cmd_id: 513            # 0x201 in hex
+    imu_id: 514            # 0x202 in hex
     limit_switch_id: 512   # 0x200 in hex
     watchdog_timeout: 0.5
     invert_top: false
     invert_bottom: true
     backspin_ratio: 1.2
+    imu_source: "stm32"
