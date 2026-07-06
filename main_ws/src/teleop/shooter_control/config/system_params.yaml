@@ -42,9 +42,9 @@ spring_controller:
 
 mad_motor_driver_node:
   ros__parameters:
-    cmd_id: 513            # 0x201 in hex
-    imu_id: 514            # 0x202 in hex
-    limit_switch_id: 512   # 0x200 in hex
+    cmd_id: 0x201          # RDK -> STM32 (Actuator Control)
+    imu_id: 0x202          # STM32 <-> RDK (IMU Data)
+    limit_switch_id: 0x200 # STM32 -> RDK (Switch States)
     watchdog_timeout: 0.5
     invert_top: false
     invert_bottom: true
