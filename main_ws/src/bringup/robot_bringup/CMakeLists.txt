@@ -3,8 +3,13 @@ project(robot_bringup)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY launch config urdf world models
+install(DIRECTORY launch config urdf world models scripts
   DESTINATION share/${PROJECT_NAME}
+)
+
+install(PROGRAMS
+  scripts/check_imu.py
+  DESTINATION lib/${PROJECT_NAME}
 )
 
 if(BUILD_TESTING)

@@ -15,10 +15,21 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration("use_sim_time")
     gazebo = LaunchConfiguration("gazebo")
 
+    # Auto-detect IMU
+    check_imu_cmd = Command(['python3 ', os.path.join(pkg_robot_bringup, 'scripts', 'check_imu.py')])
+    has_imu_arg = DeclareLaunchArgument('has_imu', default_value=check_imu_cmd)
+    has_imu = LaunchConfiguration('has_imu')
+
+    # Condition: NOT gazebo AND has_imu is true
+    from launch.conditions import IfCondition
+    from launch.substitutions import PythonExpression
+    
+    launch_imu_cond = IfCondition(PythonExpression(["'", has_imu, "' == 'true' and '", gazebo, "' == 'false'"]))
+
     imu_driver = Node(
         package="bno055_driver",
         executable="bno055_node",
-        condition=UnlessCondition(gazebo),
+        condition=launch_imu_cond,
         parameters=[hardware_nodes_config, {"use_sim_time": use_sim_time}],
     )
 
@@ -40,4 +51,4 @@ def generate_launch_description():
         remappings=[("/odometry/filtered", "/odometry/filtered")],
     )
 
-    return LaunchDescription([imu_driver, local_ekf_node, global_ekf_node])
+    return LaunchDescription([has_imu_arg, imu_driver, local_ekf_node, global_ekf_node])

@@ -15,6 +15,15 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration("use_sim_time")
 
+    # Auto-detect IMU
+    from launch.substitutions import Command, PythonExpression
+    check_imu_cmd = Command(['python3 ', os.path.join(pkg_robot_bringup, 'scripts', 'check_imu.py')])
+    has_imu_arg = DeclareLaunchArgument('has_imu', default_value=check_imu_cmd)
+    has_imu = LaunchConfiguration('has_imu')
+    
+    # If we do NOT have an IMU, fallback to Odom for Yaw
+    use_odom_for_yaw = PythonExpression(["'true' if '", has_imu, "' == 'false' else 'false'"])
+
     # Container for all C++ components to achieve Zero-Copy & Low Latency
     container = ComposableNodeContainer(
         name="robot_control_container",
@@ -26,7 +35,13 @@ def generate_launch_description():
                 package="imu_stabilizer",
                 plugin="imu_stabilizer::HeadingStabilizerNode",
                 name="heading_stabilizer",
-                parameters=[tuning_config, {"use_sim_time": use_sim_time}],
+                parameters=[
+                    tuning_config, 
+                    {
+                        "use_sim_time": use_sim_time,
+                        "use_odom_for_yaw": use_odom_for_yaw
+                    }
+                ],
                 remappings=[
                     ("/cmd_vel_in", "/cmd_vel_teleop"),
                     ("/cmd_vel_out", "/mecanum_drive_controller/reference"),
@@ -63,4 +78,4 @@ def generate_launch_description():
         condition=UnlessCondition(use_sim_time)
     )
 
-    return LaunchDescription([container, socket_can_sender])
+    return LaunchDescription([has_imu_arg, container, socket_can_sender])
