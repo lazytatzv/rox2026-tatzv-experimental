@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Int16
+from std_msgs.msg import Float64
 
 class ShooterMux(Node):
     def __init__(self):
@@ -11,18 +11,18 @@ class ShooterMux(Node):
         self.timeout = self.get_parameter('teleop_timeout').get_parameter_value().double_value
 
         # State
-        self.latest_teleop = 0
-        self.latest_auto = 0
+        self.latest_teleop = 0.0
+        self.latest_auto = 0.0
         self.last_teleop_time = self.get_clock().now()
 
         # Subscribers
         self.sub_teleop = self.create_subscription(
-            Int16, 'shooter/cmd_joy', self.teleop_callback, 10)
+            Float64, 'shooter/cmd_joy', self.teleop_callback, 10)
         self.sub_auto = self.create_subscription(
-            Int16, 'shooter/cmd_auto', self.auto_callback, 10)
+            Float64, 'shooter/cmd_auto', self.auto_callback, 10)
 
         # Publisher
-        self.pub_muxed = self.create_publisher(Int16, '/shooter/cmd_muxed', 10)
+        self.pub_muxed = self.create_publisher(Float64, '/shooter/cmd_muxed', 10)
 
         # Timer (50Hz to match motor command rate)
         self.timer = self.create_timer(0.02, self.timer_callback)
@@ -40,7 +40,7 @@ class ShooterMux(Node):
         now = self.get_clock().now()
         elapsed = (now - self.last_teleop_time).nanoseconds / 1e9
 
-        out_msg = Int16()
+        out_msg = Float64()
         
         # If teleop is active and hasn't timed out, use it.
         # Otherwise, fall back to auto.
