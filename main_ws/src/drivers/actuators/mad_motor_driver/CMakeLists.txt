@@ -8,9 +8,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(can_msgs REQUIRED)
 
 add_executable(mad_motor_driver_node src/mad_motor_driver_node.cpp)
-ament_target_dependencies(mad_motor_driver_node rclcpp std_msgs)
+ament_target_dependencies(mad_motor_driver_node rclcpp std_msgs can_msgs)
 
 install(TARGETS mad_motor_driver_node
   DESTINATION lib/${PROJECT_NAME}
