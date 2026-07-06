@@ -6,6 +6,7 @@ use defmt_rtt as _;
 use panic_probe as _;
 
 use embassy_executor::Spawner;
+use embassy_stm32::can::bxcan::filter::Mask32;
 use embassy_stm32::can::bxcan::Frame;
 use embassy_stm32::can::{bxcan::StandardId, Can, Rx0InterruptHandler, TxInterruptHandler};
 use embassy_stm32::gpio::{Input, Pull};
@@ -14,13 +15,15 @@ use embassy_stm32::time::khz;
 use embassy_stm32::timer::qei::{Qei, QeiDir};
 use embassy_stm32::timer::simple_pwm::{PwmPin, SimplePwm};
 use embassy_stm32::{bind_interrupts, Config};
-use embassy_time::{Duration, Ticker, Timer};
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
+use embassy_time::{Duration, Instant, Ticker, Timer};
 
-// 左右のモーターの目標RPMを共有
-static TARGET_RPM_L: Mutex<CriticalSectionRawMutex, f32> = Mutex::new(0.0);
-static TARGET_RPM_R: Mutex<CriticalSectionRawMutex, f32> = Mutex::new(0.0);
+// 上下モーターの目標RPMとシステム状態の共有
+static TARGET_RPM_TOP: Mutex<CriticalSectionRawMutex, f32> = Mutex::new(0.0);
+static TARGET_RPM_BOTTOM: Mutex<CriticalSectionRawMutex, f32> = Mutex::new(0.0);
+static ESTOP_FLAG: Mutex<CriticalSectionRawMutex, bool> = Mutex::new(false);
+static LAST_CMD_TIME: Mutex<CriticalSectionRawMutex, Option<Instant>> = Mutex::new(None);
 
 bind_interrupts!(struct Irqs {
     CAN1_RX0 => Rx0InterruptHandler<CAN1>;
@@ -38,22 +41,21 @@ async fn can_rx_task(mut rx: embassy_stm32::can::Rx0<'static, CAN1>) {
                 if id == StandardId::new(0x201).unwrap() {
                     if let Some(data) = frame.data() {
                         if data.len() >= 8 {
-                            // Byte 0-1: Top RPM (Left)
-                            let bytes_top = [data[0], data[1]];
-                            let target_top = i16::from_le_bytes(bytes_top) as f32;
-                            
-                            // Byte 2-3: Bottom RPM (Right)
-                            let bytes_bottom = [data[2], data[3]];
-                            let target_bottom = i16::from_le_bytes(bytes_bottom) as f32;
-                            
+                            // Byte 0-1: Top RPM
+                            let target_top = i16::from_le_bytes([data[0], data[1]]) as f32;
+
+                            // Byte 2-3: Bottom RPM
+                            let target_bottom = i16::from_le_bytes([data[2], data[3]]) as f32;
+
                             // Byte 4-5: Dribbler (Unused for now)
-                            // Byte 6: E-Stop (Unused for now)
-                            
-                            let mut locked_l = TARGET_RPM_L.lock().await;
-                            *locked_l = target_top;
-                            
-                            let mut locked_r = TARGET_RPM_R.lock().await;
-                            *locked_r = target_bottom;
+
+                            // Byte 6: E-Stop
+                            let estop = data[6] != 0;
+
+                            *TARGET_RPM_TOP.lock().await = target_top;
+                            *TARGET_RPM_BOTTOM.lock().await = target_bottom;
+                            *ESTOP_FLAG.lock().await = estop;
+                            *LAST_CMD_TIME.lock().await = Some(Instant::now());
                         }
                     }
                 }
@@ -65,7 +67,7 @@ async fn can_rx_task(mut rx: embassy_stm32::can::Rx0<'static, CAN1>) {
 #[embassy_executor::task]
 async fn telemetry_task(
     mut tx: embassy_stm32::can::Tx<'static, CAN1>,
-    mut limit_sw: Input<'static>
+    mut limit_sw1: Input<'static>,
 ) {
     info!("Telemetry Task Started (Switch & IMU)");
     let mut ticker = Ticker::every(Duration::from_millis(10)); // 100Hz
@@ -74,110 +76,147 @@ async fn telemetry_task(
         ticker.next().await;
 
         // 1. スイッチ送信 (ID: 0x200)
-        let is_pressed = if limit_sw.is_low() { 1u8 } else { 0u8 };
-        let frame_sw = Frame::new_data(StandardId::new(0x200).unwrap(), [is_pressed]);
+        // Bit 0: SW1, Bit 1: SW2(dummy), Bit 2: SW3(dummy)
+        let mut switches = 0u8;
+        if limit_sw1.is_low() {
+            switches |= 0b001;
+        }
+        // if limit_sw2.is_low() { switches |= 0b010; }
+        // if limit_sw3.is_low() { switches |= 0b100; }
+
+        let frame_sw = Frame::new_data(StandardId::new(0x200).unwrap(), [switches]);
         let _ = tx.write(&frame_sw).await;
-        
-        // 2. IMU ダミー送信 (ID: 0x202) -> 最強構成の8byte圧縮
-        // 例として [w=1.0, x=0.0, y=0.0, z=0.0] を10000倍して送る
+
+        // 2. IMU 送信 (ID: 0x202) -> 10000倍圧縮
         let w = (1.0 * 10000.0) as i16;
         let x = (0.0 * 10000.0) as i16;
         let y = (0.0 * 10000.0) as i16;
         let z = (0.0 * 10000.0) as i16;
-        
+
         let mut imu_data = [0u8; 8];
         imu_data[0..2].copy_from_slice(&w.to_le_bytes());
         imu_data[2..4].copy_from_slice(&x.to_le_bytes());
         imu_data[4..6].copy_from_slice(&y.to_le_bytes());
         imu_data[6..8].copy_from_slice(&z.to_le_bytes());
-        
+
         let frame_imu = Frame::new_data(StandardId::new(0x202).unwrap(), imu_data);
         let _ = tx.write(&frame_imu).await;
     }
 }
 
-// ヘルパー: ESC用PWM出力 (1000us ~ 2000us)
+// ESC用PWM出力 (1000us ~ 2000us)
 fn set_esc_pwm(pwm: &mut SimplePwm<'_, TIM3>, ch: embassy_stm32::timer::Channel, pulse_us: f32) {
     let max_duty = pwm.get_max_duty() as f32;
-    // 50Hz (20000us周期)
     let duty = (pulse_us / 20000.0) * max_duty;
     pwm.set_duty(ch, duty as u16);
 }
 
 #[embassy_executor::task]
 async fn pid_control_task(
-    mut qei_l: Qei<'static, TIM4>,
-    mut qei_r: Qei<'static, TIM2>,
-    mut pwm: SimplePwm<'static, TIM3>
+    mut qei_top: Qei<'static, TIM4>,
+    mut qei_bottom: Qei<'static, TIM2>,
+    mut pwm: SimplePwm<'static, TIM3>,
 ) {
     info!("PID & ESC PWM Task Started");
-    
-    // 100Hz PID loop (10ms) - ESCの応答速度に合わせて調整
+
     let dt = 0.01;
     let mut ticker = Ticker::every(Duration::from_millis(10));
-    
-    // PIDゲイン (実機で調整必須)
+
+    // PIDゲイン
     let kp = 0.5;
     let ki = 0.05;
     let kd = 0.01;
-    
-    let mut integral_l = 0.0;
-    let mut prev_error_l = 0.0;
-    let mut prev_count_l = qei_l.count();
 
-    let mut integral_r = 0.0;
-    let mut prev_error_r = 0.0;
-    let mut prev_count_r = qei_r.count();
+    let mut integral_top = 0.0;
+    let mut prev_error_top = 0.0;
+    let mut prev_count_top = qei_top.count();
 
-    // エンコーダの分解能 (PPR * 4) -> 例: 2048 * 4 = 8192
+    let mut integral_bottom = 0.0;
+    let mut prev_error_bottom = 0.0;
+    let mut prev_count_bottom = qei_bottom.count();
+
     let cpr = 8192.0;
 
     loop {
         ticker.next().await;
-        
-        let target_l = *TARGET_RPM_L.lock().await;
-        let target_r = *TARGET_RPM_R.lock().await;
-        
-        // --- 実際のRPM計算 (Left) ---
-        let current_count_l = qei_l.count();
-        let delta_count_l = current_count_l.wrapping_sub(prev_count_l) as i16 as f32;
-        prev_count_l = current_count_l;
-        let actual_rpm_l = (delta_count_l / cpr) * (60.0 / dt);
 
-        // --- 実際のRPM計算 (Right) ---
-        let current_count_r = qei_r.count();
-        let delta_count_r = current_count_r.wrapping_sub(prev_count_r) as i16 as f32;
-        prev_count_r = current_count_r;
-        let actual_rpm_r = (delta_count_r / cpr) * (60.0 / dt);
+        let mut target_top = *TARGET_RPM_TOP.lock().await;
+        let mut target_bottom = *TARGET_RPM_BOTTOM.lock().await;
+        let estop = *ESTOP_FLAG.lock().await;
+        let last_cmd = *LAST_CMD_TIME.lock().await;
 
-        // --- PID計算 (Left) ---
-        let error_l = target_l - actual_rpm_l;
-        integral_l += error_l * dt;
-        if integral_l > 500.0 { integral_l = 500.0; } else if integral_l < -500.0 { integral_l = -500.0; }
-        let derivative_l = (error_l - prev_error_l) / dt;
-        let output_l = (kp * error_l) + (ki * integral_l) + (kd * derivative_l);
-        prev_error_l = error_l;
+        // ウォッチドッグ判定 (500ms以上指令がなければ停止)
+        let is_timeout = match last_cmd {
+            Some(t) => t.elapsed().as_millis() > 500,
+            None => true,
+        };
 
-        // --- PID計算 (Right) ---
-        let error_r = target_r - actual_rpm_r;
-        integral_r += error_r * dt;
-        if integral_r > 500.0 { integral_r = 500.0; } else if integral_r < -500.0 { integral_r = -500.0; }
-        let derivative_r = (error_r - prev_error_r) / dt;
-        let output_r = (kp * error_r) + (ki * integral_r) + (kd * derivative_r);
-        prev_error_r = error_r;
+        // 安全装置
+        if estop || is_timeout {
+            target_top = 0.0;
+            target_bottom = 0.0;
+        }
 
-        // --- ESCへのPWM出力計算 (1000us ~ 2000us) ---
-        let mut pulse_l = 1500.0 + output_l;
-        let mut pulse_r = 1500.0 + output_r;
+        // --- RPM計算 ---
+        let count_top = qei_top.count();
+        let delta_top = count_top.wrapping_sub(prev_count_top) as i16 as f32;
+        prev_count_top = count_top;
+        let actual_rpm_top = (delta_top / cpr) * (60.0 / dt);
 
-        if pulse_l > 2000.0 { pulse_l = 2000.0; } else if pulse_l < 1000.0 { pulse_l = 1000.0; }
-        if pulse_r > 2000.0 { pulse_r = 2000.0; } else if pulse_r < 1000.0 { pulse_r = 1000.0; }
+        let count_bottom = qei_bottom.count();
+        let delta_bottom = count_bottom.wrapping_sub(prev_count_bottom) as i16 as f32;
+        prev_count_bottom = count_bottom;
+        let actual_rpm_bottom = (delta_bottom / cpr) * (60.0 / dt);
 
-        if target_l == 0.0 { pulse_l = 1000.0; integral_l = 0.0; }
-        if target_r == 0.0 { pulse_r = 1000.0; integral_r = 0.0; }
+        // --- PID計算 ---
+        let err_top = target_top - actual_rpm_top;
+        integral_top += err_top * dt;
+        if integral_top > 500.0 {
+            integral_top = 500.0;
+        } else if integral_top < -500.0 {
+            integral_top = -500.0;
+        }
+        let out_top = (kp * err_top) + (ki * integral_top) + (kd * (err_top - prev_error_top) / dt);
+        prev_error_top = err_top;
 
-        set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch1, pulse_l);
-        set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch2, pulse_r);
+        let err_bottom = target_bottom - actual_rpm_bottom;
+        integral_bottom += err_bottom * dt;
+        if integral_bottom > 500.0 {
+            integral_bottom = 500.0;
+        } else if integral_bottom < -500.0 {
+            integral_bottom = -500.0;
+        }
+        let out_bottom = (kp * err_bottom)
+            + (ki * integral_bottom)
+            + (kd * (err_bottom - prev_error_bottom) / dt);
+        prev_error_bottom = err_bottom;
+
+        // --- PWM出力 ---
+        let mut pulse_top = 1500.0 + out_top;
+        let mut pulse_bottom = 1500.0 + out_bottom;
+
+        if pulse_top > 2000.0 {
+            pulse_top = 2000.0;
+        } else if pulse_top < 1000.0 {
+            pulse_top = 1000.0;
+        }
+        if pulse_bottom > 2000.0 {
+            pulse_bottom = 2000.0;
+        } else if pulse_bottom < 1000.0 {
+            pulse_bottom = 1000.0;
+        }
+
+        if target_top == 0.0 {
+            pulse_top = 1500.0;
+            integral_top = 0.0;
+        } // 1500が停止(車用ESC)
+        if target_bottom == 0.0 {
+            pulse_bottom = 1500.0;
+            integral_bottom = 0.0;
+        }
+
+        set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch1, pulse_top);
+        set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch2, pulse_bottom);
     }
 }
 
@@ -187,34 +226,46 @@ async fn main(spawner: Spawner) {
     let p = embassy_stm32::init(config);
     info!("Ultimate Shooter Firmware Booted.");
 
-    // --- 1. リミットスイッチ初期化 (例: PC13, プルアップ) ---
-    let limit_sw = Input::new(p.PC13, Pull::Up);
+    let limit_sw1 = Input::new(p.PC13, Pull::Up);
 
-    // --- 2. CAN 初期化 (PD0, PD1) ---
     let mut can = Can::new(p.CAN1, p.PD0, p.PD1, Irqs);
-    can.as_mut().modify_config().set_bit_timing(0x001c0000); 
-    can.as_mut().modify_filters().clear();
-    
-    // CANを送信・受信用に分割
+    can.as_mut().modify_config().set_bit_timing(0x001c0000);
+
+    // 最強の構成: ハードウェアCANフィルタ設定 (0x201と0x202のみ受信し、他は捨てる)
+    can.as_mut().modify_filters().enable_bank(
+        0,
+        Mask32::frames_with_std_id(
+            StandardId::new(0x201).unwrap(),
+            StandardId::new(0x202).unwrap(),
+        ),
+    );
+
     let (tx, rx0, _rx1) = can.split();
 
-    // --- 3. エンコーダ (QEI) 初期化 ---
-    let qei_l = Qei::new(p.TIM4, p.PB6, p.PB7);
-    let qei_r = Qei::new(p.TIM2, p.PA0, p.PA1);
+    let qei_top = Qei::new(p.TIM4, p.PB6, p.PB7);
+    let qei_bottom = Qei::new(p.TIM2, p.PA0, p.PA1);
 
-    // --- 4. ESC向け PWM 初期化 ---
     let ch1 = PwmPin::new_ch1(p.PC6, embassy_stm32::gpio::OutputType::PushPull);
     let ch2 = PwmPin::new_ch2(p.PC7, embassy_stm32::gpio::OutputType::PushPull);
-    let mut pwm = SimplePwm::new(p.TIM3, Some(ch1), Some(ch2), None, None, khz(50), Default::default());
+    let mut pwm = SimplePwm::new(
+        p.TIM3,
+        Some(ch1),
+        Some(ch2),
+        None,
+        None,
+        khz(50),
+        Default::default(),
+    );
     pwm.enable(embassy_stm32::timer::Channel::Ch1);
     pwm.enable(embassy_stm32::timer::Channel::Ch2);
 
-    set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch1, 1000.0);
-    set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch2, 1000.0);
+    set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch1, 1500.0);
+    set_esc_pwm(&mut pwm, embassy_stm32::timer::Channel::Ch2, 1500.0);
     Timer::after_millis(2000).await;
 
-    // タスク起動
     spawner.spawn(can_rx_task(rx0)).unwrap();
-    spawner.spawn(telemetry_task(tx, limit_sw)).unwrap();
-    spawner.spawn(pid_control_task(qei_l, qei_r, pwm)).unwrap();
+    spawner.spawn(telemetry_task(tx, limit_sw1)).unwrap();
+    spawner
+        .spawn(pid_control_task(qei_top, qei_bottom, pwm))
+        .unwrap();
 }
