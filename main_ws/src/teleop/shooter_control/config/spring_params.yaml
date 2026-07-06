@@ -1,0 +1,7 @@
+spring_controller:
+  ros__parameters:
+    reload_speed: 15.0       # 装填時の速度 (rad/s)
+    fire_speed: 20.0         # 発射時の速度 (rad/s)
+    joy_l2_index: 6          # L2ボタン/軸の配列インデックス
+    joy_r1_index: 5          # R1ボタンの配列インデックス
+    control_hz: 100.0        # 制御ループ周期 (Hz)
