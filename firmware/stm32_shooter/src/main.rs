@@ -34,20 +34,26 @@ async fn can_rx_task(mut rx: embassy_stm32::can::Rx0<'static, CAN1>) {
         if let Ok(envelope) = rx.read().await {
             let frame = envelope.frame;
             if let Some(id) = frame.id() {
-                // ID: 0x201 (Left Motor), 0x202 (Right Motor)
-                if id == StandardId::new(0x201).unwrap() || id == StandardId::new(0x202).unwrap() {
+                // ID: 0x201 (System Control)
+                if id == StandardId::new(0x201).unwrap() {
                     if let Some(data) = frame.data() {
-                        if data.len() >= 4 {
-                            let bytes: [u8; 4] = [data[0], data[1], data[2], data[3]];
-                            let target = f32::from_le_bytes(bytes);
+                        if data.len() >= 8 {
+                            // Byte 0-1: Top RPM (Left)
+                            let bytes_top = [data[0], data[1]];
+                            let target_top = i16::from_le_bytes(bytes_top) as f32;
                             
-                            if id == StandardId::new(0x201).unwrap() {
-                                let mut locked = TARGET_RPM_L.lock().await;
-                                *locked = target;
-                            } else {
-                                let mut locked = TARGET_RPM_R.lock().await;
-                                *locked = target;
-                            }
+                            // Byte 2-3: Bottom RPM (Right)
+                            let bytes_bottom = [data[2], data[3]];
+                            let target_bottom = i16::from_le_bytes(bytes_bottom) as f32;
+                            
+                            // Byte 4-5: Dribbler (Unused for now)
+                            // Byte 6: E-Stop (Unused for now)
+                            
+                            let mut locked_l = TARGET_RPM_L.lock().await;
+                            *locked_l = target_top;
+                            
+                            let mut locked_r = TARGET_RPM_R.lock().await;
+                            *locked_r = target_bottom;
                         }
                     }
                 }
@@ -57,24 +63,36 @@ async fn can_rx_task(mut rx: embassy_stm32::can::Rx0<'static, CAN1>) {
 }
 
 #[embassy_executor::task]
-async fn limit_switch_task(
+async fn telemetry_task(
     mut tx: embassy_stm32::can::Tx<'static, CAN1>,
     mut limit_sw: Input<'static>
 ) {
-    info!("Limit Switch Task Started");
-    let mut ticker = Ticker::every(Duration::from_millis(20)); // 50Hz
+    info!("Telemetry Task Started (Switch & IMU)");
+    let mut ticker = Ticker::every(Duration::from_millis(10)); // 100Hz
 
     loop {
         ticker.next().await;
 
-        // スイッチが押された(LOW)なら1、離された(HIGH)なら0
+        // 1. スイッチ送信 (ID: 0x200)
         let is_pressed = if limit_sw.is_low() { 1u8 } else { 0u8 };
-
-        // CAN ID 0x200 で送信 (DLC = 1)
-        let frame = Frame::new_data(StandardId::new(0x200).unwrap(), [is_pressed]);
+        let frame_sw = Frame::new_data(StandardId::new(0x200).unwrap(), [is_pressed]);
+        let _ = tx.write(&frame_sw).await;
         
-        // CAN送信 (メールボックスが空くまで非同期で待機)
-        let _ = tx.write(&frame).await;
+        // 2. IMU ダミー送信 (ID: 0x202) -> 最強構成の8byte圧縮
+        // 例として [w=1.0, x=0.0, y=0.0, z=0.0] を10000倍して送る
+        let w = (1.0 * 10000.0) as i16;
+        let x = (0.0 * 10000.0) as i16;
+        let y = (0.0 * 10000.0) as i16;
+        let z = (0.0 * 10000.0) as i16;
+        
+        let mut imu_data = [0u8; 8];
+        imu_data[0..2].copy_from_slice(&w.to_le_bytes());
+        imu_data[2..4].copy_from_slice(&x.to_le_bytes());
+        imu_data[4..6].copy_from_slice(&y.to_le_bytes());
+        imu_data[6..8].copy_from_slice(&z.to_le_bytes());
+        
+        let frame_imu = Frame::new_data(StandardId::new(0x202).unwrap(), imu_data);
+        let _ = tx.write(&frame_imu).await;
     }
 }
 
@@ -197,6 +215,6 @@ async fn main(spawner: Spawner) {
 
     // タスク起動
     spawner.spawn(can_rx_task(rx0)).unwrap();
-    spawner.spawn(limit_switch_task(tx, limit_sw)).unwrap();
+    spawner.spawn(telemetry_task(tx, limit_sw)).unwrap();
     spawner.spawn(pid_control_task(qei_l, qei_r, pwm)).unwrap();
 }
