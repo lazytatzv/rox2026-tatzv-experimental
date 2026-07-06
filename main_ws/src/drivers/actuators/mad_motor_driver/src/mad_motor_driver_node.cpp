@@ -1,6 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/float64.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <sensor_msgs/msg/imu.hpp>
 #include <can_msgs/msg/frame.hpp>
 #include <chrono>
 #include <cstring>
@@ -21,10 +22,14 @@ public:
     this->declare_parameter("invert_top", false);
     this->declare_parameter("invert_bottom", true); // デフォルトで下側を逆回転と仮定
     
-    // バックスピン比率 (1.0で上下同じ速度。1.2なら下側が20%速く回り、バックスピンがかかる)
+    // バックスピン比率
     this->declare_parameter("backspin_ratio", 1.0);
-
+    
     watchdog_timeout_ = this->get_parameter("watchdog_timeout").as_double();
+
+    // IMUのソース設定 ("stm32" または "rdk")
+    this->declare_parameter("imu_source", "stm32");
+    std::string imu_source = this->get_parameter("imu_source").as_string();
 
     // 1. Publisher for Limit Switch (Bool)
     limit_switch_pub_ = this->create_publisher<std_msgs::msg::Bool>("/shooter/limit_switch", 10);
@@ -37,10 +42,22 @@ public:
       "/shooter/cmd_muxed", 10,
       std::bind(&MadMotorDriver::cmd_callback, this, std::placeholders::_1));
 
-    // 4. Subscriber from ROS2 SocketCAN node (Limit Switch RX)
+    // 4. Subscriber from ROS2 SocketCAN node (Limit Switch & IMU RX)
     can_rx_sub_ = this->create_subscription<can_msgs::msg::Frame>(
       "/from_can", 10,
       std::bind(&MadMotorDriver::can_rx_callback, this, std::placeholders::_1));
+
+    if (imu_source == "stm32") {
+      // STM32がIMUを読み取り、RDKにCAN(0x202)で送ってくる場合
+      imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("/imu/data", 10);
+      RCLCPP_INFO(this->get_logger(), "IMU Source: STM32 -> RDK (Receiving 0x202)");
+    } else {
+      // RDKがIMUを読み取り、STM32にCAN(0x202)で送る場合
+      imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
+        "/imu/data", 10,
+        std::bind(&MadMotorDriver::imu_callback, this, std::placeholders::_1));
+      RCLCPP_INFO(this->get_logger(), "IMU Source: RDK -> STM32 (Sending 0x202)");
+    }
 
     // 5. Watchdog Timer (stops motors if commands are lost)
     watchdog_timer_ = this->create_wall_timer(
@@ -62,14 +79,54 @@ private:
     last_cmd_time_ = this->now();
   }
 
+  void imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
+  {
+    can_msgs::msg::Frame frame_imu;
+    frame_imu.is_rtr = false;
+    frame_imu.is_extended = false;
+    frame_imu.is_error = false;
+    frame_imu.dlc = 8;
+    frame_imu.id = 0x202; // IMU ID
+
+    // Float -> Int16 (10000倍)
+    int16_t w = static_cast<int16_t>(msg->orientation.w * 10000.0);
+    int16_t x = static_cast<int16_t>(msg->orientation.x * 10000.0);
+    int16_t y = static_cast<int16_t>(msg->orientation.y * 10000.0);
+    int16_t z = static_cast<int16_t>(msg->orientation.z * 10000.0);
+
+    std::memcpy(&frame_imu.data[0], &w, 2);
+    std::memcpy(&frame_imu.data[2], &x, 2);
+    std::memcpy(&frame_imu.data[4], &y, 2);
+    std::memcpy(&frame_imu.data[6], &z, 2);
+
+    can_tx_pub_->publish(frame_imu);
+  }
+
   void can_rx_callback(const can_msgs::msg::Frame::SharedPtr msg)
   {
     uint32_t limit_switch_id = this->get_parameter("limit_switch_id").as_int();
 
     if (msg->id == limit_switch_id && msg->dlc >= 1) {
       std_msgs::msg::Bool sw_msg;
-      sw_msg.data = (msg->data[0] == 1);
+      sw_msg.data = ((msg->data[0] & 0x01) != 0); // Bit 0 を取得
       limit_switch_pub_->publish(sw_msg);
+    }
+    else if (msg->id == 0x202 && msg->dlc >= 8 && imu_pub_) {
+      // STM32から送られてきたIMUデータを復元 (RDK側で使用する場合)
+      sensor_msgs::msg::Imu imu_msg;
+      
+      int16_t w, x, y, z;
+      std::memcpy(&w, &msg->data[0], 2);
+      std::memcpy(&x, &msg->data[2], 2);
+      std::memcpy(&y, &msg->data[4], 2);
+      std::memcpy(&z, &msg->data[6], 2);
+
+      imu_msg.orientation.w = static_cast<double>(w) / 10000.0;
+      imu_msg.orientation.x = static_cast<double>(x) / 10000.0;
+      imu_msg.orientation.y = static_cast<double>(y) / 10000.0;
+      imu_msg.orientation.z = static_cast<double>(z) / 10000.0;
+      
+      imu_pub_->publish(imu_msg);
     }
   }
 
@@ -126,8 +183,10 @@ private:
 
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr cmd_sub_;
   rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr can_rx_sub_;
+  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr limit_switch_pub_;
   rclcpp::Publisher<can_msgs::msg::Frame>::SharedPtr can_tx_pub_;
+  rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
   
   rclcpp::TimerBase::SharedPtr watchdog_timer_;
   rclcpp::TimerBase::SharedPtr can_tx_timer_;

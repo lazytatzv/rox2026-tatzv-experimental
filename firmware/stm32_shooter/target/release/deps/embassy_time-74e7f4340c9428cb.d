@@ -1,0 +1,15 @@
+/home/tatsv/rox2026-lazytatzv/firmware/stm32_shooter/target/release/deps/embassy_time-74e7f4340c9428cb.d: /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/lib.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/fmt.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/delay.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/duration.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/instant.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/timer.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/../README.md
+
+/home/tatsv/rox2026-lazytatzv/firmware/stm32_shooter/target/release/deps/libembassy_time-74e7f4340c9428cb.rlib: /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/lib.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/fmt.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/delay.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/duration.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/instant.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/timer.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/../README.md
+
+/home/tatsv/rox2026-lazytatzv/firmware/stm32_shooter/target/release/deps/libembassy_time-74e7f4340c9428cb.rmeta: /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/lib.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/fmt.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/delay.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/duration.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/instant.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/timer.rs /home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/../README.md
+
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/lib.rs:
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/fmt.rs:
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/delay.rs:
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/duration.rs:
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/instant.rs:
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/timer.rs:
+/home/tatsv/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/embassy-time-0.3.2/src/../README.md:
+
+# env-dep:DEFMT_LOG

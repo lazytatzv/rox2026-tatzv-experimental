@@ -1,0 +1,1 @@
+{"rustc":4826714390000139368,"features":"[]","declared_features":"[]","target":773980277789032378,"profile":2040997289075261528,"path":4985755206535003948,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"release/.fingerprint/sdio-host-60a38a36c4b1e468/dep-lib-sdio_host","checksum":false}}],"rustflags":["-C","link-arg=-fuse-ld=mold"],"config":15564086925336547597,"compile_kind":0}
