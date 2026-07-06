@@ -17,7 +17,10 @@
 #include "sensor_msgs/msg/imu.hpp"
 #include "sensor_msgs/msg/temperature.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
+#include "std_srvs/srv/trigger.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
+#include <fstream>
+#include <sstream>
 
 using namespace std::chrono_literals;
 
@@ -34,6 +37,10 @@ public:
     imu_pub_ = this->create_publisher<sensor_msgs::msg::Imu>("/imu", rclcpp::SensorDataQoS());
     temp_pub_ = this->create_publisher<sensor_msgs::msg::Temperature>("/imu/temperature", 10);
     diag_pub_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
+
+    // Set up service
+    save_calib_srv_ = this->create_service<std_srvs::srv::Trigger>(
+      "~/save_calibration", std::bind(&BNO055Node::save_calibration_callback, this, std::placeholders::_1, std::placeholders::_2));
 
     // Try initialization in a background thread to not block launch
     init_thread_ = std::make_unique<std::thread>(&BNO055Node::initialize_bno055, this);
@@ -75,6 +82,7 @@ private:
     this->declare_parameter("load_calibration", false);
     // 22 bytes of calibration data
     this->declare_parameter("calibration_data", std::vector<int64_t>(22, 0)); 
+    this->declare_parameter("calibration_save_path", "/tmp/bno055_calib.yaml");
   }
 
   bool write8(uint8_t reg, uint8_t val)
@@ -283,6 +291,64 @@ private:
     temp_pub_->publish(temp_msg);
   }
 
+  void save_calibration_callback(
+    const std::shared_ptr<std_srvs::srv::Trigger::Request> /*request*/,
+    std::shared_ptr<std_srvs::srv::Trigger::Response> response)
+  {
+    if (!is_initialized_) {
+      response->success = false;
+      response->message = "IMU not initialized yet.";
+      return;
+    }
+
+    uint8_t calib = read8(0x35);
+    if (calib != 0xFF) {
+      RCLCPP_WARN(get_logger(), "Saving calibration even though it is not fully calibrated! (Status: 0x%02X)", calib);
+    }
+
+    // Switch to CONFIG mode to read offsets
+    write8(0x3D, 0x00);
+    std::this_thread::sleep_for(30ms);
+
+    uint8_t start_reg = 0x55;
+    uint8_t data[22];
+    if (write(i2c_fd_, &start_reg, 1) != 1 || read(i2c_fd_, data, 22) != 22) {
+      response->success = false;
+      response->message = "Failed to read calibration data from I2C.";
+      // Restore NDOF mode
+      write8(0x3D, 0x0C);
+      std::this_thread::sleep_for(50ms);
+      return;
+    }
+
+    // Restore NDOF mode
+    write8(0x3D, 0x0C);
+    std::this_thread::sleep_for(50ms);
+
+    std::string path = this->get_parameter("calibration_save_path").as_string();
+    std::ofstream outfile(path);
+    if (!outfile.is_open()) {
+      response->success = false;
+      response->message = "Failed to open file: " + path;
+      return;
+    }
+
+    outfile << "/**:\n";
+    outfile << "  ros__parameters:\n";
+    outfile << "    load_calibration: true\n";
+    outfile << "    calibration_data: [";
+    for (int i = 0; i < 22; ++i) {
+      outfile << (int)data[i];
+      if (i < 21) outfile << ", ";
+    }
+    outfile << "]\n";
+    outfile.close();
+
+    response->success = true;
+    response->message = "Saved to " + path;
+    RCLCPP_INFO(get_logger(), "Calibration saved to %s", path.c_str());
+  }
+
   void check_i2c_health() {
     if (error_count_ > 10) {
       RCLCPP_ERROR(get_logger(), "I2C Bus Error Threshold Reached! Triggering Hard Recovery...");
@@ -306,6 +372,7 @@ private:
   rclcpp::Publisher<sensor_msgs::msg::Imu>::SharedPtr imu_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Temperature>::SharedPtr temp_pub_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diag_pub_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr save_calib_srv_;
   
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::TimerBase::SharedPtr diag_timer_;

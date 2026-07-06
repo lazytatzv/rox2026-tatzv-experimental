@@ -20,17 +20,27 @@ def generate_launch_description():
     has_imu_arg = DeclareLaunchArgument('has_imu', default_value=check_imu_cmd)
     has_imu = LaunchConfiguration('has_imu')
 
+    # Calibration file path
+    imu_calib_file = os.path.join(pkg_robot_bringup, 'config', 'imu_calibration.yaml')
+
     # Condition: NOT gazebo AND has_imu is true
     from launch.conditions import IfCondition
     from launch.substitutions import PythonExpression
     
     launch_imu_cond = IfCondition(PythonExpression(["'", has_imu, "' == 'true' and '", gazebo, "' == 'false'"]))
 
+    # We conditionally load the yaml if it exists, but we also pass the string path for saving
+    import os
+    bno055_params = [{"use_sim_time": use_sim_time, "calibration_save_path": imu_calib_file}]
+    if os.path.exists(imu_calib_file):
+        bno055_params.append(imu_calib_file)
+    bno055_params.append(hardware_nodes_config)
+
     imu_driver = Node(
         package="bno055_driver",
         executable="bno055_node",
         condition=launch_imu_cond,
-        parameters=[hardware_nodes_config, {"use_sim_time": use_sim_time}],
+        parameters=bno055_params,
     )
 
     local_ekf_node = Node(

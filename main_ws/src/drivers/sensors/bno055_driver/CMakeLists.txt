@@ -13,6 +13,7 @@ find_package(tf2_ros REQUIRED)
 
 find_package(rclcpp_components REQUIRED)
 find_package(diagnostic_msgs REQUIRED)
+find_package(std_srvs REQUIRED)
 
 add_library(bno055_component SHARED src/bno055_node.cpp)
 target_include_directories(bno055_component PUBLIC
@@ -25,6 +26,7 @@ ament_target_dependencies(bno055_component
   sensor_msgs
   geometry_msgs
   diagnostic_msgs
+  std_srvs
   tf2_ros
 )
 rclcpp_components_register_node(bno055_component PLUGIN "bno055_driver::BNO055Node" EXECUTABLE bno055_node)
