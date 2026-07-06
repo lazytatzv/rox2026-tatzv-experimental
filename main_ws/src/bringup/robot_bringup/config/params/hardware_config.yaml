@@ -4,7 +4,8 @@
 
 hardware:
   usb_port: "/dev/ttyUSB1"
-  protocol: "at_gateway" # 'at_gateway' (via AT command bridge board) or 'native_can' (direct native CAN frames)
+  can_interface: "can0"
+  protocol: "native_can" # 'at_gateway' (via AT command bridge board) or 'native_can' (direct native CAN frames)
   baud_rate: 921600
   transport: "socketcan" # 'serial_port' (direct USB serial), 'socketcan' (direct native raw socket), or 'ros_topic' (ROS 2 can_msgs bridge)
 

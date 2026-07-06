@@ -83,6 +83,7 @@
           <param name="protocol">${hw['hardware']['protocol']}</param>
           <param name="serial_baud">${hw['hardware']['baud_rate']}</param>
           <param name="transport">${hw['hardware'].get('transport', 'serial_port')}</param>
+          <param name="can_interface">${hw['hardware'].get('can_interface', 'can0')}</param>
         </xacro:unless>
       </xacro:unless>
     </hardware>
