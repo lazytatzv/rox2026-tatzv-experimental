@@ -21,12 +21,18 @@ class SpringController(Node):
         self.declare_parameter('joy_l2_index', 6)         # L2のインデックス（配列の6番目）
         self.declare_parameter('joy_r1_index', 5)         # R1のインデックス（配列の5番目）
         self.declare_parameter('control_hz', 100.0)       # 制御周期 (Hz)
+        self.declare_parameter('topic_joy', '/joy')
+        self.declare_parameter('topic_limit_switch', '/shooter/limit_switch')
+        self.declare_parameter('topic_speed_out', '/edulite_speed')
 
         self.reload_speed = self.get_parameter('reload_speed').value
         self.fire_speed = self.get_parameter('fire_speed').value
         self.idx_l2 = self.get_parameter('joy_l2_index').value
         self.idx_r1 = self.get_parameter('joy_r1_index').value
         control_hz = self.get_parameter('control_hz').value
+        t_joy = self.get_parameter('topic_joy').value
+        t_limit = self.get_parameter('topic_limit_switch').value
+        t_speed = self.get_parameter('topic_speed_out').value
 
         # 状態変数
         self.state = SpringState.INIT
@@ -35,14 +41,14 @@ class SpringController(Node):
 
         # Subscribers
         self.sub_joy = self.create_subscription(
-            Joy, '/joy', self.joy_callback, 10)
+            Joy, t_joy, self.joy_callback, 10)
             
         # 先ほど実装したばかりの完璧なリミットスイッチトピックを使います
         self.sub_limit = self.create_subscription(
-            Bool, '/shooter/limit_switch', self.limit_callback, 10)
+            Bool, t_limit, self.limit_callback, 10)
 
         # Publisher
-        self.pub_speed = self.create_publisher(Float32, '/edulite_speed', 10)
+        self.pub_speed = self.create_publisher(Float32, t_speed, 10)
 
         # Timer (100Hzの制御ループ)
         self.timer = self.create_timer(1.0 / control_hz, self.control_loop)

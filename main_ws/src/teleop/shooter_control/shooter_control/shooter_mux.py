@@ -8,7 +8,14 @@ class ShooterMux(Node):
         
         # Parameters
         self.declare_parameter('teleop_timeout', 0.5)
-        self.timeout = self.get_parameter('teleop_timeout').get_parameter_value().double_value
+        self.declare_parameter('topic_cmd_joy', '/shooter/cmd_joy')
+        self.declare_parameter('topic_cmd_auto', '/shooter/cmd_auto')
+        self.declare_parameter('topic_cmd_muxed', '/shooter/cmd_muxed')
+        
+        self.timeout = self.get_parameter('teleop_timeout').value
+        t_joy = self.get_parameter('topic_cmd_joy').value
+        t_auto = self.get_parameter('topic_cmd_auto').value
+        t_muxed = self.get_parameter('topic_cmd_muxed').value
 
         # State
         self.latest_teleop = 0.0
@@ -17,12 +24,12 @@ class ShooterMux(Node):
 
         # Subscribers
         self.sub_teleop = self.create_subscription(
-            Float64, 'shooter/cmd_joy', self.teleop_callback, 10)
+            Float64, t_joy, self.teleop_callback, 10)
         self.sub_auto = self.create_subscription(
-            Float64, 'shooter/cmd_auto', self.auto_callback, 10)
+            Float64, t_auto, self.auto_callback, 10)
 
         # Publisher
-        self.pub_muxed = self.create_publisher(Float64, '/shooter/cmd_muxed', 10)
+        self.pub_muxed = self.create_publisher(Float64, t_muxed, 10)
 
         # Timer (50Hz to match motor command rate)
         self.timer = self.create_timer(0.02, self.timer_callback)

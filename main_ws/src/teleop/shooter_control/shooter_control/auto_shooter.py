@@ -16,17 +16,23 @@ class AutoShooter(Node):
         self.declare_parameter('max_rpm', 7500.0)
         self.declare_parameter('min_rpm', 0.0)
         
+        self.declare_parameter('topic_distance', '/target/distance')
+        self.declare_parameter('topic_shooter_cmd', '/shooter/cmd_auto')
+        
         self.poly_a = self.get_parameter('poly_a').value
         self.poly_b = self.get_parameter('poly_b').value
         self.poly_c = self.get_parameter('poly_c').value
         self.max_rpm = self.get_parameter('max_rpm').value
         self.min_rpm = self.get_parameter('min_rpm').value
+        
+        t_dist = self.get_parameter('topic_distance').value
+        t_cmd = self.get_parameter('topic_shooter_cmd').value
 
         # Subscribers and Publishers
         self.sub_dist = self.create_subscription(
-            Float64, '/target/distance', self.distance_callback, 10)
+            Float64, t_dist, self.distance_callback, 10)
             
-        self.pub_cmd = self.create_publisher(Float64, '/shooter/cmd_auto', 10)
+        self.pub_cmd = self.create_publisher(Float64, t_cmd, 10)
         
         self.get_logger().info("Auto Shooter Strategy Node started. Ready for curve fitting!")
 
