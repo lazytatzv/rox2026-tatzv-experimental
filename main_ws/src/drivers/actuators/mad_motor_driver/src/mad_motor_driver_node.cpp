@@ -12,10 +12,17 @@ class MadMotorDriver : public rclcpp::Node
 public:
   MadMotorDriver() : Node("mad_motor_driver_node"), current_target_rpm_(0.0)
   {
-    this->declare_parameter("motor_id_left", 0x201);
-    this->declare_parameter("motor_id_right", 0x202);
+    this->declare_parameter("motor_id_top", 0x201);
+    this->declare_parameter("motor_id_bottom", 0x202);
     this->declare_parameter("limit_switch_id", 0x200);
     this->declare_parameter("watchdog_timeout", 0.5);
+    
+    // 回転方向の反転設定 (向かい合わせ配置の場合は片方をマイナスにする必要があるため)
+    this->declare_parameter("invert_top", false);
+    this->declare_parameter("invert_bottom", true); // デフォルトで下側を逆回転と仮定
+    
+    // バックスピン比率 (1.0で上下同じ速度。1.2なら下側が20%速く回り、バックスピンがかかる)
+    this->declare_parameter("backspin_ratio", 1.0);
 
     watchdog_timeout_ = this->get_parameter("watchdog_timeout").as_double();
 
@@ -45,7 +52,7 @@ public:
 
     last_cmd_time_ = this->now();
 
-    RCLCPP_INFO(this->get_logger(), "MAD Motor CAN Driver started. Using ros2_socketcan (can_msgs).");
+    RCLCPP_INFO(this->get_logger(), "MAD Motor CAN Driver started (Top/Bottom Mode).");
   }
 
 private:
@@ -79,31 +86,45 @@ private:
 
   void can_tx_callback()
   {
-    can_msgs::msg::Frame frame_left;
-    can_msgs::msg::Frame frame_right;
+    can_msgs::msg::Frame frame_top;
+    can_msgs::msg::Frame frame_bottom;
 
-    frame_left.is_rtr = false;
-    frame_left.is_extended = false;
-    frame_left.is_error = false;
-    frame_left.dlc = 4;
+    frame_top.is_rtr = false;
+    frame_top.is_extended = false;
+    frame_top.is_error = false;
+    frame_top.dlc = 4;
 
-    frame_right.is_rtr = false;
-    frame_right.is_extended = false;
-    frame_right.is_error = false;
-    frame_right.dlc = 4;
+    frame_bottom.is_rtr = false;
+    frame_bottom.is_extended = false;
+    frame_bottom.is_error = false;
+    frame_bottom.dlc = 4;
 
-    // Convert double to float to match STM32 expectation
-    float rpm_f32 = static_cast<float>(current_target_rpm_);
-    std::memcpy(frame_left.data.data(), &rpm_f32, sizeof(float));
-    std::memcpy(frame_right.data.data(), &rpm_f32, sizeof(float));
+    // パラメータ取得
+    bool invert_top = this->get_parameter("invert_top").as_bool();
+    bool invert_bottom = this->get_parameter("invert_bottom").as_bool();
+    double backspin_ratio = this->get_parameter("backspin_ratio").as_double();
 
-    // Send Left
-    frame_left.id = this->get_parameter("motor_id_left").as_int();
-    can_tx_pub_->publish(frame_left);
+    // RPMの計算 (下側をバックスピン比率に合わせて速くする)
+    double target_rpm_top = current_target_rpm_;
+    double target_rpm_bottom = current_target_rpm_ * backspin_ratio;
 
-    // Send Right
-    frame_right.id = this->get_parameter("motor_id_right").as_int();
-    can_tx_pub_->publish(frame_right);
+    // 反転設定の適用
+    if (invert_top) target_rpm_top = -target_rpm_top;
+    if (invert_bottom) target_rpm_bottom = -target_rpm_bottom;
+
+    float rpm_top_f32 = static_cast<float>(target_rpm_top);
+    float rpm_bottom_f32 = static_cast<float>(target_rpm_bottom);
+
+    std::memcpy(frame_top.data.data(), &rpm_top_f32, sizeof(float));
+    std::memcpy(frame_bottom.data.data(), &rpm_bottom_f32, sizeof(float));
+
+    // Send Top
+    frame_top.id = this->get_parameter("motor_id_top").as_int();
+    can_tx_pub_->publish(frame_top);
+
+    // Send Bottom
+    frame_bottom.id = this->get_parameter("motor_id_bottom").as_int();
+    can_tx_pub_->publish(frame_bottom);
   }
 
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr cmd_sub_;
