@@ -25,7 +25,8 @@ setup(
     entry_points={
         'console_scripts': [
             'shooter_mux = shooter_control.shooter_mux:main',
-            'shooter_teleop = shooter_control.shooter_teleop:main'
+            'shooter_teleop = shooter_control.shooter_teleop:main',
+            'auto_shooter = shooter_control.auto_shooter:main'
         ],
     },
 )
