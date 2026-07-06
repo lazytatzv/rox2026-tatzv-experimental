@@ -4,8 +4,9 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import ComposableNodeContainer
+from launch_ros.actions import ComposableNodeContainer, Node
 from launch_ros.descriptions import ComposableNode
+from launch.conditions import UnlessCondition
 
 
 def generate_launch_description():
@@ -21,7 +22,6 @@ def generate_launch_description():
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=[
-            # 1. Heading Stabilizer Component
             ComposableNode(
                 package="imu_stabilizer",
                 plugin="imu_stabilizer::HeadingStabilizerNode",
@@ -32,8 +32,35 @@ def generate_launch_description():
                     ("/cmd_vel_out", "/mecanum_drive_controller/reference"),
                 ],
             ),
+            # 2. Mad Motor (Shooter) Command Node
+            ComposableNode(
+                package="mad_motor_driver",
+                plugin="mad_motor_driver::MadMotorCommandNode",
+                name="mad_motor_command",
+                parameters=[{"use_sim_time": use_sim_time}],
+                remappings=[
+                    ("/shooter/cmd_muxed", "/shooter/cmd_muxed"),
+                    ("/can_tx", "/can_tx"),
+                ],
+            ),
         ],
         output="screen",
     )
 
-    return LaunchDescription([container])
+    # Bridge to physical CAN bus (Sender only, for Mad Motor)
+    # Only launch on real hardware (when use_sim_time is false)
+    socket_can_sender = Node(
+        package="ros2_socketcan",
+        executable="socket_can_sender_node",
+        name="socket_can_sender",
+        parameters=[{
+            "interface": "can0",
+            "use_sim_time": use_sim_time
+        }],
+        remappings=[
+            ("to_can_bus", "/can_tx"),
+        ],
+        condition=UnlessCondition(use_sim_time)
+    )
+
+    return LaunchDescription([container, socket_can_sender])
