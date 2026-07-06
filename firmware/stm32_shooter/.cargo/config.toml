@@ -1,0 +1,10 @@
+[build]
+target = "thumbv7em-none-eabihf"
+
+[target.thumbv7em-none-eabihf]
+# probe-rs-run requires you to have probe-rs installed
+# (cargo binstall probe-rs)
+runner = "probe-rs run --chip STM32F767ZITx"
+
+[env]
+DEFMT_LOG = "trace"
