@@ -121,6 +121,13 @@ def generate_launch_description():
         parameters=[{"use_sim_time": use_sim_time}],
     )
 
+    strategy_node = Node(
+        package="auto_strategy",
+        executable="strategy_node",
+        name="strategy_node",
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument("use_sim_time", default_value="false"),
@@ -138,6 +145,6 @@ def generate_launch_description():
             include_navigation,
             ros2_control_node,
             spawn_broadcaster,
-            # spawn_controller,
+            strategy_node,
         ]
     )

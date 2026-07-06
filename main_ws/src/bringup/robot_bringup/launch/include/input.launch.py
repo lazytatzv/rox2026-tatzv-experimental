@@ -54,6 +54,20 @@ def generate_launch_description():
         parameters=[{"use_sim_time": use_sim_time}],
     )
 
+    shooter_teleop_node = Node(
+        package="shooter_control",
+        executable="shooter_teleop",
+        name="shooter_teleop",
+        parameters=[config_file, {"use_sim_time": use_sim_time}],
+    )
+
+    shooter_mux_node = Node(
+        package="shooter_control",
+        executable="shooter_mux",
+        name="shooter_mux",
+        parameters=[config_file, {"use_sim_time": use_sim_time}],
+    )
+
     return LaunchDescription(
         [
             DeclareLaunchArgument("analysis_mode", default_value="false"),
@@ -61,5 +75,7 @@ def generate_launch_description():
             base_teleop_node,
             twist_mux_node,
             foxglove_teleop_relay,
+            shooter_teleop_node,
+            shooter_mux_node,
         ]
     )
