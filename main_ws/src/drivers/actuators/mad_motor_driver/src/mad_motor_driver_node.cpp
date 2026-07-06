@@ -86,18 +86,13 @@ private:
 
   void can_tx_callback()
   {
-    can_msgs::msg::Frame frame_top;
-    can_msgs::msg::Frame frame_bottom;
+    can_msgs::msg::Frame frame_cmd;
 
-    frame_top.is_rtr = false;
-    frame_top.is_extended = false;
-    frame_top.is_error = false;
-    frame_top.dlc = 4;
-
-    frame_bottom.is_rtr = false;
-    frame_bottom.is_extended = false;
-    frame_bottom.is_error = false;
-    frame_bottom.dlc = 4;
+    frame_cmd.is_rtr = false;
+    frame_cmd.is_extended = false;
+    frame_cmd.is_error = false;
+    frame_cmd.dlc = 8;
+    frame_cmd.id = 0x201; // System Control ID
 
     // パラメータ取得
     bool invert_top = this->get_parameter("invert_top").as_bool();
@@ -112,19 +107,21 @@ private:
     if (invert_top) target_rpm_top = -target_rpm_top;
     if (invert_bottom) target_rpm_bottom = -target_rpm_bottom;
 
-    float rpm_top_f32 = static_cast<float>(target_rpm_top);
-    float rpm_bottom_f32 = static_cast<float>(target_rpm_bottom);
+    // Int16にキャスト
+    int16_t rpm_top_i16 = static_cast<int16_t>(target_rpm_top);
+    int16_t rpm_bottom_i16 = static_cast<int16_t>(target_rpm_bottom);
+    int16_t rpm_dribbler_i16 = 0; // ドリブラーは未実装のため0
+    uint8_t estop = 0;            // 非常停止フラグ (未実装のため0)
+    uint8_t reserved = 0;         // 予備
 
-    std::memcpy(frame_top.data.data(), &rpm_top_f32, sizeof(float));
-    std::memcpy(frame_bottom.data.data(), &rpm_bottom_f32, sizeof(float));
+    // データのパッキング (リトルエンディアン)
+    std::memcpy(&frame_cmd.data[0], &rpm_top_i16, 2);
+    std::memcpy(&frame_cmd.data[2], &rpm_bottom_i16, 2);
+    std::memcpy(&frame_cmd.data[4], &rpm_dribbler_i16, 2);
+    frame_cmd.data[6] = estop;
+    frame_cmd.data[7] = reserved;
 
-    // Send Top
-    frame_top.id = this->get_parameter("motor_id_top").as_int();
-    can_tx_pub_->publish(frame_top);
-
-    // Send Bottom
-    frame_bottom.id = this->get_parameter("motor_id_bottom").as_int();
-    can_tx_pub_->publish(frame_bottom);
+    can_tx_pub_->publish(frame_cmd);
   }
 
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr cmd_sub_;
