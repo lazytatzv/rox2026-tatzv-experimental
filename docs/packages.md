@@ -31,37 +31,37 @@
 graph TD
     %% Input & Strategy
     subgraph "入力 & ミッション管理"
-        Joy[joy_node / ゲームパッド] -->|/joy| BT[base_teleop / 操縦ノード]
-        Strategy[auto_strategy / ミッションノード] -->|/cmd_vel_auto (Action)| Nav[base_navigation / Nav2スタック]
+        Joy["joy_node (ゲームパッド)"] -->|"/joy"| BT["base_teleop (操縦ノード)"]
+        Strategy["auto_strategy (ミッションノード)"] -->|"/cmd_vel_auto (Action)"| Nav["base_navigation (Nav2スタック)"]
     end
 
     %% Decision & Fusion
     subgraph "経路計画 & 位置推定"
-        BT -->|/cmd_vel| Mux[twist_mux / 速度調停]
-        Nav -->|/cmd_vel| Mux
+        BT -->|"/cmd_vel"| Mux["twist_mux (速度調停)"]
+        Nav -->|"/cmd_vel"| Mux
         
-        IMU_Driver[libbno055_linux] -->|/imu/data -> /imu| EKF[robot_localization / 自己位置推定]
-        IMU_Driver -->|/imu/data -> /imu| Stabilizer[imu_stabilizer / PID補正]
-        EKF -->|/odometry/filtered| Nav
+        IMU_Driver["libbno055_linux"] -->|"/imu/data -> /imu"| EKF["robot_localization (自己位置推定)"]
+        IMU_Driver -->|"/imu/data -> /imu"| Stabilizer["imu_stabilizer (PID補正)"]
+        EKF -->|"/odometry/filtered"| Nav
     end
 
     %% ROS 2 Control & Hardware Interface
     subgraph "ros2_control コントローラマネージャ"
-        Mux -->|/cmd_vel_out| Controller[Mecanum Drive Controller / 速度コントローラ]
-        Stabilizer -->|Yaw Rate Correction| Controller
+        Mux -->|"/cmd_vel_out"| Controller["Mecanum Drive Controller (速度コントローラ)"]
+        Stabilizer -->|"Yaw Rate Correction"| Controller
         
-        Controller -->|Joint Velocity Commands| HW_Manager[Hardware Component Manager]
+        Controller -->|"Joint Velocity Commands"| HW_Manager["Hardware Component Manager"]
     end
 
     %% Low-Level Driver & Actuators
     subgraph "ハードウェアドライバー & 実機通信"
-        HW_Manager -->|Write Command / Read Feedback| Robstride[robstride_driver / CANプロトコル]
-        HW_Manager -->|Write Command / Read Feedback| MAD[mad_motor_driver / CANプロトコル]
+        HW_Manager -->|"Write Command / Read Feedback"| Robstride["robstride_driver (CANプロトコル)"]
+        HW_Manager -->|"Write Command / Read Feedback"| MAD["mad_motor_driver (CANプロトコル)"]
         
-        Robstride -->|Raw CAN Frames| CAN_Bridge[seeed_usb_can_analyzer_driver]
-        MAD -->|Raw CAN Frames| CAN_Bridge
+        Robstride -->|"Raw CAN Frames"| CAN_Bridge["seeed_usb_can_analyzer_driver"]
+        MAD -->|"Raw CAN Frames"| CAN_Bridge
         
-        CAN_Bridge -->|Physical USB/CAN Bus| Motors[Robstride & MAD モーター群]
+        CAN_Bridge -->|"Physical USB/CAN Bus"| Motors["Robstride & MAD モーター群"]
     end
 
     classDef pkg fill:#e1f5fe,stroke:#01579b,stroke-width:1px;
