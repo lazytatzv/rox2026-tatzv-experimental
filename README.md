@@ -72,6 +72,12 @@ RobStride モーターの CAN ID を変更するユーティリティです。
 ros2 run robstride_driver set_motor_id --ros-args -p old:=127 -p new:=1 -p port:=/dev/ttyUSB0 -p protocol:=at
 ```
 
+### システム構成図の生成
+```bash
+# ローカルで高解像度（3倍）のノード構成図（docs/packages.png）を生成
+just generate-diag
+```
+
 ### 制御解析ワークフロー
 
 `analysis_settings.yaml` で定義されたパラメータに基づき、周波数応答やステップ応答を計測します。

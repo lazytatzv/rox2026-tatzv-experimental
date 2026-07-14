@@ -181,3 +181,42 @@ just launch use_mock_hardware:=true
 ```bash
 just analyze-control
 ```
+
+### D. 高解像度システム構成図の再生成
+本リポジトリでは軽量化のためバイナリ画像（`docs/packages.png`）を Git 追跡対象外に設定しています。
+ホスト環境（macOS）またはコンテナ内から以下のコマンドを実行するだけで、3倍スケール（300%解像度）かつ透過なしの不透明白背景（ダークテーマのビューアでもクリアに表示可能）でダイアグラム画像をいつでも再生成できます。
+```bash
+# macOSホスト側から実行する場合（要just）
+just generate-diag
+
+# または Python スクリプトを直接呼び出す場合
+python3 main_ws/generate_packages_png.py
+```
+
+---
+
+## 5. ローカル動作検証とトラブルシューティング
+
+### A. 実機なしでの動作・通信疎通確認
+実機が接続されていない環境でも、モックハードウェアオプション（`use_mock_hardware:=true`）を有効にしてノード群を立ち上げることで、Nav2 の経路計画および制御コマンド（`/cmd_vel`）の出力経路が正常に機能しているかテストできます。
+
+1. **バックグラウンドでノード群を起動**:
+   ```bash
+   # Dockerコンテナ内で実行
+   ros2 launch robot_bringup robot_bringup.launch.py gazebo:=false use_mock_hardware:=true
+   ```
+2. **目標座標の送信**:
+   ```bash
+   ros2 topic pub -1 /goal_pose geometry_msgs/msg/PoseStamped '{header: {stamp: {sec: 0, nanosec: 0}, frame_id: "map"}, pose: {position: {x: 2.0, y: 0.0, z: 0.0}, orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}}}'
+   ```
+3. **制御指示出力の確認**:
+   `/cmd_vel` トピックを監視し、Nav2 が算出した車体前進速度（`linear.x`）および目標方向への旋回速度（`angular.z`）が正常にパブリッシュされていることを確認できます。
+   ```bash
+   ros2 topic echo --once /cmd_vel
+   ```
+
+### B. トラブルシューティング
+* **`ros2_socketcan` の実行ファイル名エラー**
+  Jazzy環境では、送信・受信ノードの実行ファイル名がそれぞれ `socket_can_sender_node_exe` および `socket_can_receiver_node_exe`（`_exe`付き）になっております。Launch ファイルで `executable` が見つからない旨のエラーが出た場合は、この名前になっているかを確認してください。
+* **Launch起動時の `cannot access local variable 'os'` エラー**
+  Launch ファイルの Python スクリプト内で `import os` が二重に宣言されたり、グローバルスコープと関数のローカルスコープでバインドが競合している場合に発生します。重複インポートを削除することで解消されます。
