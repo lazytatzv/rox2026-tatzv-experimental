@@ -28,6 +28,7 @@
 ロボットシステム内のトピック、コントローラ、およびデバイスドライバー間のデータフローは以下の通りです。
 
 ```mermaid
+%%{init: {'themeCSS': 'svg { background-color: white; }'}}%%
 graph TD
     %% 1. User Input & Joystick
     subgraph "1. User Input & Joystick"
