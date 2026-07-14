@@ -31,16 +31,16 @@
 graph TD
     %% 1. User Input & Joystick
     subgraph "1. User Input & Joystick"
-        GamePad["🎮 ゲームパッド (Physical)"] -.->|Bluetooth / USB| JoyNode["joy::joy_node"]
+        GamePad["GamePad (Physical)"] -.->|Bluetooth / USB| JoyNode["joy::joy_node"]
         JoyNode -->|"/joy (sensor_msgs/Joy)"| TeleopNode["base_teleop::teleop"]
         JoyNode -->|"/joy"| ShooterTeleop["shooter_control::shooter_teleop"]
         
-        FoxgloveHMI["💻 Foxglove Control (HMI)"] -.->|Twist commands| TwistStampedRelay["base_teleop::twist_to_stamped"]
+        FoxgloveHMI["Foxglove Control (HMI)"] -.->|Twist commands| TwistStampedRelay["base_teleop::twist_to_stamped"]
     end
 
     %% 2. Strategic Mission & Planning
     subgraph "2. Strategic Mission & Planning"
-        StrategyNode["auto_strategy::strategy_node"] -->|"/cmd_vel_auto (Action)"| Nav2Stack["Navigation2 (Nav2 スタック)<br/>- bt_navigator<br/>- planner_server<br/>- controller_server<br/>- behavior_server<br/>- lifecycle_manager"]
+        StrategyNode["auto_strategy::strategy_node"] -->|"/cmd_vel_auto (Action)"| Nav2Stack["Navigation2 (Nav2 Stack)<br/>- bt_navigator<br/>- planner_server<br/>- controller_server<br/>- behavior_server<br/>- lifecycle_manager"]
         StrategyNode -->|"/cmd_shooter_auto (Float32)"| ShooterMux["shooter_control::shooter_mux"]
         
         TeleopNode -->|"/cmd_vel_joy (geometry_msgs/TwistStamped)"| TwistMux["twist_mux::twist_mux"]
@@ -52,7 +52,7 @@ graph TD
 
     %% 3. Perception, Vision & Localization
     subgraph "3. Perception, Vision & Localization"
-        Camera["📷 深度カメラ (Physical)"] -.->|Image stream| ImageSyncer["vision_localization::image_syncer"]
+        Camera["Depth Camera (Physical)"] -.->|Image stream| ImageSyncer["vision_localization::image_syncer"]
         Camera -.->|Depth Points| PointCloud2Scan["pointcloud_to_laserscan::PointCloudToLaserScanNode"]
         
         ImageSyncer -->|"/camera_synced/image_raw"| ApriltagNode["apriltag_ros::AprilTagNode"]
@@ -104,8 +104,8 @@ graph TD
         CANSender -.->|"SocketCAN (can0)"| PhysicalCAN["Physical CAN Bus"]
         PhysicalCAN -.->|"SocketCAN (can0)"| CANReceiver
         
-        PhysicalCAN -.->|CAN command| RobstrideMotors["Robstride Motors (足回り4輪)"]
-        PhysicalCAN -.->|CAN command| MADMotors["MAD Motors (シューター/装填)"]
+        PhysicalCAN -.->|CAN command| RobstrideMotors["Robstride Motors (Mecanum 4WD)"]
+        PhysicalCAN -.->|CAN command| MADMotors["MAD Motors (Shooter/Loader)"]
     end
 
     %% 6. External Telemetry & HMI
