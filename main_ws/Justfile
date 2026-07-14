@@ -54,6 +54,15 @@ launch:
         cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile launch; \
     fi
 
+# Launch physical robot (legacy mode with mecanum_controller + wheel_to_can)
+launch-legacy:
+    @if [ "{{is_container}}" = "yes" ]; then \
+        bash -c 'source {{ROS_SETUP}} && source install/setup.bash 2>/dev/null || true && ros2 launch robot_bringup base.launch.py'; \
+    else \
+        echo "Not in container. Forwarding..."; \
+        cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile launch-legacy; \
+    fi
+
 # Launch minimal teleop-only (no sensors, no Nav2, just mecanum + joystick)
 teleop:
     @if [ "{{is_container}}" = "yes" ]; then \

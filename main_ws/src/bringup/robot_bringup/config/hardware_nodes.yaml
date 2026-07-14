@@ -29,11 +29,12 @@
     enable_can_fd: false
     timeout_sec: 0.01
 # Centralized Sensor Configuration for ROX2026
-bno055_node:
+bno055_perf_publisher_node:
   ros__parameters:
-    i2c_bus: "/dev/i2c-1"
-    i2c_addr: 0x28
+    device: "/dev/i2c-1"
+    address: 0x28
     frame_id: "imu_link"
-    variance_orientation: 0.001
-    variance_angular_velocity: 0.01
-    variance_linear_acceleration: 0.1
+    publish_rate: 100.0
+    orientation_covariance: [0.001, 0.0, 0.0, 0.0, 0.001, 0.0, 0.0, 0.0, 0.001]
+    angular_velocity_covariance: [0.01, 0.0, 0.0, 0.0, 0.01, 0.0, 0.0, 0.0, 0.01]
+    linear_acceleration_covariance: [0.1, 0.0, 0.0, 0.0, 0.1, 0.0, 0.0, 0.0, 0.1]

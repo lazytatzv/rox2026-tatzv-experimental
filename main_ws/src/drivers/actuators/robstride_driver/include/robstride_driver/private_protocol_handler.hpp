@@ -49,15 +49,15 @@ public:
       // 1. Set Run Mode = 2 (Velocity)
       auto f1 = build_param_write_uint8(motor_id, 0x7005, 2);
       frames.insert(frames.end(), f1.begin(), f1.end());
-      
+
       // 2. Set Kp
       auto f2 = build_param_write_float(motor_id, 0x701F, default_kp_);
       frames.insert(frames.end(), f2.begin(), f2.end());
-      
+
       // 3. Set Ki
       auto f3 = build_param_write_float(motor_id, 0x7020, default_ki_);
       frames.insert(frames.end(), f3.begin(), f3.end());
-      
+
       // 4. Set Current Limit
       auto f4 = build_param_write_float(motor_id, 0x7018, default_limit_cur_);
       frames.insert(frames.end(), f4.begin(), f4.end());
@@ -75,7 +75,7 @@ public:
 
     uint32_t id;
     std::memcpy(&id, &data[1], 4);
-    
+
     // In private protocol response, mode is 2 (motor feedback)
     uint8_t mode = (id >> 24) & 0x1F;
     if (mode != 2) {
@@ -94,7 +94,7 @@ public:
     uint8_t vel_low = data[11];
     uint8_t tor_high = data[12];
     uint8_t tor_low = data[13];
-    
+
     // Byte0~1: Current Angle [0~65535] -> (-4pi ~ 4pi)
     uint16_t angle_raw = (angle_high << 8) | angle_low;
     result.state.position = (static_cast<double>(angle_raw) / 65535.0) * 8.0 * 3.1415926535 - 4.0 * 3.1415926535;
@@ -124,14 +124,14 @@ private:
   {
     std::vector<uint8_t> frame(16, 0);
     frame[0] = 0xAA;
-    
+
     uint32_t ext_id = (static_cast<uint32_t>(mode) << 24) | (static_cast<uint32_t>(master_id_) << 8) | motor_id;
     std::memcpy(&frame[1], &ext_id, 4);
 
     frame[5] = 0x01; // Extended ID
     frame[6] = 0x00; // Data frame
     frame[7] = 0x08; // DLC always 8
-    
+
     for (size_t i = 0; i < payload.size() && i < 8; i++) {
       frame[8 + i] = payload[i];
     }

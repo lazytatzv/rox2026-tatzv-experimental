@@ -18,6 +18,30 @@ install(TARGETS mad_motor_driver_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
+add_library(mad_motor_command_node SHARED
+  src/mad_motor_command_node.cpp
+)
+target_include_directories(mad_motor_command_node PRIVATE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(mad_motor_command_node
+  rclcpp
+  std_msgs
+  can_msgs
+  rclcpp_components
+)
+rclcpp_components_register_node(mad_motor_command_node
+  PLUGIN "mad_motor_driver::MadMotorCommandNode"
+  EXECUTABLE mad_motor_command_node_exe
+)
+
+install(TARGETS mad_motor_command_node mad_motor_command_node_exe
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()

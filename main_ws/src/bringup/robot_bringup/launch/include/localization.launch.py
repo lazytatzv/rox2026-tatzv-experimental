@@ -37,10 +37,12 @@ def generate_launch_description():
     bno055_params.append(hardware_nodes_config)
 
     imu_driver = Node(
-        package="bno055_driver",
-        executable="bno055_node",
+        package="libbno055_linux",
+        executable="bno055_perf_publisher_node",
+        name="bno055_perf_publisher_node",
         condition=launch_imu_cond,
         parameters=bno055_params,
+        remappings=[("imu/data", "/imu")],
     )
 
     local_ekf_node = Node(

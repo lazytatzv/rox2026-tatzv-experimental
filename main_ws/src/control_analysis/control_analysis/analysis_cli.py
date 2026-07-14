@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import signal
+from scipy.interpolate import CubicSpline
 from scipy.optimize import minimize
 from rosbag2_py import SequentialReader, StorageOptions, ConverterOptions
 from rclpy.serialization import deserialize_message
@@ -273,6 +274,7 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1):
 
     t_peak = t_norm[idx_peak]
 
+    # Rise time: first crossing of 10% and 90% of final value (direction-aware)
     val_10 = 0.1 * y_ss
     val_90 = 0.9 * y_ss
     t_10, t_90 = None, None
@@ -290,12 +292,15 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1):
 
     rise_time = (t_90 - t_10) if (t_10 is not None and t_90 is not None) else None
 
+    # Settling time: last moment the error exceeds the 2% band
+    # (= after this point the response stays within ±2% of y_ss)
     err = np.abs(y_norm - y_ss)
-    thresh_2 = 0.02 * abs(y_ss)
+    thresh_2 = 0.02 * abs(y_ss) if abs(y_ss) > 1e-5 else 0.02
     idx_out_2 = np.where(err > thresh_2)[0]
-    settling_time_2 = t_norm[idx_out_2[-1]] if len(idx_out_2) > 0 else 0.0
+    settling_time_2 = float(t_norm[idx_out_2[-1]]) if len(idx_out_2) > 0 else 0.0
 
     def fopdt_response(t, K, tau, L):
+        """FOPDT model: works for both positive and negative u_step."""
         resp = np.zeros_like(t)
         active = t >= L
         resp[active] = K * u_step * (1.0 - np.exp(-(t[active] - L) / tau))
@@ -306,13 +311,17 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1):
         y_fit = fopdt_response(t_norm, K, tau, L)
         return np.sum((y_norm - y_fit) ** 2)
 
+    # Estimate tau from 63.2% of steady-state crossing (direction-aware)
     val_63 = 0.632 * y_ss
     idx_63 = np.where(y_norm >= val_63 if u_step > 0 else y_norm <= val_63)[0]
-    t_63 = t_norm[idx_63[0]] if len(idx_63) > 0 else 0.5
+    t_63 = float(t_norm[idx_63[0]]) if len(idx_63) > 0 else 0.5
+
+    # K_init must be direction-aware (always positive for FOPDT K)
+    K_init = abs(K_p) if abs(K_p) > 0.01 else 1.0
 
     res = minimize(
         loss_func,
-        [K_p, max(0.01, t_63), 0.05],
+        [K_init, max(0.01, t_63), 0.05],
         bounds=[(0.01, 10.0), (0.01, 5.0), (0.0, 2.0)],
         method="L-BFGS-B",
     )
@@ -322,6 +331,13 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1):
     ss_res = np.sum((y_norm - y_fit) ** 2)
     ss_tot = np.sum((y_norm - np.mean(y_norm)) ** 2)
     r_squared = 1.0 - (ss_res / ss_tot) if ss_tot > 0 else 0.0
+
+    # IMC-based PID recommendation (Lambda-tuning for FOPDT)
+    # Lambda (closed-loop time constant) = tau_fit for a balanced response
+    lam = max(tau_fit, L_fit)  # aggressive: lambda = max(tau, L)
+    Kc = (tau_fit + 0.5 * L_fit) / (K_fit * (lam + 0.5 * L_fit)) if K_fit > 1e-4 else None
+    Ti = tau_fit + 0.5 * L_fit
+    Td = (tau_fit * L_fit) / (2.0 * tau_fit + L_fit) if (2.0 * tau_fit + L_fit) > 1e-4 else None
 
     return {
         "t_norm": t_norm,
@@ -339,6 +355,9 @@ def analyze_step_response(t_cmd, u_cmd, t_resp, y_resp, t_step, step_t1):
         "fopdt_tau": tau_fit,
         "fopdt_L": L_fit,
         "fopdt_r2": r_squared,
+        "pid_Kc": float(Kc) if Kc is not None else None,
+        "pid_Ti": float(Ti),
+        "pid_Td": float(Td) if Td is not None else None,
     }
 
 
@@ -376,6 +395,11 @@ def analyze_frequency_response(
     H = Pxy / (Pxx + 1e-12)
     coherence = np.abs(Pxy) ** 2 / (Pxx * Pyy + 1e-12)
 
+    # Unwrap phase on the full spectrum first to avoid discontinuities at band edges,
+    # then slice out the valid and all-frequency views.
+    mag_db_all = 20 * np.log10(np.abs(H) + 1e-12)
+    phase_deg_all = np.rad2deg(np.unwrap(np.angle(H)))
+
     valid = (f >= 0.1) & (f <= 20.0) & (coherence >= COHERENCE_MIN)
     if not np.any(valid):
         valid = (f >= 0.1) & (f <= 20.0)
@@ -383,11 +407,8 @@ def analyze_frequency_response(
     f_valid = f[valid]
     H_valid = H[valid]
     coh_valid = coherence[valid]
-    mag_db = 20 * np.log10(np.abs(H_valid) + 1e-12)
-    phase_deg = np.rad2deg(np.unwrap(np.angle(H_valid)))
-
-    mag_db_all = 20 * np.log10(np.abs(H) + 1e-12)
-    phase_deg_all = np.rad2deg(np.unwrap(np.angle(H)))
+    mag_db = mag_db_all[valid]
+    phase_deg = phase_deg_all[valid]
 
     f_cg, phase_margin = None, None
     f_cp, gain_margin = None, None
@@ -395,23 +416,36 @@ def analyze_frequency_response(
         try:
             cs_mag = CubicSpline(f_valid, mag_db)
             cs_phase = CubicSpline(f_valid, phase_deg)
-            f_dense = np.logspace(np.log10(f_valid[0]), np.log10(f_valid[-1]), 1000)
+            f_dense = np.logspace(np.log10(f_valid[0] + 1e-6), np.log10(f_valid[-1]), 2000)
             mag_dense = cs_mag(f_dense)
             phase_dense = cs_phase(f_dense)
 
+            # Gain crossover: 0 dB crossing (first crossing only)
             crossings_cg = np.where(np.diff(np.sign(mag_dense)))[0]
             if len(crossings_cg) > 0:
                 idx = crossings_cg[0]
-                f_cg = float(f_dense[idx])
-                phase_margin = float(phase_dense[idx] + 180.0)
+                # Linear interpolation for sub-sample accuracy
+                f_cg = float(
+                    f_dense[idx]
+                    - mag_dense[idx]
+                    * (f_dense[idx + 1] - f_dense[idx])
+                    / (mag_dense[idx + 1] - mag_dense[idx] + 1e-12)
+                )
+                phase_margin = float(np.interp(f_cg, f_dense, phase_dense) + 180.0)
 
+            # Phase crossover: -180° crossing
             crossings_cp = np.where(np.diff(np.sign(phase_dense + 180.0)))[0]
             if len(crossings_cp) > 0:
                 idx = crossings_cp[0]
-                f_cp = float(f_dense[idx])
-                gain_margin = float(-mag_dense[idx])
-        except Exception:
-            pass
+                f_cp = float(
+                    f_dense[idx]
+                    - (phase_dense[idx] + 180.0)
+                    * (f_dense[idx + 1] - f_dense[idx])
+                    / ((phase_dense[idx + 1] - phase_dense[idx]) + 1e-12)
+                )
+                gain_margin = float(-np.interp(f_cp, f_dense, mag_dense))
+        except Exception as exc:
+            print(f"[WARN] Stability margin interpolation failed: {exc}")
 
     return {
         "freq": f_valid,
@@ -432,6 +466,36 @@ def analyze_frequency_response(
         "mag_db_all": mag_db_all,
         "phase_deg_all": phase_deg_all,
     }
+
+
+def _stability_diagnosis(pm, gm):
+    """Return a human-readable stability diagnosis string."""
+    lines = []
+    if pm is not None:
+        if pm < 30.0:
+            lines.append(
+                f"  [!] Phase Margin {pm:.1f}° < 30° — system may be underdamped or oscillatory."
+            )
+        elif pm < 45.0:
+            lines.append(
+                f"  [~] Phase Margin {pm:.1f}° — adequate but consider increasing for robustness."
+            )
+        else:
+            lines.append(f"  [OK] Phase Margin {pm:.1f}° — good stability margin.")
+    if gm is not None:
+        if gm < 6.0:
+            lines.append(f"  [!] Gain Margin {gm:.1f} dB < 6 dB — gain increase may destabilize.")
+        elif gm < 10.0:
+            lines.append(
+                f"  [~] Gain Margin {gm:.1f} dB — adequate but watch for plant variations."
+            )
+        else:
+            lines.append(f"  [OK] Gain Margin {gm:.1f} dB — robust to gain uncertainty.")
+    if not lines:
+        lines.append(
+            "  [?] Could not assess stability (no crossover found — may be very stable or open loop)."
+        )
+    return lines
 
 
 def print_ascii_report(
@@ -469,6 +533,17 @@ def print_ascii_report(
         print(f"  Time Constant (tau)    : {time_metrics['fopdt_tau']:.4f} s")
         print(f"  Dead Time / Delay (L)  : {time_metrics['fopdt_L']:.4f} s")
         print(f"  Model Accuracy (R^2)   : {time_metrics['fopdt_r2'] * 100:.2f} %")
+        print("\n[PID Recommendation (IMC / Lambda-tuning from FOPDT)]")
+        if time_metrics.get("pid_Kc") is not None:
+            print(f"  Kp (Kc)                : {time_metrics['pid_Kc']:.4f}")
+            print(f"  Ti (Integral Time)     : {time_metrics['pid_Ti']:.4f} s")
+            print(
+                f"  Td (Derivative Time)   : {time_metrics['pid_Td']:.4f} s"
+                if time_metrics.get("pid_Td") is not None
+                else "  Td (Derivative Time)   : N/A"
+            )
+        else:
+            print("  PID recommendation not available (model gain too small).")
 
     if freq_metrics:
         print("\n[Frequency Domain: Dynamic Margins]")
@@ -494,6 +569,9 @@ def print_ascii_report(
             if freq_metrics["gain_margin"] is not None
             else "  Gain Margin (GM)       : inf (Stable)"
         )
+        print("\n[Stability Diagnosis]")
+        for line in _stability_diagnosis(freq_metrics["phase_margin"], freq_metrics["gain_margin"]):
+            print(line)
     print("=" * 60 + "\n")
 
 

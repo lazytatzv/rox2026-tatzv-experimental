@@ -103,6 +103,10 @@ sim-gui:
 launch:
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile launch
 
+# Launch physical robot in legacy mode (mecanum_controller + wheel_to_can)
+launch-legacy:
+    docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile launch-legacy
+
 # Launch minimal teleop-only (no sensors, no Nav2, just mecanum + joystick)
 teleop:
     docker compose {{profile}} {{compose_files}} exec ros2_rox2026 just -f main_ws/Justfile teleop

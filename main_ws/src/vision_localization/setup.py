@@ -21,7 +21,7 @@ setup(
     entry_points={
         "console_scripts": [
             "tag_localizer = vision_localization.tag_localizer:main",
-            "image_syncer = vision_localization.image_syncer:main"
+            "image_syncer = vision_localization.image_syncer:main",
         ],
     },
 )

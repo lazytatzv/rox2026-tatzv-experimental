@@ -394,23 +394,23 @@ void RobstrideSystemHardware::send_command(uint8_t motor_id, const std::vector<u
     transport_->send_raw(frame_data);
   } else if (transport_type_ == "socketcan") {
     if (can_socket_ < 0) return;
-    
+
     if (protocol_type_ == "native_can") {
       for (size_t offset = 0; offset + 16 <= frame_data.size(); offset += 16) {
         struct can_frame frame;
         std::memset(&frame, 0, sizeof(struct can_frame));
         uint32_t can_id;
         std::memcpy(&can_id, &frame_data[offset + 1], 4);
-        
+
         bool is_ext = (frame_data[offset + 5] == 0x01);
         bool is_rtr = (frame_data[offset + 6] == 0x01);
         frame.can_id = can_id;
         if (is_ext) frame.can_id |= CAN_EFF_FLAG;
         if (is_rtr) frame.can_id |= CAN_RTR_FLAG;
-        
+
         frame.can_dlc = frame_data[offset + 7];
         std::memcpy(frame.data, &frame_data[offset + 8], 8);
-        
+
         ::write(can_socket_, &frame, sizeof(struct can_frame));
       }
     } else if (protocol_type_ == "ddsm") {

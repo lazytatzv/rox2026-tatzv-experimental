@@ -33,6 +33,7 @@ TEST(HeadingStabilizerCoreTest, TestLPF)
 {
   HeadingStabilizerConfig config;
   config.gyro_alpha = 0.5;
+  config.rate_d = 0.0;
   HeadingStabilizerCore core(config);
 
   // First update

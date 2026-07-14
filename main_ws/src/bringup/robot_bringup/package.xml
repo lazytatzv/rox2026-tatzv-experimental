@@ -19,6 +19,17 @@
   <exec_depend>nav2_lifecycle_manager</exec_depend>
   <exec_depend>foxglove_bridge</exec_depend>
   <exec_depend>robstride_driver</exec_depend>
+  <exec_depend>mecanum_controller</exec_depend>
+  <exec_depend>wheel_to_can</exec_depend>
+  <exec_depend>ros2socketcan_bridge</exec_depend>
+  <exec_depend>mad_motor</exec_depend>
+  <exec_depend>motor_can_bridge</exec_depend>
+  <exec_depend>joy_conversion</exec_depend>
+  <exec_depend>roller_controller</exec_depend>
+  <exec_depend>roller_angle_controller</exec_depend>
+  <exec_depend>spring_controller</exec_depend>
+  <exec_depend>robstride_can_node</exec_depend>
+  <exec_depend>libbno055_linux</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

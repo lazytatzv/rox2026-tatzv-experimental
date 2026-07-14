@@ -39,9 +39,7 @@ def generate_launch_description():
     robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
-        parameters=[
-            {"robot_description": robot_description_content, "use_sim_time": use_sim_time}
-        ],
+        parameters=[{"robot_description": robot_description_content, "use_sim_time": use_sim_time}],
     )
 
     # --- 2. ros2_control (Robstride AT serial driver) ---

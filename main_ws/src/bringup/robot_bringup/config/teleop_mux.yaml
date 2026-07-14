@@ -62,7 +62,7 @@ twist_mux:
     joy_button_fire: 1        # B / Circleボタン
     joy_button_charge: 3      # Y / Triangleボタン
     joy_axis_aim_pitch: 4     # 右スティック上下など
-    
+
     # --- トピック設定 ---
     topic_joy: "joy"
     topic_shooter_cmd: "shooter/cmd_joy"  # Muxへ送る用のTopic
