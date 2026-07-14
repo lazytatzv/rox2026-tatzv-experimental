@@ -29,45 +29,70 @@
 
 ```mermaid
 graph TD
-    %% Input & Strategy
-    subgraph "入力 & ミッション管理"
-        Joy["joy_node (ゲームパッド)"] -->|"/joy"| BT["base_teleop (操縦ノード)"]
-        Strategy["auto_strategy (ミッションノード)"] -->|"/cmd_vel_auto (Action)"| Nav["base_navigation (Nav2スタック)"]
+    subgraph "1. User Input & Joystick"
+        GamePad["🎮 ゲームパッド (Physical)"] -.->|Bluetooth / USB| JoyNode["joy::joy_node"]
+        JoyNode -->|"/joy (sensor_msgs/Joy)"| TeleopNode["base_teleop::teleop"]
     end
 
-    %% Decision & Fusion
-    subgraph "経路計画 & 位置推定"
-        BT -->|"/cmd_vel"| Mux["twist_mux (速度調停)"]
-        Nav -->|"/cmd_vel"| Mux
-        
-        IMU_Driver["libbno055_linux"] -->|"/imu/data -> /imu"| EKF["robot_localization (自己位置推定)"]
-        IMU_Driver -->|"/imu/data -> /imu"| Stabilizer["imu_stabilizer (PID補正)"]
-        EKF -->|"/odometry/filtered"| Nav
+    subgraph "2. Strategic Mission & Planning"
+        StrategyNode["auto_strategy::strategy_node"] -->|"/cmd_vel_auto (Action)"| Nav2Stack["Navigation2 (Nav2 スタック)<br/>- bt_navigator<br/>- planner_server<br/>- controller_server<br/>- behavior_server"]
+        TeleopNode -->|"/cmd_vel_joy (geometry_msgs/TwistStamped)"| TwistMux["twist_mux::twist_mux"]
+        TeleopNode -->|"/stop_lock (std_msgs/Bool)"| TwistMux
+        Nav2Stack -->|"/cmd_vel (geometry_msgs/Twist)"| TwistMux
     end
 
-    %% ROS 2 Control & Hardware Interface
-    subgraph "ros2_control コントローラマネージャ"
-        Mux -->|"/cmd_vel_out"| Controller["Mecanum Drive Controller (速度コントローラ)"]
-        Stabilizer -->|"Yaw Rate Correction"| Controller
-        
-        Controller -->|"Joint Velocity Commands"| HW_Manager["Hardware Component Manager"]
+    subgraph "3. Sensor Fusion & Localization"
+        IMUDriver["libbno055_linux::bno055_perf_publisher_node"] -->|"/imu (sensor_msgs/Imu)"| EKFNode["robot_localization::ekf_filter_node"]
+        IMUDriver -->|"/imu"| StabilizerNode["imu_stabilizer::imu_stabilizer_node"]
+        TagLocalizer["vision_localization::tag_localizer_node"] -->|"/odometry/filtered"| EKFNode
+        EKFNode -->|"/odometry/filtered (nav_msgs/Odometry)"| Nav2Stack
     end
 
-    %% Low-Level Driver & Actuators
-    subgraph "ハードウェアドライバー & 実機通信"
-        HW_Manager -->|"Write Command / Read Feedback"| Robstride["robstride_driver (CANプロトコル)"]
-        HW_Manager -->|"Write Command / Read Feedback"| MAD["mad_motor_driver (CANプロトコル)"]
+    subgraph "4. Controller Manager & ros2_control"
+        TwistMux -->|"/cmd_vel_out (geometry_msgs/Twist)"| ControllerManager["controller_manager::ControllerManager"]
+        StabilizerNode -->|"/yaw_rate_correction (Float64)"| ControllerManager
         
-        Robstride -->|"Raw CAN Frames"| CAN_Bridge["seeed_usb_can_analyzer_driver"]
-        MAD -->|"Raw CAN Frames"| CAN_Bridge
+        subgraph "Loaded ros2_control Plugins"
+            MecanumController["mecanum_drive_controller::MecanumDriveController"]
+            JointStateBroadcaster["joint_state_broadcaster::JointStateBroadcaster"]
+            RobstrideHW["robstride_driver::RobstrideHardwareInterface (Hardware Plugin)"]
+            MadMotorHW["mad_motor_driver::MadMotorHardwareInterface (Hardware Plugin)"]
+        end
+
+        ControllerManager -.->|Load & Spin| MecanumController
+        ControllerManager -.->|Load & Spin| JointStateBroadcaster
+        ControllerManager -.->|Load & Write/Read| RobstrideHW
+        ControllerManager -.->|Load & Write/Read| MadMotorHW
         
-        CAN_Bridge -->|"Physical USB/CAN Bus"| Motors["Robstride & MAD モーター群"]
+        MecanumController -->|"/joint_states"| RobotStatePublisher["robot_state_publisher::robot_state_publisher"]
+        JointStateBroadcaster -->|"/joint_states"| RobotStatePublisher
     end
 
-    classDef pkg fill:#e1f5fe,stroke:#01579b,stroke-width:1px;
-    classDef node fill:#fff3e0,stroke:#e65100,stroke-width:1px;
-    class BT,Nav,Strategy,Stabilizer,EKF,IMU_Driver,Robstride,MAD,CAN_Bridge pkg;
-    class Controller,Mux,HW_Manager node;
+    subgraph "5. Low-Level Communications & Actuators"
+        RobstrideHW -->|"/to_can_bus (can_msgs/Frame)"| CANAnalyzer["seeed_usb_can_analyzer_driver::usb_can_analyzer_node"]
+        MadMotorHW -->|"/to_can_bus"| CANAnalyzer
+        
+        CANAnalyzer -->|"/from_can_bus (can_msgs/Frame)"| RobstrideHW
+        CANAnalyzer -->|"/from_can_bus"| MadMotorHW
+        
+        CANAnalyzer -.->|"/dev/ttyUSB0 (Physical Serial)"| CANBus["Physical CAN Bus"]
+        CANBus -.->|CAN command| RobstrideMotors["Robstride Motors (足回り4輪)"]
+        CANBus -.->|CAN command| MADMotors["MAD Motors (シューター/装填)"]
+    end
+
+    subgraph "6. External Telemetry & HMI"
+        RobotStatePublisher -->|"/tf & /tf_static"| FoxgloveBridge["foxglove_bridge::foxglove_bridge"]
+        EKFNode -->|"/odometry/filtered"| FoxgloveBridge
+        FoxgloveBridge -.->|WebSocket| FoxgloveStudio["Foxglove Studio (HMI Visualization)"]
+    end
+
+    classDef node fill:#fff3e0,stroke:#e65100,stroke-width:1.5px;
+    classDef plugin fill:#f3e5f5,stroke:#4a148c,stroke-width:1.5px;
+    classDef device fill:#eceff1,stroke:#37474f,stroke-width:1px,stroke-dasharray: 5 5;
+    
+    class JoyNode,TeleopNode,StrategyNode,Nav2Stack,TwistMux,IMUDriver,EKFNode,StabilizerNode,TagLocalizer,ControllerManager,RobotStatePublisher,CANAnalyzer,FoxgloveBridge node;
+    class MecanumController,JointStateBroadcaster,RobstrideHW,MadMotorHW plugin;
+    class GamePad,RobstrideMotors,MADMotors,CANBus,FoxgloveStudio device;
 ```
 
 ---
