@@ -29,20 +29,35 @@
 
 ```mermaid
 graph TD
+    %% 1. User Input & Joystick
     subgraph "1. User Input & Joystick"
         GamePad["🎮 ゲームパッド (Physical)"] -.->|Bluetooth / USB| JoyNode["joy::joy_node"]
         JoyNode -->|"/joy (sensor_msgs/Joy)"| TeleopNode["base_teleop::teleop"]
+        JoyNode -->|"/joy"| ShooterTeleop["shooter_control::shooter_teleop"]
+        
+        FoxgloveHMI["💻 Foxglove Control (HMI)"] -.->|Twist commands| TwistStampedRelay["base_teleop::twist_to_stamped"]
     end
 
+    %% 2. Strategic Mission & Planning
     subgraph "2. Strategic Mission & Planning"
-        StrategyNode["auto_strategy::strategy_node"] -->|"/cmd_vel_auto (Action)"| Nav2Stack["Navigation2 (Nav2 スタック)<br/>- bt_navigator<br/>- planner_server<br/>- controller_server<br/>- behavior_server"]
+        StrategyNode["auto_strategy::strategy_node"] -->|"/cmd_vel_auto (Action)"| Nav2Stack["Navigation2 (Nav2 スタック)<br/>- bt_navigator<br/>- planner_server<br/>- controller_server<br/>- behavior_server<br/>- lifecycle_manager"]
+        StrategyNode -->|"/cmd_shooter_auto (Float32)"| ShooterMux["shooter_control::shooter_mux"]
+        
         TeleopNode -->|"/cmd_vel_joy (geometry_msgs/TwistStamped)"| TwistMux["twist_mux::twist_mux"]
         TeleopNode -->|"/stop_lock (std_msgs/Bool)"| TwistMux
+        
+        TwistStampedRelay -->|"/cmd_vel_foxglove (geometry_msgs/TwistStamped)"| TwistMux
         Nav2Stack -->|"/cmd_vel (geometry_msgs/Twist)"| TwistMux
     end
 
-    subgraph "3. Perception & Localization"
-        Camera["📷 カメラ (Physical)"] -.->|Image stream| ApriltagNode["apriltag_ros::AprilTagNode"]
+    %% 3. Perception, Vision & Localization
+    subgraph "3. Perception, Vision & Localization"
+        Camera["📷 深度カメラ (Physical)"] -.->|Image stream| ImageSyncer["vision_localization::image_syncer"]
+        Camera -.->|Depth Points| PointCloud2Scan["pointcloud_to_laserscan::PointCloudToLaserScanNode"]
+        
+        ImageSyncer -->|"/camera_synced/image_raw"| ApriltagNode["apriltag_ros::AprilTagNode"]
+        ImageSyncer -->|"/camera_synced/camera_info"| ApriltagNode
+        
         ApriltagNode -->|"/detections (apriltag_msgs/AprilTagDetectionArray)"| TagLocalizer["vision_localization::tag_localizer_node"]
         ApriltagNode -->|"/detections"| StrategyNode
         
@@ -50,12 +65,17 @@ graph TD
         IMUDriver -->|"/imu"| StabilizerNode["imu_stabilizer::imu_stabilizer_node"]
         
         TagLocalizer -->|"/apriltag_pose (PoseWithCovarianceStamped)"| EKFNode
+        PointCloud2Scan -->|"/scan (sensor_msgs/LaserScan)"| Nav2Stack
         EKFNode -->|"/odometry/filtered (nav_msgs/Odometry)"| Nav2Stack
     end
 
+    %% 4. Controller Manager & ros2_control
     subgraph "4. Controller Manager & ros2_control"
-        TwistMux -->|"/cmd_vel_out (geometry_msgs/Twist)"| ControllerManager["controller_manager::ControllerManager"]
+        TwistMux -->|"/cmd_vel_teleop (geometry_msgs/Twist)"| ControllerManager["controller_manager::ControllerManager"]
         StabilizerNode -->|"/yaw_rate_correction (Float64)"| ControllerManager
+        
+        ShooterTeleop -->|"/cmd_vel_shooter_teleop (Float32)"| ShooterMux
+        ShooterMux -->|"/cmd_vel_shooter (Float32)"| ControllerManager
         
         subgraph "Loaded ros2_control Plugins"
             MecanumController["mecanum_drive_controller::MecanumDriveController"]
@@ -73,6 +93,7 @@ graph TD
         JointStateBroadcaster -->|"/joint_states"| RobotStatePublisher
     end
 
+    %% 5. Low-Level Communications & Actuators
     subgraph "5. Low-Level Communications & Actuators"
         RobstrideHW -->|"/to_can_bus (can_msgs/Frame)"| CANSender["ros2_socketcan::socket_can_sender_node"]
         MadMotorHW -->|"/to_can_bus"| CANSender
@@ -87,6 +108,7 @@ graph TD
         PhysicalCAN -.->|CAN command| MADMotors["MAD Motors (シューター/装填)"]
     end
 
+    %% 6. External Telemetry & HMI
     subgraph "6. External Telemetry & HMI"
         RobotStatePublisher -->|"/tf & /tf_static"| FoxgloveBridge["foxglove_bridge::foxglove_bridge"]
         EKFNode -->|"/odometry/filtered"| FoxgloveBridge
@@ -97,9 +119,9 @@ graph TD
     classDef plugin fill:#f3e5f5,stroke:#4a148c,stroke-width:1.5px;
     classDef device fill:#eceff1,stroke:#37474f,stroke-width:1px,stroke-dasharray: 5 5;
     
-    class JoyNode,TeleopNode,StrategyNode,Nav2Stack,TwistMux,IMUDriver,EKFNode,StabilizerNode,TagLocalizer,ControllerManager,RobotStatePublisher,CANSender,CANReceiver,ApriltagNode,FoxgloveBridge node;
+    class JoyNode,TeleopNode,StrategyNode,Nav2Stack,TwistMux,IMUDriver,EKFNode,StabilizerNode,TagLocalizer,ControllerManager,RobotStatePublisher,CANSender,CANReceiver,ApriltagNode,FoxgloveBridge,ImageSyncer,PointCloud2Scan,TwistStampedRelay,ShooterTeleop,ShooterMux node;
     class MecanumController,JointStateBroadcaster,RobstrideHW,MadMotorHW plugin;
-    class GamePad,Camera,RobstrideMotors,MADMotors,PhysicalCAN,FoxgloveStudio device;
+    class GamePad,Camera,RobstrideMotors,MADMotors,PhysicalCAN,FoxgloveStudio,FoxgloveHMI device;
 ```
 
 ---
