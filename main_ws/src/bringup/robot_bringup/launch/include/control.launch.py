@@ -66,7 +66,7 @@ def generate_launch_description():
     # Only launch on real hardware (when use_sim_time is false)
     socket_can_sender = Node(
         package="ros2_socketcan",
-        executable="socket_can_sender_node",
+        executable="socket_can_sender_node_exe",
         name="socket_can_sender",
         parameters=[{
             "interface": "can0",

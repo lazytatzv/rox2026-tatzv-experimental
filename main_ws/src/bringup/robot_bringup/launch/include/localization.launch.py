@@ -2,9 +2,10 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, Command, PythonExpression
 from launch_ros.actions import Node
-from launch.substitutions import LaunchConfiguration
-from launch.conditions import UnlessCondition
+from launch.conditions import UnlessCondition, IfCondition
 
 
 def generate_launch_description():
@@ -23,14 +24,9 @@ def generate_launch_description():
     # Calibration file path
     imu_calib_file = os.path.join(pkg_robot_bringup, 'config', 'imu_calibration.yaml')
 
-    # Condition: NOT gazebo AND has_imu is true
-    from launch.conditions import IfCondition
-    from launch.substitutions import PythonExpression
-    
     launch_imu_cond = IfCondition(PythonExpression(["'", has_imu, "' == 'true' and '", gazebo, "' == 'false'"]))
 
     # We conditionally load the yaml if it exists, but we also pass the string path for saving
-    import os
     bno055_params = [{"use_sim_time": use_sim_time, "calibration_save_path": imu_calib_file}]
     if os.path.exists(imu_calib_file):
         bno055_params.append(imu_calib_file)
