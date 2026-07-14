@@ -95,8 +95,8 @@ rox2026-tatzv-experimental/
         ├── teleop/               # base_teleop パッケージ
         └── drivers/              # 各種ハードウェアドライバ
             ├── actuators/        # モーター（robstride, mad_motor_driver）
-            ├── communication/    # USB-CANブリッジ（seeed_usb_can_analyzer_driver）
-            └── sensors/          # センサー（libbno055-linux / サブモジュール化）
+            ├── communication/    # seeed_usb_can_analyzer_driver
+            └── sensors/          # libbno055_linux (サブモジュール化)
 ```
 
 ---
