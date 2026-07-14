@@ -41,10 +41,15 @@ graph TD
         Nav2Stack -->|"/cmd_vel (geometry_msgs/Twist)"| TwistMux
     end
 
-    subgraph "3. Sensor Fusion & Localization"
+    subgraph "3. Perception & Localization"
+        Camera["📷 カメラ (Physical)"] -.->|Image stream| ApriltagNode["apriltag_ros::AprilTagNode"]
+        ApriltagNode -->|"/detections (apriltag_msgs/AprilTagDetectionArray)"| TagLocalizer["vision_localization::tag_localizer_node"]
+        ApriltagNode -->|"/detections"| StrategyNode
+        
         IMUDriver["libbno055_linux::bno055_perf_publisher_node"] -->|"/imu (sensor_msgs/Imu)"| EKFNode["robot_localization::ekf_filter_node"]
         IMUDriver -->|"/imu"| StabilizerNode["imu_stabilizer::imu_stabilizer_node"]
-        TagLocalizer["vision_localization::tag_localizer_node"] -->|"/odometry/filtered"| EKFNode
+        
+        TagLocalizer -->|"/apriltag_pose (PoseWithCovarianceStamped)"| EKFNode
         EKFNode -->|"/odometry/filtered (nav_msgs/Odometry)"| Nav2Stack
     end
 
@@ -69,15 +74,17 @@ graph TD
     end
 
     subgraph "5. Low-Level Communications & Actuators"
-        RobstrideHW -->|"/to_can_bus (can_msgs/Frame)"| CANAnalyzer["seeed_usb_can_analyzer_driver::usb_can_analyzer_node"]
-        MadMotorHW -->|"/to_can_bus"| CANAnalyzer
+        RobstrideHW -->|"/to_can_bus (can_msgs/Frame)"| CANSender["ros2_socketcan::socket_can_sender_node"]
+        MadMotorHW -->|"/to_can_bus"| CANSender
         
-        CANAnalyzer -->|"/from_can_bus (can_msgs/Frame)"| RobstrideHW
-        CANAnalyzer -->|"/from_can_bus"| MadMotorHW
+        CANReceiver["ros2_socketcan::socket_can_receiver_node"] -->|"/from_can_bus (can_msgs/Frame)"| RobstrideHW
+        CANReceiver -->|"/from_can_bus"| MadMotorHW
         
-        CANAnalyzer -.->|"/dev/ttyUSB0 (Physical Serial)"| CANBus["Physical CAN Bus"]
-        CANBus -.->|CAN command| RobstrideMotors["Robstride Motors (足回り4輪)"]
-        CANBus -.->|CAN command| MADMotors["MAD Motors (シューター/装填)"]
+        CANSender -.->|"SocketCAN (can0)"| PhysicalCAN["Physical CAN Bus"]
+        PhysicalCAN -.->|"SocketCAN (can0)"| CANReceiver
+        
+        PhysicalCAN -.->|CAN command| RobstrideMotors["Robstride Motors (足回り4輪)"]
+        PhysicalCAN -.->|CAN command| MADMotors["MAD Motors (シューター/装填)"]
     end
 
     subgraph "6. External Telemetry & HMI"
@@ -90,9 +97,9 @@ graph TD
     classDef plugin fill:#f3e5f5,stroke:#4a148c,stroke-width:1.5px;
     classDef device fill:#eceff1,stroke:#37474f,stroke-width:1px,stroke-dasharray: 5 5;
     
-    class JoyNode,TeleopNode,StrategyNode,Nav2Stack,TwistMux,IMUDriver,EKFNode,StabilizerNode,TagLocalizer,ControllerManager,RobotStatePublisher,CANAnalyzer,FoxgloveBridge node;
+    class JoyNode,TeleopNode,StrategyNode,Nav2Stack,TwistMux,IMUDriver,EKFNode,StabilizerNode,TagLocalizer,ControllerManager,RobotStatePublisher,CANSender,CANReceiver,ApriltagNode,FoxgloveBridge node;
     class MecanumController,JointStateBroadcaster,RobstrideHW,MadMotorHW plugin;
-    class GamePad,RobstrideMotors,MADMotors,CANBus,FoxgloveStudio device;
+    class GamePad,Camera,RobstrideMotors,MADMotors,PhysicalCAN,FoxgloveStudio device;
 ```
 
 ---
