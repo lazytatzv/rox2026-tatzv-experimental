@@ -115,3 +115,7 @@ analyze-control mode="auto" bag="control_analysis_bag" report="full_analysis_rep
 # Alias for README compatibility
 report mode="auto" bag="control_analysis_bag" report_name="full_analysis_report":
     just analyze-control {{mode}} {{bag}} {{report_name}}
+
+# Generate high-resolution system architecture diagram (docs/packages.png)
+generate-diag:
+    python3 main_ws/generate_packages_png.py

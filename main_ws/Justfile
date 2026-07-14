@@ -90,3 +90,6 @@ clean:
         cd .. && docker compose exec ros2_rox2026 just -f main_ws/Justfile clean; \
     fi
 
+# Generate high-resolution system architecture diagram (docs/packages.png)
+generate-diag:
+    python3 generate_packages_png.py
