@@ -10,6 +10,7 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(rclcpp_components REQUIRED)
 
 add_executable(mad_motor_driver_node src/mad_motor_driver_node.cpp)
 ament_target_dependencies(mad_motor_driver_node rclcpp std_msgs can_msgs sensor_msgs)
