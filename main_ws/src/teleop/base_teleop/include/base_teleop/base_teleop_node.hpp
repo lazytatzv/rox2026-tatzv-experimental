@@ -33,8 +33,8 @@ private:
   int axis_linear_x_;
   int axis_linear_y_;
   int axis_angular_z_;
-  int button_software_stop_;
-  int button_joy_mode_on_;
+  int button_arm_toggle_;
+  int joy_timeout_ms_;
   double scale_linear_x_;
   double scale_linear_y_;
   double scale_angular_velocity_;
@@ -48,6 +48,8 @@ private:
   geometry_msgs::msg::Twist current_twist_;
   geometry_msgs::msg::Twist target_twist_;
   bool joy_mode_active_ = false;
+  bool prev_button_state_ = false;
+  rclcpp::Time last_joy_time_;
 };
 
 }  // namespace base_teleop

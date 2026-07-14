@@ -20,6 +20,8 @@ BaseTeleopNode::BaseTeleopNode(const rclcpp::NodeOptions & options)
   declare_parameters();
   update_parameters();
 
+  last_joy_time_ = this->now();
+
   auto telemetry_qos = rclcpp::SystemDefaultsQoS();
   auto sensor_qos = rclcpp::SensorDataQoS();
 
@@ -42,8 +44,8 @@ void BaseTeleopNode::declare_parameters()
   this->declare_parameter("joy_axis_linear_x", 1);
   this->declare_parameter("joy_axis_linear_y", 0);
   this->declare_parameter("joy_axis_angular_z", 2);
-  this->declare_parameter("joy_button_software_stop", 15);
-  this->declare_parameter("joy_button_joy_mode_on", 8);
+  this->declare_parameter("joy_button_arm_toggle", 1);
+  this->declare_parameter("joy_timeout_ms", 500);
   this->declare_parameter("scale_linear_x", 1.0);
   this->declare_parameter("scale_linear_y", 1.0);
   this->declare_parameter("scale_angular_velocity", 1.0);
@@ -59,8 +61,8 @@ void BaseTeleopNode::update_parameters()
   axis_linear_x_ = this->get_parameter("joy_axis_linear_x").as_int();
   axis_linear_y_ = this->get_parameter("joy_axis_linear_y").as_int();
   axis_angular_z_ = this->get_parameter("joy_axis_angular_z").as_int();
-  button_software_stop_ = this->get_parameter("joy_button_software_stop").as_int();
-  button_joy_mode_on_ = this->get_parameter("joy_button_joy_mode_on").as_int();
+  button_arm_toggle_ = this->get_parameter("joy_button_arm_toggle").as_int();
+  joy_timeout_ms_ = this->get_parameter("joy_timeout_ms").as_int();
   scale_linear_x_ = this->get_parameter("scale_linear_x").as_double();
   scale_linear_y_ = this->get_parameter("scale_linear_y").as_double();
   scale_angular_velocity_ = this->get_parameter("scale_angular_velocity").as_double();
@@ -73,18 +75,36 @@ void BaseTeleopNode::update_parameters()
 
 void BaseTeleopNode::timer_callback()
 {
-  if (!joy_mode_active_) {return;}
+  auto now = this->now();
+  auto diff_ms = (now - last_joy_time_).nanoseconds() / 1'000'000;
+  if (diff_ms > joy_timeout_ms_) {
+    if (joy_mode_active_) {
+      joy_mode_active_ = false;
+      RCLCPP_WARN(get_logger(), "Joystick timeout -> DISARMED");
+    }
+  }
+
+  // Publish emergency stop status (stop_lock is true when disarmed)
+  auto stop_lock_msg = std::make_unique<std_msgs::msg::Bool>();
+  stop_lock_msg->data = !joy_mode_active_;
+  publisher_stop_lock_->publish(std::move(stop_lock_msg));
 
   auto smooth = [this](double current, double target) {
       return current + smoothing_factor_ * (target - current);
     };
+
+  if (!joy_mode_active_) {
+    target_twist_.linear.x = 0.0;
+    target_twist_.linear.y = 0.0;
+    target_twist_.angular.z = 0.0;
+  }
 
   current_twist_.linear.x = smooth(current_twist_.linear.x, target_twist_.linear.x);
   current_twist_.linear.y = smooth(current_twist_.linear.y, target_twist_.linear.y);
   current_twist_.angular.z = smooth(current_twist_.angular.z, target_twist_.angular.z);
 
   auto msg = std::make_unique<geometry_msgs::msg::TwistStamped>();
-  msg->header.stamp = this->get_clock()->now();
+  msg->header.stamp = now;
   msg->header.frame_id = "base_footprint";
   msg->twist = current_twist_;
   publisher_command_velocity_->publish(std::move(msg));
@@ -92,21 +112,30 @@ void BaseTeleopNode::timer_callback()
 
 void BaseTeleopNode::joystick_callback(const sensor_msgs::msg::Joy::SharedPtr msg)
 {
-  size_t req_buttons = static_cast<size_t>(std::max(button_software_stop_, button_joy_mode_on_));
+  last_joy_time_ = this->now();
+
+  size_t req_buttons = static_cast<size_t>(button_arm_toggle_);
   if (msg->buttons.size() <= req_buttons) {return;}
 
-  if (msg->buttons[button_software_stop_] == 1) {
-    joy_mode_active_ = false;
-    RCLCPP_WARN(get_logger(), "SYSTEM DISARMED");
+  bool button_pressed = msg->buttons[button_arm_toggle_] == 1;
+
+  // Toggle arming mode on rising edge
+  if (button_pressed && !prev_button_state_) {
+    joy_mode_active_ = !joy_mode_active_;
+    if (joy_mode_active_) {
+      RCLCPP_INFO(get_logger(), "SYSTEM ARMED");
+    } else {
+      RCLCPP_WARN(get_logger(), "SYSTEM DISARMED");
+    }
+  }
+  prev_button_state_ = button_pressed;
+
+  if (!joy_mode_active_) {
+    target_twist_.linear.x = 0.0;
+    target_twist_.linear.y = 0.0;
+    target_twist_.angular.z = 0.0;
     return;
   }
-
-  if (msg->buttons[button_joy_mode_on_] == 1) {
-    joy_mode_active_ = true;
-    RCLCPP_INFO(get_logger(), "SYSTEM ARMED");
-  }
-
-  if (!joy_mode_active_) {return;}
 
   size_t req_axes = static_cast<size_t>(std::max({axis_linear_x_, axis_linear_y_,
       axis_angular_z_}));
